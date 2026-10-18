@@ -40,6 +40,16 @@ node tests/check.js
 python3 -m http.server 8000
 ```
 
+### iPhoneでのプレビュー
+
+1. PCとiPhoneを同じWi-Fiにつなぐ
+2. このフォルダで `python3 -m http.server 8000` を実行する
+3. PCのIPアドレスを調べる（Mac：「システム設定 → Wi-Fi → 詳細」、Windows：`ipconfig` の IPv4 アドレス）
+4. iPhoneのSafariで `http://<PCのIPアドレス>:8000` を開く
+
+この方法は https ではないため、「結果をシェアする」は共有メニューではなく、結果をコピーする動作になります。
+共有メニューは https で公開したあと（GitHub Pages など）に表示されます。
+
 ## 公開
 
 GitHub Pages などの静的ホスティングに、このフォルダをそのまま置けば公開できます。

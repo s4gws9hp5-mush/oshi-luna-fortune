@@ -50,13 +50,12 @@
     title.focus({ preventScroll: true });
   }
 
-  var choosing = false;
+  var pendingChoice = null; // 選択の演出中に保留している回答
   function choose(index, btn) {
-    if (choosing) return; // 連打による二重回答を防ぐ
-    choosing = true;
+    if (pendingChoice) return; // 連打による二重回答を防ぐ
     btn.classList.add("is-chosen");
-    setTimeout(function () {
-      choosing = false;
+    pendingChoice = setTimeout(function () {
+      pendingChoice = null;
       answers.push(index);
       if (answers.length < D.QUESTIONS.length) {
         renderQuestion();
@@ -139,11 +138,15 @@
   function fallbackCopy(text) {
     var ta = document.createElement("textarea");
     ta.value = text;
-    ta.setAttribute("readonly", "");
     ta.style.position = "fixed";
+    ta.style.top = "0";
     ta.style.opacity = "0";
+    ta.style.fontSize = "16px"; // iOSでフォーカス時に拡大されないように
     document.body.appendChild(ta);
+    // iOS Safari は select() だけでは選択されないため、範囲指定でも選択する
+    ta.focus();
     ta.select();
+    ta.setSelectionRange(0, text.length);
     var ok = false;
     try { ok = document.execCommand("copy"); } catch (e) { /* 失敗時は下で案内 */ }
     document.body.removeChild(ta);
@@ -185,6 +188,11 @@
   });
   $("share-btn").addEventListener("click", share);
   $("back-btn").addEventListener("click", function () {
+    // 回答直後（演出中）に戻った場合は、保留中の回答を取り消してから戻る
+    if (pendingChoice) {
+      clearTimeout(pendingChoice);
+      pendingChoice = null;
+    }
     if (answers.length === 0) {
       showScreen("top");
     } else {
