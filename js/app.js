@@ -113,8 +113,9 @@
     return (withYear ? Number(p[0]) + "年" : "") + Number(p[1]) + "月" + Number(p[2]) + "日（" + week + "）";
   }
 
-  function catSrc(typeKey) {
-    return "images/" + (typeKey && D.TYPES[typeKey] ? "cat-" + typeKey : "pixel-cat") + ".png";
+  // 白猫のイラスト（公式マスコット。タイプのちがいは周りの色と絵文字で表す）
+  function catSrc() {
+    return "images/luna-cat.png";
   }
 
   // ---- トップ ----

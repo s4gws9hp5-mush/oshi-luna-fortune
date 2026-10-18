@@ -83,20 +83,17 @@ body::before {
 
 /* ---------- トップ ---------- */
 .hero { text-align: center; padding-top: 12px; }
-/* 白猫のドット絵：くっきり拡大し、縦横比は画像のまま（幅は 30px の倍数にすると iPhone で粒がそろう） */
-.pixel {
+.mascot {
   display: block;
-  height: auto;
+  height: auto; /* width だけ指定し、縦横比は画像のまま */
   max-width: 100%;
   margin: 0 auto;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: pixelated;
 }
-.hero-art { width: 210px; margin: 4px auto 14px; }
+.hero-art { width: min(260px, 70vw); margin: 4px auto 18px; }
 .floaty { animation: floaty 4s ease-in-out infinite; }
 @keyframes floaty {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); } /* ドット絵がギザギザにならないよう回転はしない */
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
 }
 .eyebrow {
   display: inline-block;
@@ -393,7 +390,7 @@ button:focus-visible {
 
 /* ---------- 占い中 ---------- */
 .loading { text-align: center; padding-top: 16vh; }
-.loading-art { width: 150px; margin-bottom: 12px; animation: floaty 1.6s ease-in-out infinite; }
+.loading-art { width: min(190px, 52vw); margin-bottom: 12px; animation: floaty 1.6s ease-in-out infinite; }
 .loading-sky { height: 28px; font-size: 1.2rem; letter-spacing: 1.2em; color: var(--gold); }
 .loading-sky span { display: inline-block; animation: twinkle 1.2s ease-in-out infinite; }
 .loading-sky span:nth-child(2) { animation-delay: 0.3s; color: var(--lavender-deep); }

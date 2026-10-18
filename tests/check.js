@@ -37,10 +37,8 @@ for (const k of TYPE_KEYS) {
     .concat(t.daily.messages).forEach((x, i) => { noBanned(x, k + "#" + i); unique(x, k + "#" + i); });
   t.daily.actions.forEach((x, i) => { nonEmpty(x, k + ".daily.actions" + i); noBanned(x, k + ".daily.actions" + i); });
   assert.strictEqual(new Set(t.daily.actions).size, t.daily.actions.length, "アクションの重複 " + k);
-  // タイプ別の白猫イラストがある
-  assert.ok(fs.existsSync(path.join(__dirname, "..", "images", "cat-" + k + ".png")), "images/cat-" + k + ".png がない");
 }
-assert.ok(fs.existsSync(path.join(__dirname, "..", "images", "pixel-cat.png")), "images/pixel-cat.png がない");
+assert.ok(fs.existsSync(path.join(__dirname, "..", "images", "luna-cat.png")), "images/luna-cat.png（白猫のマスコット）がない");
 
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");

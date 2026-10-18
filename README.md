@@ -60,11 +60,8 @@ css/style.css         デザイン
 js/data.js            質問・タイプ・占いの文章データ
 js/fortune.js         タイプ判定と今日の占いのロジック（ブラウザと Node.js の両方で動く）
 js/app.js             画面遷移・保存・共有
-images/pixel-cat.png  公式マスコット（白猫と三日月のドット絵）
-images/cat-*.png      タイプ別の白猫（首輪の色ちがい）
+images/luna-cat.png   公式マスコット（三日月の上で眠る白猫）
 images/apple-touch-icon.png  ホーム画面用アイコン
-images/luna-cat.png   以前のマスコット画像（現在は未使用。不要なら削除してOK）
-tools/pixel-cat.py    ドット絵の画像を作るスクリプト（絵を直すときだけ使う。Python + Pillow）
 tests/check.js        データとロジックの検証
 ```
 
