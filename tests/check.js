@@ -52,6 +52,30 @@ for (const k of TYPE_KEYS) {
   assert.strictEqual(w, h, img + " が正方形でない");
 }
 
+// シェア画像「推し活タイプ取扱説明書」用の短い紹介：全タイプにあり、短く、使い回しがない
+for (const k of TYPE_KEYS) {
+  const c = D.TYPES[k].card;
+  assert.ok(c, "card がない " + k);
+  ["traits", "care", "friend"].forEach((f) => {
+    nonEmpty(c[f], k + ".card." + f); noBanned(c[f], k + ".card." + f);
+    assert.ok(c[f].length <= 34, "シェア画像の文章が長すぎる " + k + "." + f + " (" + c[f].length + "文字)");
+    unique(c[f], k + ".card." + f);
+  });
+}
+
+// ホーム画面への追加（PWA）：マニフェストとアイコン、Service Worker
+const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.webmanifest"), "utf8"));
+assert.strictEqual(manifest.name, "推しルナ占い"); assert.strictEqual(manifest.short_name, "推しルナ占い");
+assert.strictEqual(manifest.start_url, "./"); assert.strictEqual(manifest.scope, "./"); assert.strictEqual(manifest.display, "standalone");
+assert.ok(manifest.icons.some((i) => i.sizes === "192x192") && manifest.icons.some((i) => i.sizes === "512x512") && manifest.icons.some((i) => i.purpose === "maskable"));
+manifest.icons.forEach((i) => {
+  const [w, h] = pngSize(path.join(__dirname, "..", i.src));
+  assert.strictEqual(w + "x" + h, i.sizes, "アイコンの大きさ " + i.src);
+});
+const sw = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
+(sw.match(/"(?:\.\/|[a-z][^"]*\.(?:html|css|js|png))"/g) || []).map((x) => x.slice(1, -1)).filter((f) => f !== "./")
+  .forEach((f) => assert.ok(fs.existsSync(path.join(__dirname, "..", f)), "sw.js の CORE にあるファイルがない " + f));
+
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");
 const mainCount = {}, subCount = {};

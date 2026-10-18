@@ -8,6 +8,11 @@
   <title>推しルナ占い</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="推しルナ占い">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -59,6 +64,9 @@
           <button type="button" class="btn-text" id="retake-btn">もう一度診断する</button>
         </div>
       </section>
+
+      <!-- ホーム画面への追加（目立ちすぎない小さなリンク。ホーム画面から開いているときは出さない） -->
+      <button type="button" class="btn-text a2hs-link" id="a2hs-top-btn">📱 ホーム画面に追加する方法</button>
     </section>
 
     <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->
@@ -173,6 +181,14 @@
         <button type="button" class="btn-text" id="type-view-saved-btn" hidden>保存中のタイプを見る</button>
       </div>
 
+      <!-- はじめて診断を終えた人への、ホーム画面への追加の案内（「あとで」を押したら次からは出さない） -->
+      <aside class="a2hs-card" id="a2hs-card" aria-labelledby="a2hs-card-title" hidden>
+        <h3 class="a2hs-title" id="a2hs-card-title">🌙 推しルナ占いをもっと身近に♡</h3>
+        <p class="a2hs-text">ホーム画面に追加すると、いつでもすぐに今日の推し活占いを見に来られるよ。あなたの推し活タイプも、いつでも振り返ってね🎀</p>
+        <button type="button" class="btn btn-type" id="a2hs-howto-btn">ホーム画面への追加方法を見る</button>
+        <button type="button" class="btn-text" id="a2hs-later-btn">あとで</button>
+      </aside>
+
       <article class="card card-lavender">
         <h3 class="card-title"><span aria-hidden="true">🔮</span> 基本の性格</h3>
         <p id="type-personality"></p>
@@ -225,7 +241,24 @@
     </section>
   </main>
 
-  <footer class="footer">推しルナ占い ｜ 占いは楽しむためのものです 🐈<br>結果はこの端末のブラウザにだけ保存されます</footer>
+  <!-- ホーム画面への追加方法（ブラウザに合わせた手順と、データの保存についての注意） -->
+  <div class="sheet-backdrop" id="a2hs-sheet" hidden>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="a2hs-sheet-title">
+      <h2 class="sheet-title" id="a2hs-sheet-title">📱 ホーム画面に追加する方法</h2>
+      <p class="sheet-lead" id="a2hs-lead"></p>
+      <ol class="sheet-steps" id="a2hs-steps"></ol>
+      <button type="button" class="btn btn-type" id="a2hs-install-btn" hidden>ホーム画面に追加する</button>
+      <p class="sheet-status" id="a2hs-status" role="status" aria-live="polite"></p>
+      <div class="sheet-note">
+        <p class="sheet-note-title">💡 データの保存について</p>
+        <p>ホーム画面に追加しても、データのバックアップにはなりません。診断結果や占いの記録は、この端末のブラウザの中にだけ保存されます。別のスマホやパソコンには引き継がれず、ブラウザのデータを消すと消えてしまいます。</p>
+        <p id="a2hs-ios-note" hidden>iPhone では、ホーム画面のアイコンから開いたときと Safari で開いたときで、保存データが別々になることがあります。アイコンから開いて結果が見つからないときは、もう一度診断してね。</p>
+      </div>
+      <button type="button" class="btn btn-ghost" id="a2hs-close-btn">閉じる</button>
+    </section>
+  </div>
+
+  <footer class="footer">推しルナ占い ｜ 占いは楽しむためのものです 🐈<br>結果はこの端末のブラウザにだけ保存されます（ほかの端末には引き継がれません）</footer>
 
   <script src="js/data.js"></script>
   <script src="js/fortune.js"></script>

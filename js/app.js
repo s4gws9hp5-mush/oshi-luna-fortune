@@ -10,7 +10,8 @@
     type: "oshi-luna-type",   // 推し活タイプ診断の結果 { version, type, sub, answers, date }
     quiz: "oshi-luna-quiz",   // 診断の途中の回答 { version, answers }
     daily: "oshi-luna-daily", // 今日の推し活占いの履歴 { version, history: [結果, ...] }（新しい順・最大7日分）
-    legacy: "oshi-luna-last"  // 旧4問版の診断の回答（読むだけ。消さない）
+    legacy: "oshi-luna-last", // 旧4問版の診断の回答（読むだけ。消さない）
+    a2hs: "oshi-luna-a2hs"    // ホーム画面への追加の案内を閉じたかどうか { dismissed }（表示の設定のみ）
   };
   var HISTORY_DAYS = 7;
 
@@ -133,6 +134,7 @@
 
   // ---- トップ ----
   function refreshTop() {
+    $("a2hs-top-btn").hidden = isStandalone();
     var saved = loadSavedType();
     var progress = loadQuizProgress();
 
@@ -320,6 +322,7 @@
         showTypeStatus(stored && stored.type === r.type ?
           "保存できたよ♡ トップページからいつでも見返せて、推し活占いにもこのタイプが反映されるよ🌙" :
           "結果を保存できませんでした。ブラウザの設定（プライベートブラウズなど）を確認してね。");
+        if (stored && stored.type === r.type) showA2hsCard();
       } else if (saved.type === r.type) {
         save(KEYS.type, record);
         showTypeStatus("前回と同じ「" + D.TYPES[r.type].name + "」でした。");
@@ -340,6 +343,7 @@
     pendingType = null;
     $("type-confirm").hidden = true;
     $("type-status").hidden = true;
+    $("a2hs-card").hidden = true;
 
     $("type-emblem").style.setProperty("--type-color", t.color);
     $("type-hero").style.setProperty("--type-color", t.color);
@@ -484,6 +488,100 @@
     });
   }
 
+  // ---- ホーム画面への追加 ----
+  var installPrompt = null; // Android の Chrome などで使える「インストール」の呼び出し
+
+  function isStandalone() {
+    return !!((window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true);
+  }
+
+  // 使っている端末・ブラウザの種類（手順の出し分け用）
+  function browserKind() {
+    var ua = navigator.userAgent || "";
+    var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (ios && /Line\/|Instagram|FBAN|FBAV|Twitter|TikTok|BytedanceWebview/i.test(ua)) return "ios-inapp";
+    if (ios && /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)) return "ios-other";
+    if (ios) return "ios-safari";
+    if (/Android/.test(ua)) return "android";
+    return "other";
+  }
+
+  var A2HS_STEPS = {
+    "ios-safari": {
+      lead: "iPhone の Safari では、次の手順でホーム画面に追加できます。",
+      steps: [
+        "画面の下（またはアドレスバーの横）にある「共有」ボタン（四角から上向きの矢印が出ているアイコン）をタップ。見つからないときは「…」ボタンを開いてね",
+        "メニューを下にスクロールして「ホーム画面に追加」を選ぶ",
+        "名前が「推しルナ占い」になっていることを確認して、右上の「追加」をタップ"
+      ]
+    },
+    "ios-other": {
+      lead: "iPhone の Chrome などでも、ブラウザによってはホーム画面に追加できます。",
+      steps: [
+        "アドレスバーの近くにある「共有」ボタンをタップ",
+        "「ホーム画面に追加」を選び、「追加」をタップ",
+        "見つからないときは、このページを Safari で開いてから追加してね"
+      ]
+    },
+    "ios-inapp": {
+      lead: "LINE や Instagram などのアプリの中で開いていると、ホーム画面に追加できないことがあります。",
+      steps: [
+        "画面の右上や右下のメニューから「Safariで開く」（「ブラウザで開く」）を選ぶ",
+        "Safari で開いたら、「共有」ボタン → 「ホーム画面に追加」を選ぶ",
+        "名前を確認して「追加」をタップ"
+      ]
+    },
+    "android": {
+      lead: "Android の Chrome では、次の手順でホーム画面に追加できます。",
+      steps: [
+        "右上のメニュー（︙）をタップ",
+        "「ホーム画面に追加」または「アプリをインストール」を選ぶ",
+        "表示された画面で「追加」（「インストール」）をタップ"
+      ]
+    },
+    "other": {
+      lead: "ホーム画面（デスクトップ）への追加の方法は、ブラウザによって違います。",
+      steps: [
+        "ブラウザのメニューや共有ボタンを開く",
+        "「ホーム画面に追加」「アプリをインストール」などの項目を選ぶ",
+        "項目が見つからないブラウザでは、ホーム画面に追加できません。ブックマークに登録してね"
+      ]
+    }
+  };
+
+  function a2hsDismissed() {
+    var v = load(KEYS.a2hs);
+    return !!(v && v.dismissed);
+  }
+
+  // はじめて診断を終えたときに一度だけ出す（閉じた人・ホーム画面から開いている人には出さない）
+  function showA2hsCard() {
+    $("a2hs-card").hidden = a2hsDismissed() || isStandalone();
+  }
+
+  function dismissA2hsCard() {
+    save(KEYS.a2hs, { dismissed: true, date: todayKey() });
+    $("a2hs-card").hidden = true;
+  }
+
+  function openA2hsSheet() {
+    var kind = browserKind();
+    var guide = A2HS_STEPS[kind];
+    $("a2hs-lead").textContent = isStandalone() ? "いまはホーム画面から開いています。追加はもう済んでいるよ♡" : guide.lead;
+    $("a2hs-steps").hidden = isStandalone();
+    renderList($("a2hs-steps"), guide.steps);
+    $("a2hs-install-btn").hidden = !installPrompt || isStandalone();
+    $("a2hs-ios-note").hidden = kind.indexOf("ios") !== 0;
+    $("a2hs-status").textContent = "";
+    $("a2hs-sheet").hidden = false;
+    $("a2hs-sheet-title").setAttribute("tabindex", "-1");
+    $("a2hs-sheet-title").focus({ preventScroll: true });
+  }
+
+  function closeA2hsSheet() {
+    $("a2hs-sheet").hidden = true;
+  }
+
   // ---- 共有 ----
   function toast(msg, toastId) {
     var el = $(toastId || "toast");
@@ -621,6 +719,40 @@
   });
   $("retry-btn").addEventListener("click", function () { startQuiz(false); });
   $("result-home-btn").addEventListener("click", goTop);
+
+  // ホーム画面への追加
+  $("a2hs-top-btn").addEventListener("click", openA2hsSheet);
+  $("a2hs-howto-btn").addEventListener("click", function () { dismissA2hsCard(); openA2hsSheet(); });
+  $("a2hs-later-btn").addEventListener("click", dismissA2hsCard);
+  $("a2hs-close-btn").addEventListener("click", closeA2hsSheet);
+  $("a2hs-sheet").addEventListener("click", function (e) { if (e.target === $("a2hs-sheet")) closeA2hsSheet(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("a2hs-sheet").hidden) closeA2hsSheet(); });
+  // Android の Chrome などでは、ブラウザの「インストール」画面をボタンから呼び出せる
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    installPrompt = e;
+  });
+  $("a2hs-install-btn").addEventListener("click", function () {
+    if (!installPrompt) return;
+    var p = installPrompt;
+    installPrompt = null;
+    $("a2hs-install-btn").hidden = true;
+    p.prompt();
+    p.userChoice.then(function (choice) {
+      $("a2hs-status").textContent = choice && choice.outcome === "accepted" ?
+        "ホーム画面に追加しました♡" : "追加をキャンセルしました。あとから上の手順でも追加できるよ。";
+    }, function () {
+      $("a2hs-status").textContent = "追加の画面を開けませんでした。上の手順で追加してね。";
+    });
+  });
+  window.addEventListener("appinstalled", function () {
+    $("a2hs-top-btn").hidden = true;
+  });
+
+  // オフラインでも開けるように、対応するブラウザでは Service Worker を使う（https のときだけ）
+  if ("serviceWorker" in navigator && window.isSecureContext && location.protocol.indexOf("http") === 0) {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* 使えなくてもサイトはそのまま動く */ });
+  }
 
   // 戻ってきたとき（別アプリから復帰・タブ切り替え・戻るボタンでの再表示）にも日付を確かめる
   document.addEventListener("visibilitychange", function () {

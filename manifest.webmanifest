@@ -1,0 +1,17 @@
+{
+  "name": "推しルナ占い",
+  "short_name": "推しルナ占い",
+  "description": "推しを好きな気持ちも、自分のことも大切に。毎日の推し活占いと、あなたの推し活タイプがわかる診断。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6e9f7",
+  "theme_color": "#f6e9f7",
+  "icons": [
+    { "src": "images/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "images/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "images/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
