@@ -101,13 +101,35 @@
     $("lucky-item").textContent = f.lucky.item;
     $("lucky-time").textContent = f.lucky.time;
 
-    $("omamori-text").textContent = f.omamori;
+    renderOmamori(f.omamori);
     $("toast").textContent = "";
+  }
+
+  // お守りメッセージの4セクション（見出しと順番は data.js の OMAMORI_SECTIONS）
+  function renderOmamori(omamori) {
+    var box = $("omamori-sections");
+    box.innerHTML = "";
+    D.OMAMORI_SECTIONS.forEach(function (sec) {
+      var body = omamori && omamori[sec.key];
+      if (!body) return; // 文章がないセクションは見出しごと出さない
+      var section = document.createElement("section");
+      section.className = "omamori-section omamori-" + sec.key;
+      var h = document.createElement("h4");
+      h.className = "omamori-heading";
+      h.innerHTML = '<span aria-hidden="true">' + sec.icon + "</span> ";
+      h.appendChild(document.createTextNode(sec.title));
+      var p = document.createElement("p");
+      p.className = "omamori-body";
+      p.textContent = body;
+      section.appendChild(h);
+      section.appendChild(p);
+      box.appendChild(section);
+    });
   }
 
   function shareText(f) {
     return "【推しルナ占い】\n私の推し活スタイルは「" + f.style.title + "」\n今日の推し活運：" +
-      "★".repeat(f.luck.stars) + "（" + f.luck.title + "）\n🐈 " + f.omamori;
+      "★".repeat(f.luck.stars) + "（" + f.luck.title + "）\n🎀 " + f.omamori.charm;
   }
 
   function toast(msg) {

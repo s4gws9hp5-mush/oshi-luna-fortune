@@ -97,7 +97,8 @@
         item: pick(D.LUCKY_ITEMS, rand),
         time: pick(D.LUCKY_TIMES, rand)
       },
-      omamori: pick(D.OMAMORI[focus], rand)
+      // お守りメッセージは推し活スタイルごとに固定（日替わりの抽選より後ろに置き、既存の抽選結果を変えない）
+      omamori: D.STYLES[rank.primary][rank.secondary].omamori
     };
   }
 

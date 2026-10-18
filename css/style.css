@@ -1,4 +1,4 @@
-/* 推しルナ占い：パステルピンク × ラベンダー × 淡いブルー */
+/* 推しルナ占い：パステルピンク × ラベンダー × 淡いブルー × クリームイエロー */
 :root {
   --pink: #ffd6e8;
   --pink-deep: #f59cc4;
@@ -7,6 +7,8 @@
   --blue: #d6ecff;
   --blue-deep: #8cc3ee;
   --cream: #fff9ef;
+  --yellow: #fff3c4;
+  --yellow-deep: #e8c35a;
   --ink: #5a4a78;
   --ink-soft: #8a7aa6;
   --white: #ffffff;
@@ -80,7 +82,13 @@ body::before {
 
 /* ---------- トップ ---------- */
 .hero { text-align: center; padding-top: 12px; }
-.hero-art { width: 210px; height: 210px; display: block; margin: 0 auto 4px; }
+.mascot {
+  display: block;
+  height: auto; /* width だけ指定し、縦横比は画像のまま */
+  max-width: 100%;
+  margin: 0 auto;
+}
+.hero-art { width: min(260px, 70vw); margin: 4px auto 18px; }
 .floaty { animation: floaty 4s ease-in-out infinite; }
 @keyframes floaty {
   0%, 100% { transform: translateY(0) rotate(-2deg); }
@@ -105,6 +113,13 @@ body::before {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+.concept {
+  margin: 12px auto 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pink-deep);
+  letter-spacing: 0.06em;
 }
 .lead { margin: 14px 0 28px; font-size: 1rem; }
 .note { text-align: center; font-size: 0.8rem; color: var(--ink-soft); margin-top: 14px; }
@@ -226,7 +241,7 @@ button:focus-visible {
 
 /* ---------- 占い中 ---------- */
 .loading { text-align: center; padding-top: 18vh; }
-.loading-art { width: 150px; height: 150px; animation: floaty 1.6s ease-in-out infinite; }
+.loading-art { width: min(190px, 52vw); margin-bottom: 12px; animation: floaty 1.6s ease-in-out infinite; }
 .loading-text { font-weight: 700; letter-spacing: 0.1em; }
 .dots span {
   display: inline-block;
@@ -287,6 +302,7 @@ button:focus-visible {
 .card-pink { background: linear-gradient(160deg, #fff 0%, var(--pink) 140%); }
 .card-lavender { background: linear-gradient(160deg, #fff 0%, var(--lavender) 140%); }
 .card-blue { background: linear-gradient(160deg, #fff 0%, var(--blue) 140%); }
+.card-cream { background: linear-gradient(160deg, #fff 0%, var(--yellow) 140%); }
 .card-title {
   margin: 0 0 10px;
   font-size: 1.05rem;
@@ -327,7 +343,7 @@ button:focus-visible {
 }
 .lucky {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
 }
@@ -340,19 +356,62 @@ button:focus-visible {
 .lucky dt { font-size: 0.72rem; color: var(--ink-soft); }
 .lucky dd { margin: 0; font-size: 0.85rem; font-weight: 700; line-height: 1.5; }
 
+/* 白猫からのお守りメッセージ */
 .omamori {
-  position: relative;
-  margin: 4px 0 8px;
-  padding: 26px 22px 22px;
-  text-align: center;
+  margin: 8px 0 20px;
+  padding: 24px 16px 18px;
   background: var(--cream);
   border: 2px dashed var(--pink-deep);
-  border-radius: 30px 30px 60px 60px;
+  border-radius: 32px;
   box-shadow: var(--shadow);
 }
-.omamori-art { width: 80px; height: 80px; }
-.omamori-title { margin: 0 0 8px; font-size: 1rem; color: var(--pink-deep); letter-spacing: 0.06em; }
-.omamori-text { margin: 0; font-weight: 700; }
+.omamori-art { width: min(200px, 56vw); margin: 0 auto 10px; }
+.omamori-title {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--pink-deep);
+  letter-spacing: 0.06em;
+}
+.omamori-sections { display: grid; gap: 12px; }
+.omamori-section {
+  padding: 14px 16px 16px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+}
+.omamori-heading {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+  color: var(--lavender-deep);
+}
+.omamori-body {
+  margin: 0;
+  font-size: 0.97rem;
+  line-height: 1.95;
+  white-space: pre-line; /* データ内の改行（\n）をそのまま表示 */
+  overflow-wrap: anywhere;
+}
+/* 心のお守り：読み返したくなる一文として目立たせる */
+.omamori-charm {
+  text-align: center;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--yellow) 100%);
+  border: 2px solid var(--white);
+}
+.omamori-charm .omamori-heading { color: var(--pink-deep); }
+.omamori-charm .omamori-body {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.8;
+  word-break: auto-phrase;
+}
+.omamori-tomorrow { background: linear-gradient(135deg, #fff 0%, var(--blue) 160%); }
+/* 幅の狭いスマホ（iPhone SE など）では余白を詰めて、1行の文字数を確保する */
+@media (max-width: 380px) {
+  .app { padding-left: 14px; padding-right: 14px; }
+  .omamori { padding: 20px 10px 14px; }
+  .omamori-section { padding: 12px 13px 14px; }
+}
 
 .toast {
   min-height: 1.8em;

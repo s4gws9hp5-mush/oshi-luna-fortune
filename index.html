@@ -7,44 +7,21 @@
   <meta name="description" content="4つの質問に答えるだけ。月と星と白猫が、あなたの推し活スタイルと今日の推し活運を占います。">
   <title>推しルナ占い</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <!-- 背景の星 -->
   <div class="sky" aria-hidden="true"></div>
 
-  <!-- 使い回す白猫と月のイラスト -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <symbol id="luna-cat" viewBox="0 0 200 200">
-        <!-- 三日月 -->
-        <path d="M118 22a78 78 0 1 0 60 128A66 66 0 1 1 118 22z" fill="#fff6c9" stroke="#f3dc8f" stroke-width="3"/>
-        <!-- 白猫（月に座っている） -->
-        <path d="M128 150c14 4 30 0 34-12" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
-        <path d="M128 150c14 4 30 0 34-12" fill="none" stroke="#d9cdea" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-        <ellipse cx="108" cy="140" rx="30" ry="26" fill="#fff" stroke="#e3d6f0" stroke-width="2.5"/>
-        <path d="M80 106l4-26 18 14zM136 106l-4-26-18 14z" fill="#fff" stroke="#e3d6f0" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="M86 96l2-10 7 6zM130 96l-2-10-7 6z" fill="#ffc9dc"/>
-        <ellipse cx="108" cy="108" rx="30" ry="25" fill="#fff" stroke="#e3d6f0" stroke-width="2.5"/>
-        <path d="M95 106q4-5 8 0M113 106q4-5 8 0" fill="none" stroke="#6b5a86" stroke-width="2.6" stroke-linecap="round"/>
-        <path d="M105 114q3 3 6 0" fill="none" stroke="#6b5a86" stroke-width="2" stroke-linecap="round"/>
-        <ellipse cx="92" cy="116" rx="5" ry="3" fill="#ffc9dc"/>
-        <ellipse cx="124" cy="116" rx="5" ry="3" fill="#ffc9dc"/>
-        <path d="M108 133l-3 4h6z" fill="#ffd6e4"/>
-        <!-- 星 -->
-        <path d="M168 40l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#c9b8f0"/>
-        <path d="M40 150l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#bfe0f7"/>
-      </symbol>
-    </defs>
-  </svg>
-
   <main class="app">
     <!-- トップ -->
     <section class="screen is-active" id="screen-top" aria-labelledby="top-title">
       <div class="hero">
-        <svg class="hero-art floaty" role="img" aria-label="三日月に座る白猫"><use href="#luna-cat"/></svg>
+        <img class="mascot hero-art floaty" src="images/luna-cat.png" width="640" height="513" alt="三日月の上で眠る白猫（推しルナ占いのマスコット）">
         <p class="eyebrow">月と星と白猫の推し活診断</p>
         <h1 id="top-title" class="title">推しルナ占い</h1>
+        <p class="concept">推しを好きな気持ちも、<br>自分のことも大切に。</p>
         <p class="lead">4つの質問に答えるだけ。<br>あなたの推し活スタイルと、<br>今日の推し活運を占います。</p>
       </div>
       <button type="button" class="btn btn-primary" id="start-btn">占いをはじめる</button>
@@ -66,7 +43,7 @@
     <!-- 占い中 -->
     <section class="screen" id="screen-loading" aria-live="polite">
       <div class="loading">
-        <svg class="loading-art" role="img" aria-label="占い中"><use href="#luna-cat"/></svg>
+        <img class="mascot loading-art" src="images/luna-cat.png" width="640" height="513" alt="">
         <p class="loading-text">月に聞いています…</p>
         <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
       </div>
@@ -96,6 +73,10 @@
       <article class="card card-blue">
         <h3 class="card-title"><span aria-hidden="true">⭐</span> ラッキーアクション</h3>
         <ol class="actions" id="actions"></ol>
+      </article>
+
+      <article class="card card-cream">
+        <h3 class="card-title"><span aria-hidden="true">🍀</span> 今日のラッキー</h3>
         <dl class="lucky">
           <div><dt>カラー</dt><dd id="lucky-color"></dd></div>
           <div><dt>アイテム</dt><dd id="lucky-item"></dd></div>
@@ -103,10 +84,11 @@
         </dl>
       </article>
 
-      <article class="omamori">
-        <svg class="omamori-art" aria-hidden="true"><use href="#luna-cat"/></svg>
-        <h3 class="omamori-title">白猫からのお守りメッセージ</h3>
-        <p class="omamori-text" id="omamori-text"></p>
+      <!-- 白猫からのお守りメッセージ（各セクションは data.js の OMAMORI_SECTIONS から描画） -->
+      <article class="omamori" aria-labelledby="omamori-title">
+        <img class="mascot omamori-art" src="images/luna-cat.png" width="640" height="513" alt="三日月の上で眠る白猫">
+        <h3 class="omamori-title" id="omamori-title">白猫からのお守りメッセージ</h3>
+        <div class="omamori-sections" id="omamori-sections"></div>
       </article>
 
       <button type="button" class="btn btn-primary" id="share-btn">結果をシェアする</button>
