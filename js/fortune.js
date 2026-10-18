@@ -102,7 +102,57 @@
     };
   }
 
-  var api = { getFortune: getFortune, rankTypes: rankTypes, dateKey: dateKey };
+  // ---- 毎日の推し活占い（質問なし）：端末のタイムゾーンに関係なく日本時間（UTC+9）で日付を決める ----
+  var DAY_MS = 86400000;
+  var JST_OFFSET_MS = 9 * 3600000;
+
+  function jstDayNumber(date) {
+    return Math.floor((date.getTime() + JST_OFFSET_MS) / DAY_MS);
+  }
+
+  function jstDateKey(date) {
+    var t = new Date(date.getTime() + JST_OFFSET_MS);
+    return t.getUTCFullYear() + "-" + ("0" + (t.getUTCMonth() + 1)).slice(-2) + "-" + ("0" + t.getUTCDate()).slice(-2);
+  }
+
+  // 次の日本時間0時までのミリ秒
+  function msUntilNextJstDay(date) {
+    return DAY_MS - ((date.getTime() + JST_OFFSET_MS) % DAY_MS);
+  }
+
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+
+  // 日付ごとに文章を順番に巡らせる（文章の数だけ連続した日では同じ文が出ない）
+  function rotate(list, day) {
+    var step = 7;
+    while (gcd(step, list.length) !== 1) step++;
+    return list[(((day * step + 3) % list.length) + list.length) % list.length];
+  }
+
+  function getDailyFortune(date) {
+    var now = date || new Date();
+    var key = jstDateKey(now);
+    var rand = seededRandom(hash("daily|" + key));
+    var r = rand();
+    var stars = r < 0.06 ? 1 : r < 0.22 ? 2 : r < 0.52 ? 3 : r < 0.84 ? 4 : 5;
+    var allActions = Object.keys(D.ACTIONS).reduce(function (list, k) { return list.concat(D.ACTIONS[k]); }, []);
+    return {
+      date: key,
+      luck: { stars: stars, title: D.LUCK[stars].title, text: pick(D.DAILY.luck[stars], rand) },
+      actions: pickDistinct(allActions, 2, rand),
+      lucky: {
+        color: pick(D.LUCKY_COLORS, rand),
+        item: pick(D.LUCKY_ITEMS, rand),
+        time: pick(D.LUCKY_TIMES, rand)
+      },
+      omamori: rotate(D.DAILY.omamori, jstDayNumber(now))
+    };
+  }
+
+  var api = {
+    getFortune: getFortune, rankTypes: rankTypes, dateKey: dateKey,
+    getDailyFortune: getDailyFortune, jstDateKey: jstDateKey, msUntilNextJstDay: msUntilNextJstDay
+  };
   root.OshiLuna = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

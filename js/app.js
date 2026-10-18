@@ -83,26 +83,86 @@
     $("result-style").textContent = f.style.title;
     $("result-style-text").textContent = f.style.text;
 
-    $("luck-stars").textContent = "★★★★★".slice(0, f.luck.stars) + "☆☆☆☆☆".slice(0, 5 - f.luck.stars);
-    $("luck-stars").setAttribute("aria-label", "5段階中" + f.luck.stars);
+    renderStars($("luck-stars"), f.luck.stars);
     $("luck-title").textContent = f.luck.title;
     $("luck-text").textContent = f.luck.text;
 
     $("insight-text").textContent = f.insight;
 
-    var list = $("actions");
+    renderActions($("actions"), f.actions);
+    renderLucky("lucky", f.lucky);
+
+    renderOmamori(f.omamori);
+    $("toast").textContent = "";
+  }
+
+  function renderStars(el, stars) {
+    el.textContent = "★★★★★".slice(0, stars) + "☆☆☆☆☆".slice(0, 5 - stars);
+    el.setAttribute("aria-label", "5段階中" + stars);
+  }
+
+  function renderActions(list, actions) {
     list.innerHTML = "";
-    f.actions.forEach(function (a) {
+    actions.forEach(function (a) {
       var li = document.createElement("li");
       li.textContent = a;
       list.appendChild(li);
     });
-    $("lucky-color").textContent = f.lucky.color;
-    $("lucky-item").textContent = f.lucky.item;
-    $("lucky-time").textContent = f.lucky.time;
+  }
 
-    renderOmamori(f.omamori);
-    $("toast").textContent = "";
+  // ラッキーカラー（色チップ）・アイテム・時間帯（アイコン）。prefix は "lucky"（診断結果）か "daily"（毎日の占い）
+  function renderLucky(prefix, lucky) {
+    setLuckyName($(prefix + "-color"), lucky.color);
+    $(prefix + "-color-chip").style.backgroundColor = D.LUCKY_COLOR_CODES[lucky.color] || "transparent";
+    setLuckyName($(prefix + "-item"), lucky.item);
+    $(prefix + "-item-icon").textContent = D.LUCKY_ITEM_ICONS[lucky.item] || "🍀";
+    setLuckyName($(prefix + "-time"), lucky.time);
+    $(prefix + "-time-icon").textContent = D.LUCKY_TIME_ICONS[lucky.time] || "🕰️";
+  }
+
+  // 名前を表示し、LUCKY_LINE_BREAKS の位置にだけ改行の候補（<wbr>）を入れる
+  function setLuckyName(el, name) {
+    el.textContent = "";
+    (D.LUCKY_LINE_BREAKS[name] || name).split("|").forEach(function (part, i) {
+      if (i) el.appendChild(document.createElement("wbr"));
+      el.appendChild(document.createTextNode(part));
+    });
+  }
+
+  // ---- 毎日の推し活占い（日本時間の日付が変わったら自動で切り替える） ----
+  var daily = null;
+  var dailyTimer = null;
+
+  function renderDaily() {
+    daily = window.OshiLuna.getDailyFortune(new Date());
+    var parts = daily.date.split("-");
+    var week = "日月火水木金土".charAt(new Date(daily.date + "T00:00:00Z").getUTCDay());
+    $("daily-date").textContent = Number(parts[0]) + "年" + Number(parts[1]) + "月" + Number(parts[2]) + "日（" + week + "）";
+    renderStars($("daily-stars"), daily.luck.stars);
+    $("daily-luck-title").textContent = daily.luck.title;
+    $("daily-luck-text").textContent = daily.luck.text;
+    renderActions($("daily-actions"), daily.actions);
+    renderLucky("daily", daily.lucky);
+    $("daily-omamori").textContent = daily.omamori;
+
+    // ページを開いたまま0時をまたいだときのための予約（少し余裕をもたせる）
+    clearTimeout(dailyTimer);
+    dailyTimer = setTimeout(checkDailyDate, window.OshiLuna.msUntilNextJstDay(new Date()) + 1000);
+  }
+
+  function checkDailyDate() {
+    if (!daily || window.OshiLuna.jstDateKey(new Date()) !== daily.date) {
+      renderDaily();
+    } else {
+      clearTimeout(dailyTimer);
+      dailyTimer = setTimeout(checkDailyDate, window.OshiLuna.msUntilNextJstDay(new Date()) + 1000);
+    }
+  }
+
+  function dailyShareText(d) {
+    var parts = d.date.split("-");
+    return "【推しルナ占い】" + Number(parts[1]) + "月" + Number(parts[2]) + "日の推し活占い\n今日の運勢：" +
+      "★".repeat(d.luck.stars) + "（" + d.luck.title + "）\nラッキーカラー：" + d.lucky.color + "\n🎀 " + d.omamori;
   }
 
   // お守りメッセージの4セクション（見出しと順番は data.js の OMAMORI_SECTIONS）
@@ -132,16 +192,14 @@
       "★".repeat(f.luck.stars) + "（" + f.luck.title + "）\n🎀 " + f.omamori.charm;
   }
 
-  function toast(msg) {
-    var el = $("toast");
+  function toast(msg, toastId) {
+    var el = $(toastId || "toast");
     el.textContent = msg;
     el.classList.add("is-show");
     setTimeout(function () { el.classList.remove("is-show"); }, 2400);
   }
 
-  function share() {
-    if (!current) return;
-    var text = shareText(current);
+  function share(text, toastId) {
     var url = location.protocol.indexOf("http") === 0 ? location.href.split("#")[0] : undefined;
     if (navigator.share) {
       navigator.share({ title: "推しルナ占い", text: text, url: url }).catch(function () {});
@@ -150,14 +208,14 @@
     var full = url ? text + "\n" + url : text;
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(full).then(function () {
-        toast("結果をコピーしました");
-      }, function () { fallbackCopy(full); });
+        toast("結果をコピーしました", toastId);
+      }, function () { fallbackCopy(full, toastId); });
     } else {
-      fallbackCopy(full);
+      fallbackCopy(full, toastId);
     }
   }
 
-  function fallbackCopy(text) {
+  function fallbackCopy(text, toastId) {
     var ta = document.createElement("textarea");
     ta.value = text;
     ta.style.position = "fixed";
@@ -172,7 +230,7 @@
     var ok = false;
     try { ok = document.execCommand("copy"); } catch (e) { /* 失敗時は下で案内 */ }
     document.body.removeChild(ta);
-    toast(ok ? "結果をコピーしました" : "コピーできませんでした。画面をスクリーンショットしてね");
+    toast(ok ? "結果をコピーしました" : "コピーできませんでした。画面をスクリーンショットしてね", toastId);
   }
 
   function start() {
@@ -208,7 +266,13 @@
     setupLast();
     showScreen("top");
   });
-  $("share-btn").addEventListener("click", share);
+  $("share-btn").addEventListener("click", function () {
+    if (current) share(shareText(current), "toast");
+  });
+  $("daily-share-btn").addEventListener("click", function () {
+    checkDailyDate(); // 日付が変わっていたら、新しい占いにしてから共有する
+    share(dailyShareText(daily), "daily-toast");
+  });
   $("back-btn").addEventListener("click", function () {
     // 回答直後（演出中）に戻った場合は、保留中の回答を取り消してから戻る
     if (pendingChoice) {
@@ -232,6 +296,14 @@
     showScreen("result");
   });
 
+  // 戻ってきたとき（別アプリから復帰・タブ切り替え・戻るボタンでの再表示）にも日付を確かめる
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkDailyDate();
+  });
+  window.addEventListener("pageshow", checkDailyDate);
+  window.addEventListener("focus", checkDailyDate);
+
   drawSky();
   setupLast();
+  renderDaily();
 })();

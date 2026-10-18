@@ -20,6 +20,9 @@
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; } /* 「今日の推し活占いを見る」でなめらかに移動 */
+}
 
 body {
   margin: 0;
@@ -121,7 +124,59 @@ body::before {
   color: var(--pink-deep);
   letter-spacing: 0.06em;
 }
+.daily-link {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 8px 16px;
+  min-height: 40px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--lavender-deep);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1.5px solid var(--lavender);
+  border-radius: 999px;
+}
 .lead { margin: 14px 0 28px; font-size: 1rem; }
+
+/* ---------- 毎日の推し活占い（トップ画面の下） ---------- */
+.daily {
+  margin-top: 36px;
+  padding-top: 26px;
+  border-top: 2px dashed rgba(166, 140, 232, 0.35);
+  scroll-margin-top: 12px;
+}
+.daily-eyebrow {
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.daily-title {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  color: var(--lavender-deep);
+}
+.daily-date {
+  margin: 2px 0 16px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--pink-deep);
+}
+.daily-omamori {
+  margin: 0 0 16px;
+  padding: 18px 18px 16px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--yellow) 100%);
+  border: 2px dashed var(--pink-deep);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.daily-omamori-title { margin: 0 0 8px; font-size: 0.95rem; color: var(--pink-deep); letter-spacing: 0.06em; }
+.daily-omamori-text { margin: 0; font-weight: 700; line-height: 1.85; word-break: auto-phrase; }
+.daily-note { margin: 0; text-align: center; font-size: 0.78rem; color: var(--ink-soft); }
 .note { text-align: center; font-size: 0.8rem; color: var(--ink-soft); margin-top: 14px; }
 
 /* ---------- ボタン ---------- */
@@ -354,7 +409,33 @@ button:focus-visible {
   border-radius: 14px;
 }
 .lucky dt { font-size: 0.72rem; color: var(--ink-soft); }
-.lucky dd { margin: 0; font-size: 0.85rem; font-weight: 700; line-height: 1.5; }
+.lucky dd {
+  display: flex;
+  flex-direction: column; /* 色チップ・アイコンを名前の上に置き、狭い画面でも横にはみ出さない */
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.lucky-name {
+  word-break: keep-all; /* 単語の途中では折り返さず、<wbr> の位置で折り返す */
+  overflow-wrap: anywhere; /* それでも入りきらないときだけ途中で折り返す */
+}
+.lucky-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+.color-chip {
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 1px rgba(90, 74, 120, 0.25), 0 2px 6px rgba(166, 140, 232, 0.25); /* 白やシルバーでも見えるよう細い縁取り */
+}
+.lucky-icon { font-size: 1.2rem; line-height: 1; }
 
 /* 白猫からのお守りメッセージ */
 .omamori {
@@ -411,6 +492,11 @@ button:focus-visible {
   .app { padding-left: 14px; padding-right: 14px; }
   .omamori { padding: 20px 10px 14px; }
   .omamori-section { padding: 12px 13px 14px; }
+  /* ラッキーの3列：6文字のカタカナ（キーホルダー等）が1行に収まるように */
+  .card { padding-left: 14px; padding-right: 14px; }
+  .lucky { gap: 6px; }
+  .lucky div { padding-left: 2px; padding-right: 2px; }
+  .lucky dd { font-size: 0.78rem; }
 }
 
 .toast {

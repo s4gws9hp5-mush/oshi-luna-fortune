@@ -22,11 +22,49 @@
         <p class="eyebrow">月と星と白猫の推し活診断</p>
         <h1 id="top-title" class="title">推しルナ占い</h1>
         <p class="concept">推しを好きな気持ちも、<br>自分のことも大切に。</p>
+        <a class="daily-link" href="#daily">🌙 今日の推し活占いを見る</a>
         <p class="lead">4つの質問に答えるだけ。<br>あなたの推し活スタイルと、<br>今日の推し活運を占います。</p>
       </div>
-      <button type="button" class="btn btn-primary" id="start-btn">占いをはじめる</button>
+      <button type="button" class="btn btn-primary" id="start-btn">推し活タイプ診断をはじめる</button>
       <button type="button" class="btn btn-ghost" id="last-btn" hidden>前回の結果を見る</button>
       <p class="note">所要時間は約1分。結果は毎日少しずつ変わります。</p>
+
+      <!-- 毎日の推し活占い（質問なし。日本時間の日付で自動的に切り替わる） -->
+      <section class="daily" id="daily" aria-labelledby="daily-title">
+        <p class="daily-eyebrow">質問なしで見られる、毎日の占い</p>
+        <h2 class="daily-title" id="daily-title">今日の推し活占い</h2>
+        <p class="daily-date" id="daily-date"></p>
+
+        <article class="card card-pink">
+          <h3 class="card-title"><span aria-hidden="true">🌙</span> 今日の運勢</h3>
+          <p class="stars" id="daily-stars"></p>
+          <p class="card-sub" id="daily-luck-title"></p>
+          <p id="daily-luck-text"></p>
+        </article>
+
+        <article class="card card-blue">
+          <h3 class="card-title"><span aria-hidden="true">⭐</span> ラッキーアクション</h3>
+          <ol class="actions" id="daily-actions"></ol>
+        </article>
+
+        <article class="card card-cream">
+          <h3 class="card-title"><span aria-hidden="true">🍀</span> 今日のラッキー</h3>
+          <dl class="lucky">
+            <div><dt>カラー</dt><dd><span class="lucky-mark color-chip" id="daily-color-chip" aria-hidden="true"></span><span class="lucky-name" id="daily-color"></span></dd></div>
+            <div><dt>アイテム</dt><dd><span class="lucky-mark lucky-icon" id="daily-item-icon" aria-hidden="true"></span><span class="lucky-name" id="daily-item"></span></dd></div>
+            <div><dt>時間帯</dt><dd><span class="lucky-mark lucky-icon" id="daily-time-icon" aria-hidden="true"></span><span class="lucky-name" id="daily-time"></span></dd></div>
+          </dl>
+        </article>
+
+        <article class="daily-omamori">
+          <h3 class="daily-omamori-title"><span aria-hidden="true">🎀</span> 今日のお守りメッセージ</h3>
+          <p class="daily-omamori-text" id="daily-omamori"></p>
+        </article>
+
+        <p class="daily-note">毎日0時（日本時間）に切り替わります。<br>占いは楽しむためのものです。</p>
+        <button type="button" class="btn btn-ghost" id="daily-share-btn">今日の占いをシェアする</button>
+        <p class="toast" id="daily-toast" role="status" aria-live="polite"></p>
+      </section>
     </section>
 
     <!-- 質問 -->
@@ -78,9 +116,9 @@
       <article class="card card-cream">
         <h3 class="card-title"><span aria-hidden="true">🍀</span> 今日のラッキー</h3>
         <dl class="lucky">
-          <div><dt>カラー</dt><dd id="lucky-color"></dd></div>
-          <div><dt>アイテム</dt><dd id="lucky-item"></dd></div>
-          <div><dt>時間帯</dt><dd id="lucky-time"></dd></div>
+          <div><dt>カラー</dt><dd><span class="lucky-mark color-chip" id="lucky-color-chip" aria-hidden="true"></span><span class="lucky-name" id="lucky-color"></span></dd></div>
+          <div><dt>アイテム</dt><dd><span class="lucky-mark lucky-icon" id="lucky-item-icon" aria-hidden="true"></span><span class="lucky-name" id="lucky-item"></span></dd></div>
+          <div><dt>時間帯</dt><dd><span class="lucky-mark lucky-icon" id="lucky-time-icon" aria-hidden="true"></span><span class="lucky-name" id="lucky-time"></span></dd></div>
         </dl>
       </article>
 
