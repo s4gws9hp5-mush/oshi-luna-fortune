@@ -79,6 +79,7 @@
         <p class="result-type" id="daily-type-chip" hidden></p>
       </div>
 
+      <p class="notice preview-notice" id="daily-preview" hidden></p>
       <div class="notice" id="daily-past" hidden>
         <p id="daily-past-text"></p>
         <button type="button" class="btn btn-primary" id="daily-today-btn">🌙 今日の推し活占いを見る！</button>
@@ -116,6 +117,7 @@
       <article class="daily-omamori">
         <h3 class="daily-omamori-title"><span aria-hidden="true">🎀</span> 白猫からのお守りメッセージ</h3>
         <p class="daily-omamori-text" id="daily-omamori"></p>
+        <p class="daily-omamori-type" id="daily-omamori-type" hidden></p>
       </article>
 
       <p class="daily-note">毎日0時（日本時間）に新しい占いに切り替わります。<br>占いは楽しむためのものです。</p>
@@ -205,7 +207,17 @@
       </article>
 
       <button type="button" class="btn btn-primary" id="to-daily-btn">🌙 今日の占いを見る</button>
-      <button type="button" class="btn btn-ghost" id="share-btn">結果をシェアする</button>
+      <button type="button" class="btn btn-ghost" id="share-btn">📸 結果をシェアする</button>
+      <!-- シェア画像（タイプごとに作り直す） -->
+      <div class="share-panel" id="share-panel" hidden>
+        <p class="share-panel-title">📸 シェア用の画像</p>
+        <img class="share-preview" id="share-preview" width="1080" height="1350" alt="推し活タイプのシェア画像">
+        <button type="button" class="btn btn-primary" id="share-image-btn" hidden>画像をシェアする</button>
+        <a class="btn btn-ghost" id="share-save-link" download="oshi-luna-type.png" href="#">画像を保存する</a>
+        <button type="button" class="btn btn-ghost" id="share-copy-btn">タイプ名とURLをコピー</button>
+        <p class="share-hint" id="share-hint"></p>
+        <p class="share-status" id="share-status" role="status" aria-live="polite"></p>
+      </div>
       <button type="button" class="btn btn-ghost" id="retry-btn">もう一度診断する</button>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>
       <button type="button" class="btn-text" id="result-home-btn">トップに戻る</button>
@@ -217,6 +229,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/fortune.js"></script>
+  <script src="js/share-card.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

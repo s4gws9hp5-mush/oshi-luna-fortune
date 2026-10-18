@@ -100,7 +100,7 @@
     return list[(((day * step + 3) % list.length) + list.length) % list.length];
   }
 
-  // typeKey（保存済みの推し活タイプ）があれば、メッセージとラッキーアクションをタイプに合わせる。
+  // typeKey（保存済みの推し活タイプ）があれば、メッセージ・ラッキーアクション・お守りの言葉をタイプに合わせる。
   // 運勢の★・運勢文・ラッキーカラー/アイテム/時間帯・お守りは、タイプに関係なく全員同じ（不公平にしない）。
   function getDailyFortune(date, typeKey) {
     var now = date || new Date();
@@ -130,6 +130,7 @@
       result.typeKey = typeKey;
       result.actions = pickDistinct(type.daily.actions, 2, typeRand);
       result.message = rotate(type.daily.messages, day);
+      result.typeOmamori = type.omamori.charm; // タイプのお守りの言葉（全員共通のお守りに添える）
     }
     return result;
   }

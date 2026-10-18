@@ -67,13 +67,21 @@
     save(KEYS.daily, { version: 1, history: list.slice(0, HISTORY_DAYS) });
   }
 
-  function todayKey() { return F.jstDateKey(new Date()); }
+  // 日付のお試し表示：URL に ?preview-date=2026-10-19 を付けると、その日の占いを表示する（保存はしない）
+  // 翌日の占いに保存したタイプが反映されるかを、日付が変わるのを待たずに確かめるためのもの
+  var PREVIEW_DATE = (function () {
+    var m = /[?&]preview-date=(\d{4}-\d{2}-\d{2})(?:&|$)/.exec(location.search);
+    return m && !isNaN(new Date(m[1] + "T12:00:00+09:00")) ? m[1] : null;
+  })();
+
+  function todayKey() { return PREVIEW_DATE || F.jstDateKey(new Date()); }
 
   // 今日の占い：その日に一度出た結果は、日付が変わるまで同じものを表示する
   function todayFortune() {
     var key = todayKey();
     var saved = loadHistory().filter(function (x) { return x.date === key; })[0];
     if (saved) return saved;
+    if (PREVIEW_DATE) return F.getDailyFortune(new Date(PREVIEW_DATE + "T12:00:00+09:00"), savedTypeKey());
     var d = F.getDailyFortune(new Date(), savedTypeKey());
     saveToHistory(d);
     return d;
@@ -160,6 +168,8 @@
     var saved = savedTypeKey();
 
     $("daily-date").textContent = formatDate(d.date, true);
+    $("daily-preview").hidden = !PREVIEW_DATE;
+    if (PREVIEW_DATE) $("daily-preview").textContent = "🧪 お試し表示：" + formatDate(PREVIEW_DATE, true) + "の占いを表示しています（保存はされません）";
     $("daily-type-chip").hidden = !type;
     if (type) $("daily-type-chip").textContent = type.emoji + " " + type.name + "のあなたへ";
 
@@ -179,6 +189,8 @@
     renderActions($("daily-actions"), d.actions);
     renderLucky("daily", d.lucky);
     $("daily-omamori").textContent = d.omamori;
+    $("daily-omamori-type").hidden = !(type && d.typeOmamori);
+    if (type && d.typeOmamori) $("daily-omamori-type").textContent = type.emoji + " " + type.name + "のあなたへ：" + d.typeOmamori;
 
     $("daily-invite").hidden = !!saved;
     $("daily-mytype-btn").hidden = !saved;
@@ -304,14 +316,18 @@
       renderType(r.type, r.sub);
       if (!saved) {
         save(KEYS.type, record);
-        showTypeStatus("診断結果を保存しました。トップページからいつでも見返せます。");
+        var stored = loadSavedType();
+        showTypeStatus(stored && stored.type === r.type ?
+          "保存できたよ♡ トップページからいつでも見返せて、推し活占いにもこのタイプが反映されるよ🌙" :
+          "結果を保存できませんでした。ブラウザの設定（プライベートブラウズなど）を確認してね。");
       } else if (saved.type === r.type) {
         save(KEYS.type, record);
         showTypeStatus("前回と同じ「" + D.TYPES[r.type].name + "」でした。");
       } else {
         // 保存済みのタイプと違うときは、確定するまで上書きしない
         pendingType = record;
-        $("type-confirm-text").textContent = "前回の診断では「" + D.TYPES[saved.type].name + "」でした。今回の結果を保存しますか？保存すると、明日からの占いがこのタイプに合わせたアドバイスになります。";
+        $("type-confirm-text").textContent = "前回の診断では「" + D.TYPES[saved.type].name + "」でした。" +
+          "このタイプを保存すると、明日からの推し活占いにあなたのタイプが反映されます。毎日の運勢やラッキーアクションを、あなたの推し活スタイルに合わせてお届けします♡";
         $("type-confirm").hidden = false;
       }
       showScreen("result");
@@ -360,6 +376,7 @@
     $("type-charm").textContent = t.omamori.charm;
     $("type-omamori-msg").textContent = t.omamori.message;
     $("toast").textContent = "";
+    prepareShareImage(typeKey);
   }
 
   function renderList(list, items) {
@@ -386,7 +403,85 @@
 
   function typeShareText(typeKey) {
     var t = D.TYPES[typeKey];
-    return "【推しルナ占い】私の推し活タイプは\n" + t.emoji + "「" + t.name + "」\n" + t.catch + "\n🎀 " + t.omamori.charm;
+    return "【推しルナ占い】私の推し活タイプは\n" + t.emoji + "「" + t.name + "」\n" + t.catch + "\n#推しルナ占い";
+  }
+
+  // ---- 推し活タイプのシェア画像 ----
+  var SITE_URL = "https://s4gws9hp5-mush.github.io/oshi-luna-fortune/";
+  function siteUrl() {
+    return location.protocol.indexOf("http") === 0 ? location.origin + location.pathname : SITE_URL;
+  }
+  var shareImage = null; // { typeKey, blob, file, url }
+
+  function shareStatus(text) { $("share-status").textContent = text; }
+
+  // 結果画面を開いたときに画像を用意しておく（iPhone では、ボタンを押してすぐに共有を始める必要があるため）
+  function prepareShareImage(typeKey) {
+    $("share-panel").hidden = true;
+    shareStatus("");
+    if (shareImage && shareImage.typeKey === typeKey) return;
+    if (shareImage && shareImage.url) URL.revokeObjectURL(shareImage.url);
+    shareImage = { typeKey: typeKey, pending: true };
+    var current = shareImage;
+    if (!window.OshiLunaShareCard || !window.Promise) { current.failed = true; return; }
+    window.OshiLunaShareCard.create(D.TYPES[typeKey], siteUrl().replace(/^https?:\/\//, "").replace(/\/$/, "")).then(function (blob) {
+      if (shareImage !== current) return; // 別のタイプに切り替わっていたら使わない
+      current.pending = false;
+      current.blob = blob;
+      current.url = URL.createObjectURL(blob);
+      try { current.file = new File([blob], "oshi-luna-" + typeKey + ".png", { type: "image/png" }); } catch (e) { current.file = null; }
+      updateSharePanel();
+    }, function (e) {
+      if (shareImage !== current) return;
+      current.pending = false;
+      current.failed = true;
+      if (window.console) console.error(e);
+      updateSharePanel();
+    });
+  }
+
+  function canShareImage() {
+    var f = shareImage && shareImage.file;
+    try { return !!(f && navigator.canShare && navigator.share && navigator.canShare({ files: [f] })); } catch (e) { return false; }
+  }
+
+  function updateSharePanel() {
+    if (!shareImage) return;
+    var ready = shareImage.url && !shareImage.failed;
+    $("share-preview").hidden = !ready;
+    $("share-save-link").hidden = !ready;
+    if (ready) {
+      $("share-preview").src = shareImage.url;
+      $("share-save-link").href = shareImage.url;
+      $("share-save-link").setAttribute("download", "oshi-luna-" + shareImage.typeKey + ".png");
+    }
+    $("share-image-btn").hidden = !(ready && canShareImage());
+    $("share-hint").textContent = shareImage.pending ? "画像を作っています…" :
+      shareImage.failed ? "この環境では画像を作れませんでした。下のボタンでタイプ名とURLをコピーできます。" :
+      canShareImage() ? "「画像をシェアする」から、SNSやメッセージに画像を送れます。" :
+      "この環境では画像を直接シェアできません。「画像を保存する」か、画像を長押しして保存してから投稿してね。";
+  }
+
+  function openSharePanel() {
+    if (!shownType) return;
+    if (!shareImage || shareImage.typeKey !== shownType.type) prepareShareImage(shownType.type);
+    $("share-panel").hidden = false;
+    shareStatus("");
+    updateSharePanel();
+    $("share-panel").scrollIntoView({ block: "nearest" });
+  }
+
+  function shareTypeImage() {
+    if (!shownType || !shareImage || !shareImage.file || !canShareImage()) {
+      shareStatus("画像の準備ができていません。少し待ってから、もう一度押してね。");
+      return;
+    }
+    navigator.share({ files: [shareImage.file], title: "推しルナ占い", text: typeShareText(shownType.type) + "\n" + siteUrl() }).then(function () {
+      shareStatus("シェアできたよ♡");
+    }, function (e) {
+      shareStatus(e && e.name === "AbortError" ? "シェアをキャンセルしました。" :
+        "シェアできませんでした。「画像を保存する」から保存して、SNSに投稿してね。");
+    });
   }
 
   // ---- 共有 ----
@@ -403,17 +498,21 @@
       navigator.share({ title: "推しルナ占い", text: text, url: url }).catch(function () {});
       return;
     }
-    var full = url ? text + "\n" + url : text;
+    copyText(url ? text + "\n" + url : text, function (ok) {
+      toast(ok ? "結果をコピーしました" : "コピーできませんでした。画面をスクリーンショットしてね", toastId);
+    });
+  }
+
+  // テキストをコピーして、実際にコピーできたか（true / false）を done に渡す
+  function copyText(text, done) {
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(full).then(function () {
-        toast("結果をコピーしました", toastId);
-      }, function () { fallbackCopy(full, toastId); });
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallbackCopy(text)); });
     } else {
-      fallbackCopy(full, toastId);
+      done(fallbackCopy(text));
     }
   }
 
-  function fallbackCopy(text, toastId) {
+  function fallbackCopy(text) {
     var ta = document.createElement("textarea");
     ta.value = text;
     ta.style.position = "fixed";
@@ -428,7 +527,7 @@
     var ok = false;
     try { ok = document.execCommand("copy"); } catch (e) { /* 失敗時は下で案内 */ }
     document.body.removeChild(ta);
-    toast(ok ? "結果をコピーしました" : "コピーできませんでした。画面をスクリーンショットしてね", toastId);
+    return ok;
   }
 
   // 背景の星をランダムに配置
@@ -489,10 +588,15 @@
   $("type-save-btn").addEventListener("click", function () {
     if (!pendingType) return;
     save(KEYS.type, pendingType);
-    var name = D.TYPES[pendingType.type].name;
+    var pendingTypeKey = pendingType.type;
     pendingType = null;
     $("type-confirm").hidden = true;
-    showTypeStatus("「" + name + "」を保存しました。今日の占いは今日のまま、明日からこのタイプに合わせたアドバイスになります。");
+    var stored = loadSavedType();
+    if (stored && stored.type === pendingTypeKey) {
+      showTypeStatus("保存できたよ♡ 明日からの推し活占いに、このタイプが反映されるよ🌙");
+    } else {
+      showTypeStatus("保存できませんでした。ブラウザの設定（プライベートブラウズなど）を確認して、もう一度お試しください。");
+    }
   });
   $("type-keep-btn").addEventListener("click", function () {
     var saved = loadSavedType();
@@ -502,8 +606,18 @@
   });
   $("type-view-saved-btn").addEventListener("click", openSavedType);
   $("to-daily-btn").addEventListener("click", openDaily);
-  $("share-btn").addEventListener("click", function () {
-    if (shownType) share(typeShareText(shownType.type), "toast");
+  $("share-btn").addEventListener("click", openSharePanel);
+  $("share-image-btn").addEventListener("click", shareTypeImage);
+  $("share-save-link").addEventListener("click", function (e) {
+    if (!shareImage || !shareImage.url) { e.preventDefault(); shareStatus("画像の準備ができていません。少し待ってから、もう一度押してね。"); return; }
+    // 保存できたかはブラウザから分からないので、完了とは言わずに案内する
+    shareStatus("保存の画面を開きました。開かないときは、上の画像を長押しして「写真に追加」してね。");
+  });
+  $("share-copy-btn").addEventListener("click", function () {
+    if (!shownType) return;
+    copyText(typeShareText(shownType.type) + "\n" + siteUrl(), function (ok) {
+      shareStatus(ok ? "タイプ名とURLをコピーしたよ♡ SNSに貼り付けて使ってね。" : "コピーできませんでした。画面をスクリーンショットしてね。");
+    });
   });
   $("retry-btn").addEventListener("click", function () { startQuiz(false); });
   $("result-home-btn").addEventListener("click", goTop);
