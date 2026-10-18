@@ -38,6 +38,21 @@
 - 診断済みの人がもう一度診断して別のタイプになったときは、「保存する」を押すまで前のタイプのままです
 - 旧4問版の診断の保存データ（`oshi-luna-last`）は消さずに残していますが、新しいタイプとしては使いません
 
+### タイプと白猫のイラストの対応
+
+| タイプ | 画像ファイル | モチーフ |
+| --- | --- | --- |
+| 🌙 月夜のおひとりさま鑑賞家 | `images/types/solo-moon-book.png` | 三日月と本 |
+| 📣 ときめき全力応援隊長 | `images/types/cheer-penlight.png` | ペンライト |
+| 📷 思い出アルバムコレクター | `images/types/memory-photos-goods.png` | 写真やグッズ |
+| 💬 推し語りコミュニケーター | `images/types/talk-heart.png` | ハート |
+| 🌱 そっと寄りそう見守りさん | `images/types/watch-starry-cloud.png` | 星空と雲 |
+| 🎨 ときめき探究クリエイター | `images/types/create-notebook-pencil.png` | ノートと鉛筆 |
+| ☁️ マイペースな癒やし系ファン | `images/types/heal-cushion-mug.png` | クッションとマグカップ |
+| 🔭 情報キャッチの星読みリサーチャー | `images/types/research-magnifier-starbook.png` | 虫眼鏡と星の本 |
+
+タイプ別の絵は正方形の透明PNGです。差し替えるときも正方形にすると、表示がそろいます。
+
 ## 文章や質問を直すとき
 
 すべて `js/data.js` にあります。
@@ -60,7 +75,8 @@ css/style.css         デザイン
 js/data.js            質問・タイプ・占いの文章データ
 js/fortune.js         タイプ判定と今日の占いのロジック（ブラウザと Node.js の両方で動く）
 js/app.js             画面遷移・保存・共有
-images/luna-cat.png   公式マスコット（三日月の上で眠る白猫）
+images/luna-cat.png   公式マスコット（三日月の上で眠る白猫）。トップ・読み込み・質問・案内カードなど
+images/types/         推し活タイプごとの白猫（下の表。どのタイプの絵かは js/data.js の TYPES の image で指定）
 images/apple-touch-icon.png  ホーム画面用アイコン
 tests/check.js        データとロジックの検証
 ```

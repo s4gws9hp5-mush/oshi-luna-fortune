@@ -113,9 +113,14 @@
     return (withYear ? Number(p[0]) + "年" : "") + Number(p[1]) + "月" + Number(p[2]) + "日（" + week + "）";
   }
 
-  // 白猫のイラスト（公式マスコット。タイプのちがいは周りの色と絵文字で表す）
-  function catSrc() {
-    return "images/luna-cat.png";
+  // 白猫のイラスト：タイプが決まっていればタイプ別の絵、なければ公式マスコット（元の白猫）
+  // 縦横の大きさも合わせて設定し、どのブラウザでも縦横比が崩れないようにする
+  var MASCOT = { src: "images/luna-cat.png", width: 640, height: 513 };
+  function setCat(img, typeKey) {
+    var t = typeKey && D.TYPES[typeKey];
+    img.src = t ? t.image : MASCOT.src;
+    img.width = t ? 400 : MASCOT.width;   // タイプ別の絵はすべて正方形
+    img.height = t ? 400 : MASCOT.height;
   }
 
   // ---- トップ ----
@@ -145,7 +150,7 @@
     if (saved) {
       var t = D.TYPES[saved.type];
       $("top-type-emblem").style.setProperty("--type-color", t.color);
-      $("top-type-img").src = catSrc(saved.type);
+      setCat($("top-type-img"), saved.type);
       $("top-type-name").textContent = t.emoji + " " + t.name;
       $("top-type-catch").textContent = t.catch;
     } else if (progress) {
@@ -179,7 +184,7 @@
     $("daily-luck-title").textContent = d.luck.title;
     $("daily-luck-text").textContent = d.luck.text;
 
-    $("daily-foryou-img").src = catSrc(d.typeKey);
+    setCat($("daily-foryou-img"), d.typeKey);
     $("daily-message").textContent = d.message;
 
     $("daily-actions-note").hidden = !type;
@@ -335,8 +340,8 @@
 
     $("type-emblem").style.setProperty("--type-color", t.color);
     $("type-hero").style.setProperty("--type-color", t.color);
-    $("type-img").src = catSrc(typeKey);
-    $("type-omamori-img").src = catSrc(typeKey);
+    setCat($("type-img"), typeKey);
+    setCat($("type-omamori-img"), typeKey);
     $("type-emoji").textContent = t.emoji;
     $("type-name").textContent = t.name;
     $("type-catch").textContent = t.catch;

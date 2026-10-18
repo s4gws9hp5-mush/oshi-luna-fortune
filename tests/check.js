@@ -39,6 +39,18 @@ for (const k of TYPE_KEYS) {
   assert.strictEqual(new Set(t.daily.actions).size, t.daily.actions.length, "アクションの重複 " + k);
 }
 assert.ok(fs.existsSync(path.join(__dirname, "..", "images", "luna-cat.png")), "images/luna-cat.png（白猫のマスコット）がない");
+// タイプごとの白猫：全タイプに別々の画像があり、正方形（表示で縦横比が崩れない）
+const pngSize = (file) => { const b = fs.readFileSync(file); assert.strictEqual(b.toString("ascii", 1, 4), "PNG", file); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
+const typeImages = new Set();
+for (const k of TYPE_KEYS) {
+  const img = D.TYPES[k].image;
+  assert.match(img, /^images\/types\/[a-z-]+\.png$/, "画像のパス " + k);
+  assert.ok(!typeImages.has(img), "画像の使い回し " + k + " " + img); typeImages.add(img);
+  const file = path.join(__dirname, "..", img);
+  assert.ok(fs.existsSync(file), img + " がない");
+  const [w, h] = pngSize(file);
+  assert.strictEqual(w, h, img + " が正方形でない");
+}
 
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");

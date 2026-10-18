@@ -88,6 +88,12 @@ body::before {
   height: auto; /* width だけ指定し、縦横比は画像のまま */
   max-width: 100%;
   margin: 0 auto;
+  /* フレックスやグリッドの中でも、枠が伸びて絵がゆがまないように（iPhone の Safari 対策） */
+  flex: none;
+  align-self: center;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
 }
 .hero-art { width: min(260px, 70vw); margin: 4px auto 18px; }
 .floaty { animation: floaty 4s ease-in-out infinite; }
@@ -193,15 +199,8 @@ body::before {
   color: var(--ink);
 }
 .type-card-text { margin: 0; font-size: 0.92rem; line-height: 1.85; }
-.type-card-cats {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 6px;
-  margin: 14px 0 4px;
-}
-.type-card-cats .mini { width: 60px; margin: 0; }
-.type-card-more { font-size: 0.72rem; line-height: 1.4; color: var(--ink-soft); margin-left: 4px; }
+.type-card-art { margin: 14px 0 6px; }
+.type-card-art .mascot { width: 130px; }
 .type-card-renewal { margin: 10px 0 0; font-size: 0.82rem; color: var(--pink-deep); }
 .type-card-note { margin: 10px 0 0; font-size: 0.8rem; color: var(--ink-soft); }
 .type-card-you { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
