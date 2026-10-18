@@ -196,19 +196,11 @@ body::before {
 .type-card-art .mascot { width: 130px; }
 .type-card-renewal { margin: 10px 0 0; font-size: 0.82rem; color: var(--pink-deep); }
 .type-card-note { margin: 10px 0 0; font-size: 0.8rem; color: var(--ink-soft); }
-.type-card-you { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
-.type-card-mytype {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 8px 0 12px;
-  padding: 12px;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-}
-.type-card-name { margin: 0; font-weight: 700; line-height: 1.5; word-break: auto-phrase; }
-.type-card-catch { margin: 2px 0 0; font-size: 0.82rem; line-height: 1.6; color: var(--ink-soft); }
+.type-card-you { margin: 6px 0 12px; font-size: 0.95rem; font-weight: 700; color: var(--pink-deep); letter-spacing: 0.04em; }
+#type-card-done .type-emblem.small { width: 104px; height: 104px; }
+#type-card-done .type-emblem.small .emblem-cat { width: 84px; }
+.type-card-name { margin: 12px 0 0; font-size: 1.15rem; font-weight: 700; line-height: 1.6; word-break: auto-phrase; }
+.type-card-catch { margin: 4px 0 0; font-size: 0.88rem; line-height: 1.7; color: var(--ink-soft); word-break: auto-phrase; }
 
 /* 診断の案内・お知らせ */
 .notice {
@@ -656,6 +648,7 @@ button:focus-visible {
   .omamori { padding: 20px 10px 14px; }
   .type-card { padding-left: 14px; padding-right: 14px; }
   .btn-big { padding-left: 10px; padding-right: 10px; font-size: 1.02rem; letter-spacing: 0.02em; } /* ボタンの文字を1行に */
+  .type-card .btn { padding-left: 8px; padding-right: 8px; font-size: 0.96rem; letter-spacing: 0.02em; } /* 診断ボタンも1行に */
   /* ラッキーの3列：6文字のカタカナ（キーホルダー等）が1行に収まるように */
   .card { padding-left: 14px; padding-right: 14px; }
   .lucky { gap: 6px; }

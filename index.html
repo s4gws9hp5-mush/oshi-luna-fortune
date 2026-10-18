@@ -30,41 +30,32 @@
         <span class="nowrap">今日の運勢とラッキーアクション、</span><span class="nowrap">白猫からのお守りメッセージをどうぞ。</span>
       </p>
 
-      <!-- 推し活タイプ診断への案内（未診断／途中／診断済みで表示を切り替える） -->
+      <!-- 推し活タイプ診断への案内（保存済みのタイプがあるかどうかで表示を切り替える） -->
       <section class="type-card" id="type-card" aria-labelledby="type-card-title">
         <p class="type-card-eyebrow">🎀 推し活タイプ診断</p>
 
+        <!-- A. 診断結果が保存されていない人向け（途中まで答えた人には「続きから」も出す） -->
         <div id="type-card-new">
-          <h2 class="type-card-title" id="type-card-title">今日の運勢だけじゃ、<br>わからないあなたのこと。</h2>
-          <p class="type-card-text">推しにときめく瞬間も、応援するときのこだわりも、人それぞれ。<br>いくつかの質問に答えると、あなたの推し活タイプがわかるよ♡</p>
+          <h2 class="type-card-title" id="type-card-title">🌙 あなたの推し活タイプ、<br>知ってる？</h2>
+          <p class="type-card-text"><span class="nowrap">今日の運勢だけじゃなく、</span><span class="nowrap">あなたらしい推し活スタイルも</span><span class="nowrap">見つけてみよう♡</span><br><span class="nowrap">いくつかの質問に答えるだけで、</span><span class="nowrap">あなたの推し活タイプがわかるよ！</span></p>
           <div class="type-card-art" aria-hidden="true">
             <img class="mascot" src="images/luna-cat.png" width="640" height="513" alt="">
           </div>
           <p class="type-card-renewal" id="type-card-renewal" hidden>診断がリニューアルしました。新しい診断で、あなたのタイプを見つけてね。</p>
-          <button type="button" class="btn btn-type" id="start-btn">🎀 もっと詳しく診断してみる</button>
-          <p class="type-card-note"><span class="nowrap">全8タイプから、</span><span class="nowrap">あなたの推し活タイプを見つけよう。</span><br><span class="nowrap">無料・約2〜3分（全10問）</span></p>
+          <button type="button" class="btn btn-type" id="start-btn">🎀 推し活タイプ診断をはじめる</button>
+          <button type="button" class="btn-text" id="resume-btn" hidden></button>
+          <p class="type-card-note"><span class="nowrap">診断は約1分。</span><span class="nowrap">結果はいつでも見返せるよ♡</span></p>
         </div>
 
-        <div id="type-card-resume" hidden>
-          <h2 class="type-card-title">診断の続きから<br>はじめられます</h2>
-          <p class="type-card-text" id="type-card-resume-text"></p>
-          <button type="button" class="btn btn-type" id="resume-btn">🎀 続きから診断する</button>
-          <button type="button" class="btn-text" id="restart-btn">最初から答え直す</button>
-        </div>
-
+        <!-- B. 診断結果が保存されている人向け -->
         <div id="type-card-done" hidden>
-          <p class="type-card-you">あなたは</p>
-          <div class="type-card-mytype">
-            <span class="type-emblem small" id="top-type-emblem">
-              <img class="mascot emblem-cat" src="images/luna-cat.png" width="640" height="513" alt="" id="top-type-img">
-            </span>
-            <div>
-              <p class="type-card-name" id="top-type-name"></p>
-              <p class="type-card-catch" id="top-type-catch"></p>
-            </div>
-          </div>
-          <p class="type-card-text">今日の占いは、あなたのタイプに合わせたメッセージとラッキーアクションでお届けしています。</p>
-          <button type="button" class="btn btn-type" id="mytype-btn">🎀 わたしのタイプを見る</button>
+          <p class="type-card-you">🎀 あなたの推し活タイプ</p>
+          <span class="type-emblem small" id="top-type-emblem">
+            <img class="mascot emblem-cat" src="images/luna-cat.png" width="640" height="513" alt="" id="top-type-img">
+          </span>
+          <p class="type-card-name" id="top-type-name"></p>
+          <p class="type-card-catch" id="top-type-catch"></p>
+          <button type="button" class="btn btn-type" id="mytype-btn">わたしのタイプを詳しく見る</button>
           <button type="button" class="btn-text" id="retake-btn">もう一度診断する</button>
         </div>
       </section>

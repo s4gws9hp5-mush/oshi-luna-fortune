@@ -128,18 +128,20 @@
     var saved = loadSavedType();
     var progress = loadQuizProgress();
 
+    // 保存済みのタイプがあるときだけ B（あなたの推し活タイプ）、なければ必ず A（初めての人向けの案内）
     $("type-card-done").hidden = !saved;
-    $("type-card-resume").hidden = !!saved || !progress;
-    $("type-card-new").hidden = !!saved || !!progress;
+    $("type-card-new").hidden = !!saved;
     $("type-card-renewal").hidden = !!saved || !load(KEYS.legacy);
+    $("resume-btn").hidden = !!saved || !progress;
     if (saved) {
       var t = D.TYPES[saved.type];
       $("top-type-emblem").style.setProperty("--type-color", t.color);
       setCat($("top-type-img"), saved.type);
-      $("top-type-name").textContent = t.emoji + " " + t.name;
+      $("top-type-img").alt = t.name + "の白猫";
+      $("top-type-name").textContent = "「" + t.name + "」";
       $("top-type-catch").textContent = t.catch;
     } else if (progress) {
-      $("type-card-resume-text").textContent = "全" + D.QUESTIONS.length + "問のうち、" + progress.length + "問まで回答済みです。";
+      $("resume-btn").textContent = "続きから再開する（" + progress.length + "/" + D.QUESTIONS.length + "問まで回答済み）";
     }
   }
 
@@ -456,7 +458,6 @@
   $("daily-btn").addEventListener("click", openDaily);
   $("start-btn").addEventListener("click", function () { startQuiz(false); });
   $("resume-btn").addEventListener("click", function () { startQuiz(true); });
-  $("restart-btn").addEventListener("click", function () { startQuiz(false); });
   $("mytype-btn").addEventListener("click", openSavedType);
   $("retake-btn").addEventListener("click", function () { startQuiz(false); });
 
