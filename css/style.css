@@ -1,4 +1,4 @@
-/* 推しルナ占い：パステルピンク × ラベンダー × 淡いブルー × クリームイエロー */
+/* 推しルナ占い：ベビーピンク × ラベンダー × スカイブルー × 淡いゴールド */
 :root {
   --pink: #ffd6e8;
   --pink-deep: #f59cc4;
@@ -9,6 +9,7 @@
   --cream: #fff9ef;
   --yellow: #fff3c4;
   --yellow-deep: #e8c35a;
+  --gold: #e6c06a;
   --ink: #5a4a78;
   --ink-soft: #8a7aa6;
   --white: #ffffff;
@@ -20,9 +21,6 @@
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
-@media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; } /* 「今日の推し活占いを見る」でなめらかに移動 */
-}
 
 body {
   margin: 0;
@@ -85,17 +83,20 @@ body::before {
 
 /* ---------- トップ ---------- */
 .hero { text-align: center; padding-top: 12px; }
-.mascot {
+/* 白猫のドット絵：くっきり拡大し、縦横比は画像のまま（幅は 30px の倍数にすると iPhone で粒がそろう） */
+.pixel {
   display: block;
-  height: auto; /* width だけ指定し、縦横比は画像のまま */
+  height: auto;
   max-width: 100%;
   margin: 0 auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
 }
-.hero-art { width: min(260px, 70vw); margin: 4px auto 18px; }
+.hero-art { width: 210px; margin: 4px auto 14px; }
 .floaty { animation: floaty 4s ease-in-out infinite; }
 @keyframes floaty {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-10px) rotate(2deg); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); } /* ドット絵がギザギザにならないよう回転はしない */
 }
 .eyebrow {
   display: inline-block;
@@ -124,46 +125,12 @@ body::before {
   color: var(--pink-deep);
   letter-spacing: 0.06em;
 }
-.daily-link {
-  display: inline-block;
-  margin: 12px 0 0;
-  padding: 8px 16px;
-  min-height: 40px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--lavender-deep);
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1.5px solid var(--lavender);
-  border-radius: 999px;
-}
-.lead { margin: 14px 0 28px; font-size: 1rem; }
-
-/* ---------- 毎日の推し活占い（トップ画面の下） ---------- */
-.daily {
-  margin-top: 36px;
-  padding-top: 26px;
-  border-top: 2px dashed rgba(166, 140, 232, 0.35);
-  scroll-margin-top: 12px;
-}
-.daily-eyebrow {
-  margin: 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--ink-soft);
-}
 .daily-title {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   text-align: center;
   font-size: 1.35rem;
   letter-spacing: 0.08em;
   color: var(--lavender-deep);
-}
-.daily-date {
-  margin: 2px 0 16px;
-  text-align: center;
-  font-weight: 700;
-  color: var(--pink-deep);
 }
 .daily-omamori {
   margin: 0 0 16px;
@@ -178,6 +145,105 @@ body::before {
 .daily-omamori-text { margin: 0; font-weight: 700; line-height: 1.85; word-break: auto-phrase; }
 .daily-note { margin: 0; text-align: center; font-size: 0.78rem; color: var(--ink-soft); }
 .note { text-align: center; font-size: 0.8rem; color: var(--ink-soft); margin-top: 14px; }
+
+.daily-intro {
+  margin: 14px 4px 4px;
+  text-align: center;
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+.daily-intro-type {
+  display: block;
+  margin-top: 6px;
+  font-weight: 700;
+  color: var(--lavender-deep);
+}
+.daily-intro-type[hidden] { display: none; }
+
+/* ---------- 推し活タイプ診断への案内カード ---------- */
+.type-card {
+  position: relative;
+  margin: 34px 0 8px;
+  padding: 26px 20px 20px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.9) 0 2px, transparent 3px),
+    linear-gradient(160deg, #fff6fb 0%, #f1e8ff 55%, #e6f3ff 100%);
+  border: 2px solid var(--white);
+  border-radius: 32px;
+  box-shadow: 0 14px 34px rgba(166, 140, 232, 0.28);
+}
+.type-card-eyebrow {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--white);
+  background: linear-gradient(100deg, #f8a8cc, #b9a2f2);
+  border-radius: 999px;
+}
+.type-card-title {
+  margin: 6px 0 10px;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.type-card-text { margin: 0; font-size: 0.92rem; line-height: 1.85; }
+.type-card-cats {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 14px 0 4px;
+}
+.type-card-cats .mini { width: 60px; margin: 0; }
+.type-card-more { font-size: 0.72rem; line-height: 1.4; color: var(--ink-soft); margin-left: 4px; }
+.type-card-renewal { margin: 10px 0 0; font-size: 0.82rem; color: var(--pink-deep); }
+.type-card-note { margin: 10px 0 0; font-size: 0.8rem; color: var(--ink-soft); }
+.type-card-you { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+.type-card-mytype {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 12px;
+  padding: 12px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+}
+.type-card-name { margin: 0; font-weight: 700; line-height: 1.5; word-break: auto-phrase; }
+.type-card-catch { margin: 2px 0 0; font-size: 0.82rem; line-height: 1.6; color: var(--ink-soft); }
+
+/* 診断の案内・お知らせ */
+.notice {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px dashed var(--lavender);
+  border-radius: 20px;
+}
+.notice p { margin: 0; }
+.notice[hidden] { display: none; }
+.notice.confirm { border-color: var(--pink-deep); background: #fff7fb; }
+.invite {
+  margin: 22px 0 0;
+  padding: 18px 16px 16px;
+  text-align: center;
+  background: linear-gradient(160deg, #fff6fb, #efe6ff);
+  border-radius: 24px;
+  border: 2px solid var(--white);
+}
+.invite[hidden] { display: none; }
+.invite-title { margin: 0; font-weight: 700; line-height: 1.7; }
 
 /* ---------- ボタン ---------- */
 .btn {
@@ -206,6 +272,31 @@ body::before {
   background: rgba(255, 255, 255, 0.75);
   border: 2px solid var(--lavender);
 }
+.btn-big { min-height: 64px; margin-top: 20px; font-size: 1.15rem; }
+.btn-sub { display: block; font-size: 0.78rem; font-weight: 400; letter-spacing: 0.02em; opacity: 0.85; }
+.nowrap { white-space: nowrap; }
+/* 推し活タイプ診断のボタン（今日の占いとは別の体験だとわかる色） */
+.btn-type {
+  color: var(--white);
+  background: linear-gradient(100deg, #f59cc4, #e8a0d8);
+  box-shadow: 0 8px 20px rgba(245, 156, 196, 0.4);
+}
+.btn-text {
+  display: block;
+  margin: 10px auto 0;
+  min-height: 44px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.btn-text[hidden] { display: none; }
+.btn:disabled { opacity: 0.6; }
 .btn[hidden] { display: none; }
 button:focus-visible {
   outline: 3px solid var(--lavender-deep);
@@ -213,6 +304,10 @@ button:focus-visible {
 }
 
 /* ---------- 質問 ---------- */
+.quiz-head { display: flex; align-items: center; gap: 12px; }
+.quiz-cat { width: 60px; margin: 0; flex: none; }
+.quiz-progress { flex: 1; }
+.quiz-progress .q-count { margin: 0 0 6px; text-align: left; }
 .progress {
   height: 10px;
   background: rgba(255, 255, 255, 0.7);
@@ -236,13 +331,15 @@ button:focus-visible {
   color: var(--lavender-deep);
 }
 .q-text {
-  margin: 0 0 22px;
+  margin: 22px 0 22px;
   text-align: center;
   font-size: 1.3rem;
   line-height: 1.6;
   word-break: auto-phrase;
   outline: none;
 }
+.q-note { margin: -14px 0 18px; text-align: center; font-size: 0.82rem; color: var(--ink-soft); }
+.q-note[hidden] { display: none; }
 .options { display: grid; gap: 12px; }
 .option {
   display: flex;
@@ -295,8 +392,12 @@ button:focus-visible {
 }
 
 /* ---------- 占い中 ---------- */
-.loading { text-align: center; padding-top: 18vh; }
-.loading-art { width: min(190px, 52vw); margin-bottom: 12px; animation: floaty 1.6s ease-in-out infinite; }
+.loading { text-align: center; padding-top: 16vh; }
+.loading-art { width: 150px; margin-bottom: 12px; animation: floaty 1.6s ease-in-out infinite; }
+.loading-sky { height: 28px; font-size: 1.2rem; letter-spacing: 1.2em; color: var(--gold); }
+.loading-sky span { display: inline-block; animation: twinkle 1.2s ease-in-out infinite; }
+.loading-sky span:nth-child(2) { animation-delay: 0.3s; color: var(--lavender-deep); }
+.loading-sky span:nth-child(3) { animation-delay: 0.6s; }
 .loading-text { font-weight: 700; letter-spacing: 0.1em; }
 .dots span {
   display: inline-block;
@@ -324,9 +425,10 @@ button:focus-visible {
   box-shadow: var(--shadow);
 }
 .result-date { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+.result-type[hidden] { display: none; }
 .result-type {
   display: inline-block;
-  margin: 8px 0 4px;
+  margin: 10px 0 0;
   padding: 2px 14px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -334,18 +436,6 @@ button:focus-visible {
   background: var(--lavender);
   border-radius: 999px;
 }
-.result-style {
-  margin: 4px 0 10px;
-  font-size: clamp(1.4rem, 6.5vw, 1.7rem);
-  line-height: 1.5;
-  word-break: auto-phrase;
-  background: linear-gradient(90deg, var(--pink-deep), var(--lavender-deep));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.result-style-text { margin: 0; text-align: left; }
-
 .card {
   margin: 0 0 16px;
   padding: 20px 20px 18px;
@@ -364,6 +454,110 @@ button:focus-visible {
   letter-spacing: 0.06em;
 }
 .card-sub { font-weight: 700; color: var(--pink-deep); margin-bottom: 4px !important; }
+.card-note { margin: -4px 0 10px !important; font-size: 0.82rem; font-weight: 700; color: var(--blue-deep); }
+.card-note[hidden] { display: none; }
+
+/* 今日のあなたへのメッセージ（いちばん心に残るカード） */
+.foryou {
+  margin: 0 0 16px;
+  padding: 20px 20px 22px;
+  text-align: center;
+  background: linear-gradient(160deg, #fffaf0 0%, #fff0f7 60%, #f1e9ff 100%);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(230, 192, 106, 0.25);
+}
+.foryou-art { width: 90px; margin: 0 auto 6px; }
+.foryou-title { margin: 0 0 8px; font-size: 1rem; letter-spacing: 0.06em; color: var(--pink-deep); }
+.foryou-text { margin: 0; font-size: 1.05rem; font-weight: 700; line-height: 1.9; word-break: auto-phrase; }
+
+/* 推し活タイプ診断の結果 */
+.type-hero {
+  --type-color: var(--lavender);
+  margin-bottom: 16px;
+  padding: 26px 18px 22px;
+  text-align: center;
+  background: linear-gradient(180deg, #f4effe 0%, #fff 75%); /* color-mix 非対応（iOS 16.1以前）用 */
+  background: linear-gradient(180deg, color-mix(in srgb, var(--type-color) 30%, #fff) 0%, #fff 75%);
+  border: 2px solid var(--white);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+}
+.type-emblem {
+  --type-color: var(--lavender);
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 55%, var(--lavender) 56%);
+  background: radial-gradient(circle, #fff 55%, color-mix(in srgb, var(--type-color) 55%, #fff) 56%);
+  box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--type-color);
+}
+.type-emblem .emblem-cat { width: 120px; margin: 0; }
+.type-emoji {
+  position: absolute;
+  right: 2px;
+  bottom: 6px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  font-size: 1.3rem;
+  background: var(--white);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--type-color);
+}
+.type-emblem.small { flex: none; width: 76px; height: 76px; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--type-color); }
+.type-emblem.small .emblem-cat { width: 60px; }
+.type-lead { margin: 16px 0 2px; font-size: 0.88rem; color: var(--ink-soft); }
+.type-name {
+  margin: 0;
+  font-size: clamp(1.35rem, 6.4vw, 1.7rem);
+  line-height: 1.5;
+  word-break: auto-phrase;
+  color: var(--ink);
+}
+.type-catch { margin: 8px 0 0; font-weight: 700; line-height: 1.7; color: var(--pink-deep); word-break: auto-phrase; }
+.type-sub {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+}
+.type-sub[hidden] { display: none; }
+.points { margin: 0; padding: 0; list-style: none; }
+.points li {
+  position: relative;
+  padding: 8px 10px 8px 28px;
+  margin-bottom: 6px;
+  line-height: 1.7;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 14px;
+}
+.points li::before {
+  content: "✦";
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+.match-types { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.match-chip {
+  --type-color: var(--lavender);
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.6;
+  background: var(--lavender);
+  background: color-mix(in srgb, var(--type-color) 35%, #fff);
+  border-radius: 999px;
+}
 .stars {
   font-size: 1.7rem;
   letter-spacing: 0.15em;
@@ -446,52 +640,34 @@ button:focus-visible {
   border-radius: 32px;
   box-shadow: var(--shadow);
 }
-.omamori-art { width: min(200px, 56vw); margin: 0 auto 10px; }
+.omamori { text-align: center; }
+.omamori-art { width: 120px; margin: 0 auto 8px; }
 .omamori-title {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   text-align: center;
   font-size: 1.1rem;
   color: var(--pink-deep);
   letter-spacing: 0.06em;
 }
-.omamori-sections { display: grid; gap: 12px; }
-.omamori-section {
-  padding: 14px 16px 16px;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 20px;
-}
-.omamori-heading {
-  margin: 0 0 6px;
-  font-size: 0.92rem;
-  letter-spacing: 0.06em;
-  color: var(--lavender-deep);
-}
-.omamori-body {
-  margin: 0;
-  font-size: 0.97rem;
-  line-height: 1.95;
-  white-space: pre-line; /* データ内の改行（\n）をそのまま表示 */
-  overflow-wrap: anywhere;
-}
-/* 心のお守り：読み返したくなる一文として目立たせる */
 .omamori-charm {
-  text-align: center;
-  background: linear-gradient(135deg, var(--pink) 0%, var(--yellow) 100%);
-  border: 2px solid var(--white);
-}
-.omamori-charm .omamori-heading { color: var(--pink-deep); }
-.omamori-charm .omamori-body {
+  margin: 0 0 12px;
+  padding: 14px 12px;
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.8;
   word-break: auto-phrase;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--yellow) 100%);
+  border: 2px solid var(--white);
+  border-radius: 20px;
 }
-.omamori-tomorrow { background: linear-gradient(135deg, #fff 0%, var(--blue) 160%); }
+.omamori-body { margin: 0; text-align: left; line-height: 1.95; }
+
 /* 幅の狭いスマホ（iPhone SE など）では余白を詰めて、1行の文字数を確保する */
 @media (max-width: 380px) {
   .app { padding-left: 14px; padding-right: 14px; }
   .omamori { padding: 20px 10px 14px; }
-  .omamori-section { padding: 12px 13px 14px; }
+  .type-card { padding-left: 14px; padding-right: 14px; }
+  .btn-big { padding-left: 10px; padding-right: 10px; font-size: 1.02rem; letter-spacing: 0.02em; } /* ボタンの文字を1行に */
   /* ラッキーの3列：6文字のカタカナ（キーホルダー等）が1行に収まるように */
   .card { padding-left: 14px; padding-right: 14px; }
   .lucky { gap: 6px; }

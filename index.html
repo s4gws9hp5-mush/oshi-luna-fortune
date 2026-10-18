@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6e9f7">
-  <meta name="description" content="4つの質問に答えるだけ。月と星と白猫が、あなたの推し活スタイルと今日の推し活運を占います。">
+  <meta name="description" content="推しを好きな気持ちも、自分のことも大切に。毎日の推し活占いと、あなたの推し活タイプがわかる診断。">
   <title>推しルナ占い</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -18,124 +18,216 @@
     <!-- トップ -->
     <section class="screen is-active" id="screen-top" aria-labelledby="top-title">
       <div class="hero">
-        <img class="mascot hero-art floaty" src="images/luna-cat.png" width="640" height="513" alt="三日月の上で眠る白猫（推しルナ占いのマスコット）">
-        <p class="eyebrow">月と星と白猫の推し活診断</p>
+        <img class="pixel hero-art floaty" src="images/pixel-cat.png" width="300" height="250" alt="三日月の上の白猫（推しルナ占いのマスコット）">
+        <p class="eyebrow">月と星と白猫の推し活占い</p>
         <h1 id="top-title" class="title">推しルナ占い</h1>
         <p class="concept">推しを好きな気持ちも、<br>自分のことも大切に。</p>
-        <a class="daily-link" href="#daily">🌙 今日の推し活占いを見る</a>
-        <p class="lead">4つの質問に答えるだけ。<br>あなたの推し活スタイルと、<br>今日の推し活運を占います。</p>
       </div>
-      <button type="button" class="btn btn-primary" id="start-btn">推し活タイプ診断をはじめる</button>
+
+      <button type="button" class="btn btn-primary btn-big" id="daily-btn">🌙 今日の推し活占いを見る！</button>
+      <p class="daily-intro">
+        <span class="nowrap">毎日0時（日本時間）に、</span><span class="nowrap">新しい占いが届きます。</span><br>
+        <span class="nowrap">今日の運勢とラッキーアクション、</span><span class="nowrap">白猫からのお守りメッセージをどうぞ。</span>
+        <span class="daily-intro-type" id="daily-intro-type" hidden></span>
+      </p>
       <button type="button" class="btn btn-ghost" id="last-btn" hidden>前回の結果を見る</button>
-      <p class="note">所要時間は約1分。結果は毎日少しずつ変わります。</p>
 
-      <!-- 毎日の推し活占い（質問なし。日本時間の日付で自動的に切り替わる） -->
-      <section class="daily" id="daily" aria-labelledby="daily-title">
-        <p class="daily-eyebrow">質問なしで見られる、毎日の占い</p>
-        <h2 class="daily-title" id="daily-title">今日の推し活占い</h2>
-        <p class="daily-date" id="daily-date"></p>
+      <!-- 推し活タイプ診断への案内（未診断／途中／診断済みで表示を切り替える） -->
+      <section class="type-card" id="type-card" aria-labelledby="type-card-title">
+        <p class="type-card-eyebrow">🎀 推し活タイプ診断</p>
 
-        <article class="card card-pink">
-          <h3 class="card-title"><span aria-hidden="true">🌙</span> 今日の運勢</h3>
-          <p class="stars" id="daily-stars"></p>
-          <p class="card-sub" id="daily-luck-title"></p>
-          <p id="daily-luck-text"></p>
-        </article>
+        <div id="type-card-new">
+          <h2 class="type-card-title" id="type-card-title">今日の運勢だけじゃ、<br>わからないあなたのこと。</h2>
+          <p class="type-card-text">推しにときめく瞬間も、応援するときのこだわりも、人それぞれ。<br>いくつかの質問に答えると、あなたの推し活タイプがわかるよ♡</p>
+          <div class="type-card-cats" aria-hidden="true">
+            <img class="pixel mini" src="images/cat-solo.png" width="300" height="250" alt="">
+            <img class="pixel mini" src="images/cat-cheer.png" width="300" height="250" alt="">
+            <img class="pixel mini" src="images/cat-talk.png" width="300" height="250" alt="">
+            <span class="type-card-more">ほか<br>全8タイプ</span>
+          </div>
+          <p class="type-card-renewal" id="type-card-renewal" hidden>診断がリニューアルしました。新しい診断で、あなたのタイプを見つけてね。</p>
+          <button type="button" class="btn btn-type" id="start-btn">🎀 もっと詳しく診断してみる</button>
+          <p class="type-card-note">あなたの推し活タイプを見つけよう。<span class="nowrap">無料・約2〜3分（全10問）</span></p>
+        </div>
 
-        <article class="card card-blue">
-          <h3 class="card-title"><span aria-hidden="true">⭐</span> ラッキーアクション</h3>
-          <ol class="actions" id="daily-actions"></ol>
-        </article>
+        <div id="type-card-resume" hidden>
+          <h2 class="type-card-title">診断の続きから<br>はじめられます</h2>
+          <p class="type-card-text" id="type-card-resume-text"></p>
+          <button type="button" class="btn btn-type" id="resume-btn">🎀 続きから診断する</button>
+          <button type="button" class="btn-text" id="restart-btn">最初から答え直す</button>
+        </div>
 
-        <article class="card card-cream">
-          <h3 class="card-title"><span aria-hidden="true">🍀</span> 今日のラッキー</h3>
-          <dl class="lucky">
-            <div><dt>カラー</dt><dd><span class="lucky-mark color-chip" id="daily-color-chip" aria-hidden="true"></span><span class="lucky-name" id="daily-color"></span></dd></div>
-            <div><dt>アイテム</dt><dd><span class="lucky-mark lucky-icon" id="daily-item-icon" aria-hidden="true"></span><span class="lucky-name" id="daily-item"></span></dd></div>
-            <div><dt>時間帯</dt><dd><span class="lucky-mark lucky-icon" id="daily-time-icon" aria-hidden="true"></span><span class="lucky-name" id="daily-time"></span></dd></div>
-          </dl>
-        </article>
-
-        <article class="daily-omamori">
-          <h3 class="daily-omamori-title"><span aria-hidden="true">🎀</span> 今日のお守りメッセージ</h3>
-          <p class="daily-omamori-text" id="daily-omamori"></p>
-        </article>
-
-        <p class="daily-note">毎日0時（日本時間）に切り替わります。<br>占いは楽しむためのものです。</p>
-        <button type="button" class="btn btn-ghost" id="daily-share-btn">今日の占いをシェアする</button>
-        <p class="toast" id="daily-toast" role="status" aria-live="polite"></p>
+        <div id="type-card-done" hidden>
+          <p class="type-card-you">あなたは</p>
+          <div class="type-card-mytype">
+            <span class="type-emblem small" id="top-type-emblem">
+              <img class="pixel emblem-cat" src="images/cat-solo.png" width="300" height="250" alt="" id="top-type-img">
+            </span>
+            <div>
+              <p class="type-card-name" id="top-type-name"></p>
+              <p class="type-card-catch" id="top-type-catch"></p>
+            </div>
+          </div>
+          <p class="type-card-text">今日の占いは、あなたのタイプに合わせたメッセージとラッキーアクションでお届けしています。</p>
+          <button type="button" class="btn btn-type" id="mytype-btn">🎀 わたしのタイプを見る</button>
+          <button type="button" class="btn-text" id="retake-btn">もう一度診断する</button>
+        </div>
       </section>
     </section>
 
-    <!-- 質問 -->
-    <section class="screen" id="screen-quiz" aria-live="polite">
-      <div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" id="progress">
-        <span class="progress-bar" id="progress-bar"></span>
-      </div>
-      <p class="q-count" id="q-count">Q1 / 4</p>
-      <h2 class="q-text" id="q-text"></h2>
-      <div class="options" id="options"></div>
-      <button type="button" class="btn-back" id="back-btn">‹ ひとつ戻る</button>
-    </section>
-
-    <!-- 占い中 -->
+    <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->
     <section class="screen" id="screen-loading" aria-live="polite">
       <div class="loading">
-        <img class="mascot loading-art" src="images/luna-cat.png" width="640" height="513" alt="">
-        <p class="loading-text">月に聞いています…</p>
+        <div class="loading-sky" aria-hidden="true"><span>✦</span><span>☾</span><span>✦</span></div>
+        <img class="pixel loading-art" src="images/pixel-cat.png" width="300" height="250" alt="">
+        <p class="loading-text" id="loading-text">月に聞いています…</p>
         <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
       </div>
     </section>
 
-    <!-- 結果 -->
-    <section class="screen" id="screen-result" aria-labelledby="result-style">
+    <!-- 今日の推し活占いの結果 -->
+    <section class="screen" id="screen-daily" aria-labelledby="daily-title">
       <div class="result-head">
-        <p class="result-date" id="result-date"></p>
-        <p class="result-type" id="result-type"></p>
-        <h2 class="result-style" id="result-style"></h2>
-        <p class="result-style-text" id="result-style-text"></p>
+        <p class="result-date" id="daily-date"></p>
+        <h2 class="daily-title" id="daily-title">今日の推し活占い</h2>
+        <p class="result-type" id="daily-type-chip" hidden></p>
       </div>
 
+      <div class="notice" id="daily-past" hidden>
+        <p id="daily-past-text"></p>
+        <button type="button" class="btn btn-primary" id="daily-today-btn">🌙 今日の推し活占いを見る！</button>
+      </div>
+      <p class="notice" id="daily-locked" hidden>今日の占いは、最初に見た内容のままお届けしています。新しいタイプに合わせたアドバイスは、明日の占いから始まります。</p>
+
       <article class="card card-pink">
-        <h3 class="card-title"><span aria-hidden="true">🌙</span> 今日の推し活運</h3>
-        <p class="stars" id="luck-stars"></p>
-        <p class="card-sub" id="luck-title"></p>
-        <p id="luck-text"></p>
+        <h3 class="card-title"><span aria-hidden="true">🌙</span> 今日の運勢</h3>
+        <p class="stars" id="daily-stars"></p>
+        <p class="card-sub" id="daily-luck-title"></p>
+        <p id="daily-luck-text"></p>
       </article>
 
-      <article class="card card-lavender">
-        <h3 class="card-title"><span aria-hidden="true">🔮</span> 意外な気づき</h3>
-        <p id="insight-text"></p>
+      <article class="foryou">
+        <img class="pixel foryou-art" src="images/pixel-cat.png" width="300" height="250" alt="" id="daily-foryou-img">
+        <h3 class="foryou-title" id="daily-message-title">💌 今日のあなたへのメッセージ</h3>
+        <p class="foryou-text" id="daily-message"></p>
       </article>
 
       <article class="card card-blue">
         <h3 class="card-title"><span aria-hidden="true">⭐</span> ラッキーアクション</h3>
-        <ol class="actions" id="actions"></ol>
+        <p class="card-note" id="daily-actions-note" hidden></p>
+        <ol class="actions" id="daily-actions"></ol>
       </article>
 
       <article class="card card-cream">
         <h3 class="card-title"><span aria-hidden="true">🍀</span> 今日のラッキー</h3>
         <dl class="lucky">
-          <div><dt>カラー</dt><dd><span class="lucky-mark color-chip" id="lucky-color-chip" aria-hidden="true"></span><span class="lucky-name" id="lucky-color"></span></dd></div>
-          <div><dt>アイテム</dt><dd><span class="lucky-mark lucky-icon" id="lucky-item-icon" aria-hidden="true"></span><span class="lucky-name" id="lucky-item"></span></dd></div>
-          <div><dt>時間帯</dt><dd><span class="lucky-mark lucky-icon" id="lucky-time-icon" aria-hidden="true"></span><span class="lucky-name" id="lucky-time"></span></dd></div>
+          <div><dt>カラー</dt><dd><span class="lucky-mark color-chip" id="daily-color-chip" aria-hidden="true"></span><span class="lucky-name" id="daily-color"></span></dd></div>
+          <div><dt>アイテム</dt><dd><span class="lucky-mark lucky-icon" id="daily-item-icon" aria-hidden="true"></span><span class="lucky-name" id="daily-item"></span></dd></div>
+          <div><dt>時間帯</dt><dd><span class="lucky-mark lucky-icon" id="daily-time-icon" aria-hidden="true"></span><span class="lucky-name" id="daily-time"></span></dd></div>
         </dl>
       </article>
 
-      <!-- 白猫からのお守りメッセージ（各セクションは data.js の OMAMORI_SECTIONS から描画） -->
-      <article class="omamori" aria-labelledby="omamori-title">
-        <img class="mascot omamori-art" src="images/luna-cat.png" width="640" height="513" alt="三日月の上で眠る白猫">
-        <h3 class="omamori-title" id="omamori-title">白猫からのお守りメッセージ</h3>
-        <div class="omamori-sections" id="omamori-sections"></div>
+      <article class="daily-omamori">
+        <h3 class="daily-omamori-title"><span aria-hidden="true">🎀</span> 白猫からのお守りメッセージ</h3>
+        <p class="daily-omamori-text" id="daily-omamori"></p>
       </article>
 
-      <button type="button" class="btn btn-primary" id="share-btn">結果をシェアする</button>
-      <button type="button" class="btn btn-ghost" id="retry-btn">もう一度占う</button>
+      <p class="daily-note">毎日0時（日本時間）に新しい占いに切り替わります。<br>占いは楽しむためのものです。</p>
+      <button type="button" class="btn btn-primary" id="daily-share-btn">今日の占いをシェアする</button>
+      <p class="toast" id="daily-toast" role="status" aria-live="polite"></p>
+
+      <div class="invite" id="daily-invite" hidden>
+        <p class="invite-title">あなたの推し活タイプを知ると、<br>明日からの占いがあなた向けに。</p>
+        <button type="button" class="btn btn-type" id="daily-start-btn">🎀 推し活タイプを診断してみる</button>
+      </div>
+      <button type="button" class="btn btn-ghost" id="daily-mytype-btn" hidden>🎀 わたしのタイプを見る</button>
+      <button type="button" class="btn btn-ghost" id="daily-home-btn">トップに戻る</button>
+    </section>
+
+    <!-- 推し活タイプ診断の質問 -->
+    <section class="screen" id="screen-quiz" aria-live="polite">
+      <div class="quiz-head">
+        <img class="pixel quiz-cat" src="images/pixel-cat.png" width="300" height="250" alt="">
+        <div class="quiz-progress">
+          <p class="q-count" id="q-count">Q1 / 10</p>
+          <div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="10" aria-valuenow="1" id="progress">
+            <span class="progress-bar" id="progress-bar"></span>
+          </div>
+        </div>
+      </div>
+      <h2 class="q-text" id="q-text"></h2>
+      <p class="q-note" id="q-note" hidden></p>
+      <div class="options" id="options"></div>
+      <button type="button" class="btn-back" id="back-btn">‹ ひとつ戻る</button>
+      <button type="button" class="btn-text" id="quiz-home-btn">トップに戻る（回答は保存されます）</button>
+    </section>
+
+    <!-- 推し活タイプ診断の結果 -->
+    <section class="screen" id="screen-result" aria-labelledby="type-name">
+      <div class="type-hero" id="type-hero">
+        <span class="type-emblem" id="type-emblem">
+          <img class="pixel emblem-cat" src="images/cat-solo.png" width="300" height="250" alt="" id="type-img">
+          <span class="type-emoji" id="type-emoji" aria-hidden="true"></span>
+        </span>
+        <p class="type-lead">あなたの推し活タイプは</p>
+        <h2 class="type-name" id="type-name"></h2>
+        <p class="type-catch" id="type-catch"></p>
+        <p class="type-sub" id="type-sub"></p>
+      </div>
+
+      <div class="notice confirm" id="type-confirm" hidden>
+        <p id="type-confirm-text"></p>
+        <button type="button" class="btn btn-type" id="type-save-btn">この新しいタイプを保存する</button>
+        <button type="button" class="btn btn-ghost" id="type-keep-btn">前のタイプのままにする</button>
+      </div>
+      <div class="notice" id="type-status" role="status" hidden>
+        <p id="type-status-text"></p>
+        <button type="button" class="btn-text" id="type-view-saved-btn" hidden>保存中のタイプを見る</button>
+      </div>
+
+      <article class="card card-lavender">
+        <h3 class="card-title"><span aria-hidden="true">🔮</span> 基本の性格</h3>
+        <p id="type-personality"></p>
+      </article>
+      <article class="card card-pink">
+        <h3 class="card-title"><span aria-hidden="true">✨</span> 推し活で輝くところ</h3>
+        <ul class="points" id="type-strengths"></ul>
+      </article>
+      <article class="card card-cream">
+        <h3 class="card-title"><span aria-hidden="true">☁️</span> 無理をしやすいポイント</h3>
+        <ul class="points" id="type-pitfalls"></ul>
+      </article>
+      <article class="card card-blue">
+        <h3 class="card-title"><span aria-hidden="true">🌷</span> 自分らしく推し活を楽しむヒント</h3>
+        <ul class="points" id="type-tips"></ul>
+      </article>
+      <article class="card card-lavender">
+        <h3 class="card-title"><span aria-hidden="true">🤝</span> 相性のよい推し活スタイル</h3>
+        <div class="match-types" id="type-match-types"></div>
+        <p id="type-match-text"></p>
+      </article>
+      <article class="card card-pink">
+        <h3 class="card-title"><span aria-hidden="true">⭐</span> 今日からできる小さなアクション</h3>
+        <p id="type-action"></p>
+      </article>
+
+      <article class="omamori" aria-labelledby="type-omamori-title">
+        <img class="pixel omamori-art" src="images/cat-solo.png" width="300" height="250" alt="" id="type-omamori-img">
+        <h3 class="omamori-title" id="type-omamori-title">白猫からのお守りメッセージ</h3>
+        <p class="omamori-charm" id="type-charm"></p>
+        <p class="omamori-body" id="type-omamori-msg"></p>
+      </article>
+
+      <button type="button" class="btn btn-primary" id="to-daily-btn">🌙 今日の占いを見る</button>
+      <button type="button" class="btn btn-ghost" id="share-btn">結果をシェアする</button>
+      <button type="button" class="btn btn-ghost" id="retry-btn">もう一度診断する</button>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>
+      <button type="button" class="btn-text" id="result-home-btn">トップに戻る</button>
+      <p class="note">この診断は、自分の推し活スタイルを知るためのヒントです。<br>性格や推し活のしかたを決めつけるものではありません。</p>
     </section>
   </main>
 
-  <footer class="footer">推しルナ占い ｜ 占いは楽しむためのものです 🐈</footer>
+  <footer class="footer">推しルナ占い ｜ 占いは楽しむためのものです 🐈<br>結果はこの端末のブラウザにだけ保存されます</footer>
 
   <script src="js/data.js"></script>
   <script src="js/fortune.js"></script>

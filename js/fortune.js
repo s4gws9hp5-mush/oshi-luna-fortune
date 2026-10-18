@@ -38,68 +38,39 @@
     return out;
   }
 
-  function dateKey(date) {
-    var y = date.getFullYear();
-    var m = ("0" + (date.getMonth() + 1)).slice(-2);
-    var d = ("0" + date.getDate()).slice(-2);
-    return y + "-" + m + "-" + d;
-  }
-
-  // 回答の得点から1位・2位のタイプを決める。同点なら先の質問で選んだタイプを優先
-  function rankTypes(answers) {
-    var totals = {};
-    var firstSeen = {};
+  // ---- 推し活タイプ診断：回答だけでタイプを決める（日付・乱数は使わない） ----
+  // answers: 各質問で選んだ選択肢の番号（0〜3）。選んだ選択肢の main に2点、sub に1点。
+  // 同点のときの順位：
+  //   1. 合計点が高い
+  //   2. main（2点）として選ばれた回数が多い
+  //   3. main として選ばれた質問が早い（最初に強く惹かれたタイプを優先）
+  //   4. 点が入った質問が早い
+  //   5. TYPE_ORDER の順
+  function diagnoseType(answers) {
+    if (!isValidAnswers(answers)) throw new Error("回答が正しくありません");
+    var score = {}, mainCount = {}, firstMain = {}, firstAny = {};
+    D.TYPE_ORDER.forEach(function (t) { score[t] = 0; mainCount[t] = 0; firstMain[t] = 99; firstAny[t] = 99; });
     answers.forEach(function (optionIndex, q) {
-      var scores = D.QUESTIONS[q].options[optionIndex].scores;
-      Object.keys(scores).forEach(function (type) {
-        totals[type] = (totals[type] || 0) + scores[type];
-        if (!(type in firstSeen)) firstSeen[type] = q;
-      });
+      var opt = D.QUESTIONS[q].options[optionIndex];
+      score[opt.main] += 2;
+      score[opt.sub] += 1;
+      mainCount[opt.main]++;
+      if (firstMain[opt.main] === 99) firstMain[opt.main] = q;
+      if (firstAny[opt.main] === 99) firstAny[opt.main] = q;
+      if (firstAny[opt.sub] === 99) firstAny[opt.sub] = q;
     });
-    var ranked = Object.keys(D.TYPES).sort(function (a, b) {
-      var diff = (totals[b] || 0) - (totals[a] || 0);
-      if (diff) return diff;
-      var fa = a in firstSeen ? firstSeen[a] : 99;
-      var fb = b in firstSeen ? firstSeen[b] : 99;
-      return fa - fb;
+    var ranked = D.TYPE_ORDER.slice().sort(function (a, b) {
+      return (score[b] - score[a]) || (mainCount[b] - mainCount[a]) ||
+        (firstMain[a] - firstMain[b]) || (firstAny[a] - firstAny[b]) ||
+        (D.TYPE_ORDER.indexOf(a) - D.TYPE_ORDER.indexOf(b));
     });
-    var primary = ranked[0];
-    // 2位が0点（すべて同じタイプ）なら「純度100%」スタイル
-    var secondary = totals[ranked[1]] ? ranked[1] : primary;
-    return { primary: primary, secondary: secondary, totals: totals };
+    return { type: ranked[0], sub: ranked[1], scores: score };
   }
 
-  // answers: 各質問で選んだ選択肢の番号（0〜3）×4
-  function getFortune(answers, date) {
-    if (!Array.isArray(answers) || answers.length !== D.QUESTIONS.length) {
-      throw new Error("回答数が正しくありません");
-    }
-    var today = dateKey(date || new Date());
-    var rank = rankTypes(answers);
-    var focus = D.QUESTIONS[3].options[answers[3]].focus;
-    var rand = seededRandom(hash(answers.join("") + "|" + today));
-
-    // ★1は出にくく、★3〜4が出やすい配分
-    var r = rand();
-    var stars = r < 0.06 ? 1 : r < 0.22 ? 2 : r < 0.52 ? 3 : r < 0.84 ? 4 : 5;
-
-    return {
-      date: today,
-      answers: answers.slice(),
-      type: D.TYPES[rank.primary],
-      typeKey: rank.primary,
-      style: D.STYLES[rank.primary][rank.secondary],
-      luck: { stars: stars, title: D.LUCK[stars].title, text: D.LUCK[stars].text },
-      insight: D.INSIGHTS[answers[2]][rank.primary],
-      actions: pickDistinct(D.ACTIONS[focus], 2, rand),
-      lucky: {
-        color: pick(D.LUCKY_COLORS, rand),
-        item: pick(D.LUCKY_ITEMS, rand),
-        time: pick(D.LUCKY_TIMES, rand)
-      },
-      // お守りメッセージは推し活スタイルごとに固定（日替わりの抽選より後ろに置き、既存の抽選結果を変えない）
-      omamori: D.STYLES[rank.primary][rank.secondary].omamori
-    };
+  function isValidAnswers(answers) {
+    return Array.isArray(answers) && answers.length === D.QUESTIONS.length && answers.every(function (v, q) {
+      return v === Math.floor(v) && v >= 0 && v < D.QUESTIONS[q].options.length;
+    });
   }
 
   // ---- 毎日の推し活占い（質問なし）：端末のタイムゾーンに関係なく日本時間（UTC+9）で日付を決める ----
@@ -129,15 +100,19 @@
     return list[(((day * step + 3) % list.length) + list.length) % list.length];
   }
 
-  function getDailyFortune(date) {
+  // typeKey（保存済みの推し活タイプ）があれば、メッセージとラッキーアクションをタイプに合わせる。
+  // 運勢の★・運勢文・ラッキーカラー/アイテム/時間帯・お守りは、タイプに関係なく全員同じ（不公平にしない）。
+  function getDailyFortune(date, typeKey) {
     var now = date || new Date();
     var key = jstDateKey(now);
+    var day = jstDayNumber(now);
     var rand = seededRandom(hash("daily|" + key));
     var r = rand();
     var stars = r < 0.06 ? 1 : r < 0.22 ? 2 : r < 0.52 ? 3 : r < 0.84 ? 4 : 5;
     var allActions = Object.keys(D.ACTIONS).reduce(function (list, k) { return list.concat(D.ACTIONS[k]); }, []);
-    return {
+    var result = {
       date: key,
+      typeKey: null,
       luck: { stars: stars, title: D.LUCK[stars].title, text: pick(D.DAILY.luck[stars], rand) },
       actions: pickDistinct(allActions, 2, rand),
       lucky: {
@@ -145,12 +120,22 @@
         item: pick(D.LUCKY_ITEMS, rand),
         time: pick(D.LUCKY_TIMES, rand)
       },
-      omamori: rotate(D.DAILY.omamori, jstDayNumber(now))
+      message: rotate(D.DAILY.messages, day),
+      omamori: rotate(D.DAILY.omamori, day)
     };
+    var type = typeKey && D.TYPES[typeKey];
+    if (type) {
+      // タイプ別の部分は別の乱数で選ぶ（全員共通の部分の抽選結果を変えない）
+      var typeRand = seededRandom(hash("daily|" + key + "|" + typeKey));
+      result.typeKey = typeKey;
+      result.actions = pickDistinct(type.daily.actions, 2, typeRand);
+      result.message = rotate(type.daily.messages, day);
+    }
+    return result;
   }
 
   var api = {
-    getFortune: getFortune, rankTypes: rankTypes, dateKey: dateKey,
+    diagnoseType: diagnoseType, isValidAnswers: isValidAnswers,
     getDailyFortune: getDailyFortune, jstDateKey: jstDateKey, msUntilNextJstDay: msUntilNextJstDay
   };
   root.OshiLuna = api;
