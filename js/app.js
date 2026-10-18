@@ -127,21 +127,6 @@
   function refreshTop() {
     var saved = loadSavedType();
     var progress = loadQuizProgress();
-    var history = loadHistory();
-
-    var introType = $("daily-intro-type");
-    introType.hidden = !saved;
-    if (saved) introType.textContent = "✨ 「" + D.TYPES[saved.type].name + "」のあなたに合わせたメッセージ付き";
-
-    var last = $("last-btn");
-    last.hidden = !history.length;
-    if (history.length) {
-      last.textContent = "前回の結果を見る";
-      var sub = document.createElement("span");
-      sub.className = "btn-sub";
-      sub.textContent = formatDate(history[0].date) + "の占い";
-      last.appendChild(sub);
-    }
 
     $("type-card-done").hidden = !saved;
     $("type-card-resume").hidden = !!saved || !progress;
@@ -469,12 +454,6 @@
   // ---- ボタン ----
   // トップ
   $("daily-btn").addEventListener("click", openDaily);
-  $("last-btn").addEventListener("click", function () {
-    var history = loadHistory();
-    if (!history.length || busy) return;
-    renderDaily(history[0]);
-    showScreen("daily");
-  });
   $("start-btn").addEventListener("click", function () { startQuiz(false); });
   $("resume-btn").addEventListener("click", function () { startQuiz(true); });
   $("restart-btn").addEventListener("click", function () { startQuiz(false); });

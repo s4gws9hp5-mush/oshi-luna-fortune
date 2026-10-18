@@ -156,13 +156,6 @@ body::before {
   line-height: 1.8;
   color: var(--ink-soft);
 }
-.daily-intro-type {
-  display: block;
-  margin-top: 6px;
-  font-weight: 700;
-  color: var(--lavender-deep);
-}
-.daily-intro-type[hidden] { display: none; }
 
 /* ---------- 推し活タイプ診断への案内カード ---------- */
 .type-card {
@@ -269,7 +262,6 @@ body::before {
   border: 2px solid var(--lavender);
 }
 .btn-big { min-height: 64px; margin-top: 20px; font-size: 1.15rem; }
-.btn-sub { display: block; font-size: 0.78rem; font-weight: 400; letter-spacing: 0.02em; opacity: 0.85; }
 .nowrap { white-space: nowrap; }
 /* 推し活タイプ診断のボタン（今日の占いとは別の体験だとわかる色） */
 .btn-type {
