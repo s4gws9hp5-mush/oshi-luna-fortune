@@ -5,7 +5,7 @@
  */
 "use strict";
 
-var CACHE = "oshi-luna-v1";
+var CACHE = "oshi-luna-v2";
 var CORE = [
   "./", "index.html", "css/style.css",
   "js/data.js", "js/fortune.js", "js/share-card.js", "js/app.js",

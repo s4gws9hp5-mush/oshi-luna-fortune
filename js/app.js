@@ -433,7 +433,7 @@
       current.pending = false;
       current.blob = blob;
       current.url = URL.createObjectURL(blob);
-      try { current.file = new File([blob], "oshi-luna-" + typeKey + ".png", { type: "image/png" }); } catch (e) { current.file = null; }
+      try { current.file = new File([blob], shareFileName(typeKey), { type: "image/png", lastModified: Date.now() }); } catch (e) { current.file = null; }
       updateSharePanel();
     }, function (e) {
       if (shareImage !== current) return;
@@ -444,26 +444,104 @@
     });
   }
 
+  // 保存するファイルの名前（例：推しルナ占い_ときめき全力応援隊長.png）
+  function shareFileName(typeKey) { return "推しルナ占い_" + D.TYPES[typeKey].name + ".png"; }
+
   function canShareImage() {
     var f = shareImage && shareImage.file;
     try { return !!(f && navigator.canShare && navigator.share && navigator.canShare({ files: [f] })); } catch (e) { return false; }
   }
 
+  // 保存の案内の出し分け：iPhone・iPad／Android／そのほか
+  function deviceKind() {
+    var kind = browserKind();
+    return kind.indexOf("ios") === 0 ? "ios" : kind;
+  }
+
+  // 端末とブラウザの機能に合わせた、保存のしかた
+  function shareGuide() {
+    var kind = browserKind(), device = deviceKind(), canShare = canShareImage();
+    var guide = { title: "保存のしかた", steps: [], note: "" };
+    if (device === "ios" && canShare) {
+      guide.steps = [
+        "「写真アプリに保存する・共有する」をタップ",
+        "開いたメニューで「画像を保存」を選ぶ（見つからないときは、メニューを上にスクロールしてね）",
+        "写真アプリを開いて、画像が入っているか確認してね"
+      ];
+      guide.note = "はじめて保存するときは、写真へのアクセスの確認が出ることがあります。追加を許可すると保存できます。メニューで LINE や Instagram などを選ぶと、そのまま送ることもできます。";
+    } else if (device === "ios") {
+      guide.steps = [
+        "上の画像を長押し",
+        "出てきたメニューで「“写真”に追加」を選ぶ",
+        "写真アプリを開いて、画像が入っているか確認してね"
+      ];
+      guide.note = (kind === "ios-inapp" ? "LINE や Instagram などのアプリの中で開いているときは、うまく保存できないことがあります。そのときは、メニューから「Safari で開く」を選んでね。" : "") +
+        "「画像ファイルをダウンロードする」で保存した画像は、写真アプリではなく「ファイル」アプリに入ります。";
+    } else if (device === "android") {
+      guide.steps = canShare ? [
+        "SNS やメッセージに送るときは「共有メニューから保存・共有する」をタップして、送り先のアプリを選ぶ",
+        "端末に保存するときは「画像ファイルをダウンロードする」をタップ",
+        "ダウンロードした画像は、ブラウザのダウンロード一覧や、「ファイル」・ギャラリーのアプリの「Download」から見られます（端末によって名前が違います）"
+      ] : [
+        "「画像ファイルをダウンロードする」をタップ",
+        "ダウンロードできないときは、上の画像を長押しして「画像をダウンロード」を選ぶ",
+        "ダウンロードした画像は、ブラウザのダウンロード一覧や、「ファイル」・ギャラリーのアプリの「Download」から見られます（端末によって名前が違います）"
+      ];
+    } else {
+      guide.steps = canShare ? [
+        "「共有メニューから保存・共有する」で、送り先や保存先を選ぶ",
+        "ファイルとして保存するときは「画像ファイルをダウンロードする」"
+      ] : [
+        "「画像ファイルをダウンロードする」をタップ（クリック）",
+        "うまくいかないときは、上の画像を長押し（右クリック）して保存"
+      ];
+    }
+    if (canShare) guide.note += "「画像をシェアする」は、画像といっしょにタイプ名とURLの文章も送ります。";
+    return guide;
+  }
+
+  // ボタンの文字を、言葉の切れ目でだけ折り返すように並べる
+  function setLabel(el, parts) {
+    if (el.textContent === parts.join("")) return;
+    while (el.firstChild) el.removeChild(el.firstChild);
+    parts.forEach(function (text) {
+      var span = document.createElement("span");
+      span.className = "nowrap";
+      span.textContent = text;
+      el.appendChild(span);
+    });
+  }
+
   function updateSharePanel() {
     if (!shareImage) return;
-    var ready = shareImage.url && !shareImage.failed;
+    var ready = !!(shareImage.url && !shareImage.failed), canShare = ready && canShareImage();
     $("share-preview").hidden = !ready;
     $("share-save-link").hidden = !ready;
+    $("share-save-btn").hidden = !canShare;
+    $("share-image-btn").hidden = !canShare;
+    setLabel($("share-save-btn"), deviceKind() === "ios" ? ["📥 写真アプリに保存する・", "共有する"] : ["📥 共有メニューから", "保存・共有する"]);
     if (ready) {
       $("share-preview").src = shareImage.url;
       $("share-save-link").href = shareImage.url;
-      $("share-save-link").setAttribute("download", "oshi-luna-" + shareImage.typeKey + ".png");
+      $("share-save-link").setAttribute("download", shareFileName(shareImage.typeKey));
     }
-    $("share-image-btn").hidden = !(ready && canShareImage());
     $("share-hint").textContent = shareImage.pending ? "画像を作っています…" :
       shareImage.failed ? "この環境では画像を作れませんでした。下のボタンでタイプ名とURLをコピーできます。" :
-      canShareImage() ? "「画像をシェアする」から、SNSやメッセージに画像を送れます。" :
-      "この環境では画像を直接シェアできません。「画像を保存する」か、画像を長押しして保存してから投稿してね。";
+      canShare ? "" :
+      "この環境では、画像を共有メニューで送れません。下の手順で保存してから、SNS に投稿してね。";
+    var guide = ready ? shareGuide() : null;
+    $("share-guide").hidden = !guide;
+    if (guide) {
+      $("share-guide-title").textContent = guide.title;
+      var list = $("share-steps");
+      while (list.firstChild) list.removeChild(list.firstChild);
+      guide.steps.forEach(function (text) {
+        var li = document.createElement("li");
+        li.textContent = text;
+        list.appendChild(li);
+      });
+      $("share-guide-note").textContent = guide.note;
+    }
   }
 
   function openSharePanel() {
@@ -475,17 +553,51 @@
     $("share-panel").scrollIntoView({ block: "nearest" });
   }
 
-  function shareTypeImage() {
-    if (!shownType || !shareImage || !shareImage.file || !canShareImage()) {
+  // 共有メニューを開く。withText のときは、タイプ名とURLの文章もいっしょに送る
+  // iPhone では、ボタンを押してすぐに呼ばないと開けないので、画像は前もって作っておく
+  var sharing = false;
+  function openShareMenu(withText) {
+    if (sharing) return; // 共有メニューを開いている間は、二重に開かない
+    if (!shownType || !shareImage || !shareImage.file || shareImage.typeKey !== shownType.type || !canShareImage()) {
       shareStatus("画像の準備ができていません。少し待ってから、もう一度押してね。");
       return;
     }
-    navigator.share({ files: [shareImage.file], title: "推しルナ占い", text: typeShareText(shownType.type) + "\n" + siteUrl() }).then(function () {
-      shareStatus("シェアできたよ♡");
+    var data = { files: [shareImage.file] };
+    if (withText) {
+      data.title = "推しルナ占い";
+      data.text = typeShareText(shownType.type) + "\n" + siteUrl();
+    }
+    var ios = deviceKind() === "ios";
+    var fallback = ios ? "上の画像を長押しして「“写真”に追加」で保存できます。" : "「画像ファイルをダウンロードする」から保存できます。";
+    var promise;
+    try {
+      promise = navigator.share(data);
+    } catch (e) {
+      promise = Promise.reject(e);
+    }
+    sharing = true;
+    shareStatus("");
+    Promise.resolve(promise).then(function () {
+      // 共有メニューで何かを選んで完了したことしか分からないので、保存できたとは言い切らない
+      shareStatus(withText ? "シェアできたよ♡" : ios ?
+        "共有メニューを閉じました。「画像を保存」を選んだときは、写真アプリに入っているか確認してね♡" :
+        "共有メニューでの操作が終わりました。選んだアプリや保存先で、画像を確認してね♡");
     }, function (e) {
-      shareStatus(e && e.name === "AbortError" ? "シェアをキャンセルしました。" :
-        "シェアできませんでした。「画像を保存する」から保存して、SNSに投稿してね。");
-    });
+      var name = e && e.name;
+      shareStatus(name === "AbortError" ? (withText ? "シェアをキャンセルしました。" : "保存・共有をキャンセルしました。もう一度押すと、メニューが開きます。") :
+        name === "NotAllowedError" ? "共有メニューを開けませんでした。もう一度ボタンを押してみてね。うまくいかないときは、" + fallback :
+        (withText ? "シェアできませんでした。" : "共有メニューで送れませんでした。") + fallback + (withText ? "保存してから、SNS に投稿してね。" : ""));
+    }).then(function () { sharing = false; });
+  }
+
+  // ダウンロード：保存できたかはブラウザから分からないので、完了とは言わずに確かめ方を案内する
+  function downloadStatus() {
+    var device = deviceKind();
+    return device === "ios" ?
+      "ダウンロードの確認が出たら「ダウンロード」を押してね。保存先は「ファイル」アプリです。写真アプリに入れたいときは、上の画像を長押しして「“写真”に追加」を選んでね。" :
+      device === "android" ?
+      "ダウンロードを始めました。保存できたかは、ブラウザのダウンロード一覧で確認してね。始まらないときは、上の画像を長押しして「画像をダウンロード」を選んでね。" :
+      "ダウンロードを始めました。保存できたかは、ブラウザのダウンロード一覧で確認してね。始まらないときは、上の画像を長押し（右クリック）して保存してね。";
   }
 
   // ---- ホーム画面への追加 ----
@@ -705,11 +817,11 @@
   $("type-view-saved-btn").addEventListener("click", openSavedType);
   $("to-daily-btn").addEventListener("click", openDaily);
   $("share-btn").addEventListener("click", openSharePanel);
-  $("share-image-btn").addEventListener("click", shareTypeImage);
+  $("share-save-btn").addEventListener("click", function () { openShareMenu(false); });
+  $("share-image-btn").addEventListener("click", function () { openShareMenu(true); });
   $("share-save-link").addEventListener("click", function (e) {
     if (!shareImage || !shareImage.url) { e.preventDefault(); shareStatus("画像の準備ができていません。少し待ってから、もう一度押してね。"); return; }
-    // 保存できたかはブラウザから分からないので、完了とは言わずに案内する
-    shareStatus("保存の画面を開きました。開かないときは、上の画像を長押しして「写真に追加」してね。");
+    shareStatus(downloadStatus());
   });
   $("share-copy-btn").addEventListener("click", function () {
     if (!shownType) return;

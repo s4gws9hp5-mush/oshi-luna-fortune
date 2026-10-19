@@ -227,12 +227,18 @@
       <!-- シェア画像（タイプごとに作り直す） -->
       <div class="share-panel" id="share-panel" hidden>
         <p class="share-panel-title">📸 シェア用の画像</p>
-        <img class="share-preview" id="share-preview" width="1080" height="1350" alt="推し活タイプのシェア画像">
-        <button type="button" class="btn btn-primary" id="share-image-btn" hidden>画像をシェアする</button>
-        <a class="btn btn-ghost" id="share-save-link" download="oshi-luna-type.png" href="#">画像を保存する</a>
-        <button type="button" class="btn btn-ghost" id="share-copy-btn">タイプ名とURLをコピー</button>
+        <img class="share-preview" id="share-preview" width="1080" height="1920" alt="推し活タイプ取扱説明書の画像">
         <p class="share-hint" id="share-hint"></p>
+        <button type="button" class="btn btn-primary" id="share-save-btn" hidden><span class="nowrap">📥 写真アプリに保存する・</span><span class="nowrap">共有する</span></button>
+        <button type="button" class="btn btn-ghost" id="share-image-btn" hidden>画像をシェアする</button>
+        <a class="btn btn-ghost" id="share-save-link" download="推しルナ占い.png" href="#"><span class="nowrap">画像ファイルを</span><span class="nowrap">ダウンロードする</span></a>
+        <button type="button" class="btn btn-ghost" id="share-copy-btn">タイプ名とURLをコピー</button>
         <p class="share-status" id="share-status" role="status" aria-live="polite"></p>
+        <div class="share-guide" id="share-guide" hidden>
+          <p class="share-guide-title" id="share-guide-title">保存のしかた</p>
+          <ol class="share-steps" id="share-steps"></ol>
+          <p class="share-guide-note" id="share-guide-note"></p>
+        </div>
       </div>
       <button type="button" class="btn btn-ghost" id="retry-btn">もう一度診断する</button>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>

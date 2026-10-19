@@ -89,6 +89,15 @@
     ctx.closePath();
   }
 
+  // 色を混ぜる（"#rrggbb" どうし。t は b の割合）
+  function rgbOf(hex) { var n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function mix(a, b, t) {
+    var x = rgbOf(a), y = rgbOf(b);
+    return "rgb(" + x.map(function (v, i) { return Math.round(v + (y[i] - v) * t); }).join(",") + ")";
+  }
+  function rgba(hex, a) { return "rgba(" + rgbOf(hex).join(",") + "," + a + ")"; }
+
+  // ---- 飾り（キラキラ・星・ハート・三日月・リボン）----
   function sparkle(ctx, x, y, r, color) {
     ctx.save();
     ctx.fillStyle = color;
@@ -98,6 +107,72 @@
     ctx.quadraticCurveTo(x, y, x, y + r);
     ctx.quadraticCurveTo(x, y, x - r, y);
     ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function star(ctx, x, y, r, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.lineJoin = "round";
+    ctx.lineWidth = r * 0.22;
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.5 : r;
+      ctx[i ? "lineTo" : "moveTo"](x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function heart(ctx, x, y, s, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y + s * 0.85);
+    ctx.bezierCurveTo(x - s * 1.3, y, x - s * 0.7, y - s * 1.05, x, y - s * 0.38);
+    ctx.bezierCurveTo(x + s * 0.7, y - s * 1.05, x + s * 1.3, y, x, y + s * 0.85);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 三日月：円から、右上にずらした円を切り抜いた形
+  function moon(ctx, x, y, r, color) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.beginPath();
+    ctx.rect(x - r - 1, y - r - 1, r * 2 + 2, r * 2 + 2);
+    ctx.arc(x + r * 0.42, y - r * 0.32, r * 0.8, 0, Math.PI * 2, true);
+    ctx.fillStyle = color;
+    ctx.fill("evenodd");
+    ctx.restore();
+  }
+
+  function bow(ctx, x, y, s, color, knot) {
+    ctx.save();
+    ctx.fillStyle = color;
+    [-1, 1].forEach(function (d) {
+      ctx.beginPath(); // 垂れ
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + d * s * 0.62, y + s * 1.05);
+      ctx.lineTo(x + d * s * 0.36, y + s * 0.9);
+      ctx.lineTo(x + d * s * 0.2, y + s * 1.12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath(); // 輪
+      ctx.moveTo(x, y);
+      ctx.bezierCurveTo(x + d * s * 0.5, y - s * 0.9, x + d * s * 1.35, y - s * 0.7, x + d * s * 1.15, y);
+      ctx.bezierCurveTo(x + d * s * 1.35, y + s * 0.7, x + d * s * 0.5, y + s * 0.9, x, y);
+      ctx.fill();
+    });
+    ctx.fillStyle = knot;
+    ctx.beginPath();
+    ctx.arc(x, y, s * 0.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -116,183 +191,373 @@
     });
   }
 
-  var CARD = { x: 60, y: 70, w: W - 120, h: H - 140 };   // 白いカード
-  var LEFT = 130, TEXT_W = W - 260;                       // 本文の左端と幅
-  var CTA_TOP = H - 400;                                  // 下の誘導エリア（ここより上に本文を収める）
+  var CARD = { x: 44, y: 44, w: W - 88, h: H - 88 };     // 白いカード
+  var TEXT_W = W - 200;                                   // タイプ名などの幅
+  var PX = 96, PW = W - 192, COL_GAP = 24;                // 説明のパネルの左端と幅
+  var CTA_TOP = H - 340;                                  // 下の誘導エリア（ここより上に説明を収める）
 
-  function background(ctx) {
+  function background(ctx, theme) {
     var bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#ffe3f0");
-    bg.addColorStop(0.5, "#efe4ff");
+    bg.addColorStop(0.5, mix("#efe4ff", theme, 0.3));
     bg.addColorStop(1, "#dcefff");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-    [[90, 40, 16, "#ffffff"], [990, 46, 13, "#f6d36b"], [40, 1880, 14, "#c9b8f0"], [1030, 1878, 16, "#ffffff"], [960, 36, 7, "#ffb3cf"]]
+    [[24, 24, 14, "#ffffff"], [1050, 30, 12, "#f6d36b"], [22, 1890, 13, "#c9b8f0"], [1054, 1886, 15, "#ffffff"], [540, 22, 9, "#ffffff"]]
       .forEach(function (p) { sparkle(ctx, p[0], p[1], p[2], p[3]); });
     ctx.save();
-    ctx.shadowColor = "rgba(166, 140, 232, 0.28)";
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetY = 12;
-    roundRect(ctx, CARD.x, CARD.y, CARD.w, CARD.h, 60);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.93)";
+    ctx.shadowColor = "rgba(166, 140, 232, 0.3)";
+    ctx.shadowBlur = 36;
+    ctx.shadowOffsetY = 10;
+    roundRect(ctx, CARD.x, CARD.y, CARD.w, CARD.h, 64);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.fill();
+    ctx.restore();
+    // ふちの点線（ステッチ）はタイプの色
+    ctx.save();
+    roundRect(ctx, CARD.x + 16, CARD.y + 16, CARD.w - 32, CARD.h - 32, 50);
+    ctx.setLineDash([14, 12]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = rgba(theme, 0.85);
+    ctx.stroke();
     ctx.restore();
   }
 
-  // 左寄せの見出し（タイプの色のラベル）
-  function label(ctx, text, y, color, size) {
+  // 「推し活タイプ取扱説明書」のリボン帯
+  function banner(ctx, text, y, size) {
     ctx.font = "700 " + size + "px " + FONT;
-    var w = ctx.measureText(text).width + size * 1.6, h = size * 1.7;
-    roundRect(ctx, LEFT, y, w, h, h / 2);
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.5;
+    var h = Math.round(size * 1.9), w = ctx.measureText(text).width + size * 2.4, x = W / 2 - w / 2;
+    ctx.fillStyle = "#f4c2dc";
+    [[x, -1], [x + w, 1]].forEach(function (p) {
+      var e = p[0], d = p[1];
+      ctx.beginPath();
+      ctx.moveTo(e - d * h * 0.4, y + h * 0.3);
+      ctx.lineTo(e + d * h * 0.75, y + h * 0.3);
+      ctx.lineTo(e + d * h * 0.48, y + h * 0.72);
+      ctx.lineTo(e + d * h * 0.75, y + h * 1.12);
+      ctx.lineTo(e - d * h * 0.4, y + h * 1.12);
+      ctx.closePath();
+      ctx.fill();
+    });
+    var g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, "#ffd3e7");
+    g.addColorStop(1, "#e4d8ff");
+    roundRect(ctx, x, y, w, h, 16);
+    ctx.fillStyle = g;
     ctx.fill();
-    ctx.globalAlpha = 1;
-    sparkle(ctx, LEFT + size * 0.55, y + h / 2, size * 0.28, "#ffffff");
     ctx.fillStyle = INK;
-    ctx.textAlign = "left";
-    ctx.fillText(text, LEFT + size * 0.95, y + (h - size) / 2);
+    ctx.textAlign = "center";
+    ctx.fillText(text, W / 2, y + (h - size) / 2);
+    sparkle(ctx, x + size * 0.75, y + h / 2, size * 0.32, "#ffffff");
+    sparkle(ctx, x + w - size * 0.75, y + h / 2, size * 0.32, "#ffffff");
     return y + h;
   }
 
-  // 本文の改行：1行に入らなければ、句読点 → 助詞の順に、2行の長さがいちばんそろう位置で分ける
-  function wrapBody(ctx, text, maxWidth) {
-    if (ctx.measureText(text).width <= maxWidth) return [text];
-    var groups = ["、。！？♡」”", "をがはのも"];
-    for (var i = 0; i < groups.length; i++) {
-      var s = splitTwo(ctx, text, groups[i]);
-      if (s && s.w <= maxWidth) return s.lines;
-    }
-    return wrap(ctx, text, maxWidth);
+  // 改行の位置ごとの「不自然さ」（小さいほど自然）。text の i 文字目の前で改行する場合。-1 は改行できない
+  var OPENING = "「“（(";
+  function isHira(c) { return c >= "ぁ" && c <= "ゖ"; }
+  // 途中で分けない言葉（ひらがなの言葉は、助詞と見分けがつかないことがあるため）
+  var KEEP_WORDS = ["ひと息", "ひと言", "ひとり", "そっと", "もっと", "ずっと", "きっと", "ちょっと", "とき", "やさし", "あたたか",
+    "うれし", "のんびり", "おしゃべり", "しっかり", "じっくり", "ゆっくり", "すてき", "まっすぐ", "どんどん", "おおらか", "なきゃ", "盛り上がろう"];
+  function insideWord(text, i) {
+    return KEEP_WORDS.some(function (w) {
+      for (var at = text.indexOf(w); at >= 0; at = text.indexOf(w, at + 1)) if (i > at && i < at + w.length) return true;
+      return false;
+    });
+  }
+  function breakCost(text, i) {
+    var a = text.charAt(i - 1), b = text.charAt(i), a2 = text.charAt(i - 2);
+    if (NO_LINE_START.indexOf(b) >= 0 || OPENING.indexOf(a) >= 0) return -1;
+    if (insideWord(text, i)) return 8;
+    if ("」”".indexOf(a) >= 0 && PARTICLES.indexOf(b) >= 0) return 6; // 「〜」／と
+    if ("、。！？♡」”".indexOf(a) >= 0) return 0;          // 句読点のあと
+    if (OPENING.indexOf(b) >= 0) return 1;                  // かぎかっこの前
+    if (a === "て" && isHira(b)) return 3;                  // 「〜して／あげて」「聞いて／もらえる」
+    if (b === "で" && text.charAt(i + 1) === "き") return 2; // 「／できる」
+    // 助詞から行を始めない。ただし後ろがひらがなのときは「やさしく」「とっても」など言葉の頭のことも多い
+    if (PARTICLES.indexOf(b) >= 0) return isHira(text.charAt(i + 1)) ? 3 : 8;
+    if ("をがはのにへとやな".indexOf(a) >= 0 && "てでっ".indexOf(a2) < 0) return 1; // 助詞のあと
+    if (a === "も" && "てで".indexOf(a2) < 0) return 2;
+    if (isHira(a) && !isHira(b)) return 2;                  // ひらがな → 漢字・カタカナ
+    return 8;                                               // 言葉の途中（できるだけ使わない）
   }
 
-  // 左寄せの本文（prefix があれば2行目以降を字下げ）
-  function body(ctx, text, y, size, prefix, record) {
+  // できるだけ少ない行数で、自然な位置で、行の長さがそろうように分ける
+  function wrapNice(ctx, text, maxWidth) {
+    var n = text.length, cache = {}, em = ctx.measureText("あ").width;
+    function width(s, e) { var k = s + ":" + e; return k in cache ? cache[k] : (cache[k] = ctx.measureText(text.slice(s, e)).width); }
+    if (width(0, n) <= maxWidth) return [text];
+    var cost = [];
+    for (var i = 1; i < n; i++) cost[i] = breakCost(text, i);
+    var found = null;
+    for (var count = 2; count <= 5; count++) {
+      var best = null;
+      (function search(start, left, cuts, total, worst) {
+        if (left === 1) {
+          if (width(start, n) > maxWidth) return;
+          var ws = [], prev = 0;
+          cuts.concat([n]).forEach(function (c) { ws.push(width(prev, c)); prev = c; });
+          var score = total * 3 + (Math.max.apply(null, ws) - Math.min.apply(null, ws)) / em;
+          if (!best || score < best.score) best = { score: score, cuts: cuts, worst: worst };
+          return;
+        }
+        for (var c = start + 1; c < n; c++) {
+          if (width(start, c) > maxWidth) break;
+          if (cost[c] >= 0) search(c, left - 1, cuts.concat([c]), total + cost[c], Math.max(worst, cost[c]));
+        }
+      })(0, count, [], 0, 0);
+      if (!best) { if (found) break; continue; }
+      if (best.worst < 8) { found = best; break; }   // 自然な位置だけで切れた
+      if (found) break;                              // 1行増やしても無理なら、少ない行数のほうを使う
+      found = best;                                  // 言葉の途中で切るしかないときは、1行増やして試す
+    }
+    if (!found) return wrap(ctx, text, maxWidth);
+    var lines = [], from = 0;
+    found.cuts.concat([n]).forEach(function (c) { lines.push(text.slice(from, c)); from = c; });
+    return lines;
+  }
+
+  // パネルの本文の行（項目が2つ以上なら「・」をつけ、2行目以降は字下げ）
+  function panelLines(ctx, items, size, width) {
     ctx.font = "400 " + size + "px " + FONT;
+    var prefix = items.length > 1 ? "・" : "", indent = prefix ? ctx.measureText(prefix).width : 0, out = [];
+    items.forEach(function (t) {
+      wrapNice(ctx, t, width - indent).forEach(function (line, i) {
+        out.push({ prefix: i === 0 ? prefix : "", indent: indent, text: line });
+      });
+    });
+    return out;
+  }
+
+  function panelPad(w) { return w < PW ? 26 : 34; } // パネルの左右の余白
+  function panelHeight(p) { return p.tab / 2 + 12 + (p.lines.length - 1) * p.size * 1.5 + p.size + 24; }
+
+  // 見出しのタブつきのパネル（タブはパネルの上のふちに重ねる）
+  function panel(ctx, p, theme, record) {
+    roundRect(ctx, p.x, p.y, p.w, p.h, 30);
+    ctx.fillStyle = mix(theme, "#ffffff", 0.8);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = rgba(theme, 0.8);
+    ctx.stroke();
+
+    ctx.font = "700 " + p.ls + "px " + FONT;
+    var th = p.tab, br = th * 0.36;
+    var tw = th / 2 + br + p.ls * 0.4 + ctx.measureText(p.title).width + p.ls * 0.8, tx = p.x + 24, ty = p.y - th / 2;
+    roundRect(ctx, tx, ty, tw, th, th / 2);
+    ctx.fillStyle = theme;
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#ffffff";
+    ctx.stroke();
+    var bx = tx + th / 2, by = ty + th / 2;
+    ctx.beginPath();
+    ctx.arc(bx, by, br, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    p.icon(ctx, bx, by, br * 0.62);
     ctx.fillStyle = INK;
     ctx.textAlign = "left";
-    var indent = prefix ? ctx.measureText(prefix).width : 0;
-    var lines = wrapBody(ctx, text, TEXT_W - indent);
-    var lh = size * 1.55;
-    lines.forEach(function (line, i) {
-      if (prefix && i === 0) ctx.fillText(prefix, LEFT, y);
-      ctx.fillText(line, LEFT + indent, y);
-      record.push({ text: (prefix && i === 0 ? prefix : "") + line, x: LEFT, w: indent + ctx.measureText(line).width, size: size });
-      y += lh;
+    ctx.fillText(p.title, bx + br + p.ls * 0.4, ty + (th - p.ls) / 2);
+
+    ctx.font = "400 " + p.size + "px " + FONT;
+    var x = p.x + panelPad(p.w), y = p.y + th / 2 + 12;
+    p.lines.forEach(function (l) {
+      if (l.prefix) ctx.fillText(l.prefix, x, y);
+      ctx.fillText(l.text, x + l.indent, y);
+      record.push({ text: l.prefix + l.text, x: x, w: l.indent + ctx.measureText(l.text).width, size: p.size });
+      y += p.size * 1.5;
     });
-    return y;
   }
 
-  // 1回分の描画。step.cat で白猫と余白、step.font で文字の大きさを変える。描いた範囲を返す
+  // 見出しのアイコン（白い丸の中に描く）
+  var ICONS = {
+    moon: function (ctx, x, y, r) { moon(ctx, x - r * 0.1, y + r * 0.05, r * 1.05, "#f0c43c"); },
+    star: function (ctx, x, y, r) { star(ctx, x, y + r * 0.08, r * 1.05, "#a68ce8"); },
+    bow: function (ctx, x, y, r) { bow(ctx, x, y - r * 0.2, r * 0.78, "#f7a1c4", "#f07fb2"); },
+    heart: function (ctx, x, y, r) { heart(ctx, x, y + r * 0.08, r * 0.95, "#f07fb2"); }
+  };
+
+  // 1回分の描画。step.cat で白猫の大きさ、step.gap で余白、step.font で文字の大きさを変える。描いた範囲を返す
   function render(canvas, type, catImg, siteText, step) {
-    var scale = step.cat;
     var ctx = canvas.getContext("2d");
-    var lines = [];
+    var theme = type.color, records = [];
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
-    background(ctx);
+    background(ctx, theme);
 
     // 1. サービス名と見出し
-    ctx.font = "700 46px " + FONT;
+    ctx.font = "700 48px " + FONT;
     var title = ctx.createLinearGradient(W / 2 - 180, 0, W / 2 + 180, 0);
     title.addColorStop(0, "#f59cc4");
     title.addColorStop(0.55, LAVENDER);
     title.addColorStop(1, "#8cc3ee");
     ctx.fillStyle = title;
-    ctx.fillText("推しルナ占い", W / 2, 118);
-    ctx.font = "400 28px " + FONT;
+    ctx.fillText("推しルナ占い", W / 2, 86);
+    var tw = ctx.measureText("推しルナ占い").width;
+    star(ctx, W / 2 - tw / 2 - 40, 110, 16, "#f6d36b");
+    heart(ctx, W / 2 + tw / 2 + 40, 110, 16, "#f7a1c4");
+    var y = banner(ctx, "推し活タイプ取扱説明書", 154, 30);
+    ctx.font = "400 30px " + FONT;
     ctx.fillStyle = INK_SOFT;
-    ctx.fillText("─ 推し活タイプ取扱説明書 ─", W / 2, 178);
-    ctx.font = "400 36px " + FONT;
-    ctx.fillText("あなたの推し活タイプは", W / 2, 232);
+    ctx.textAlign = "center";
+    ctx.fillText("あなたの推し活タイプは", W / 2, y + 26);
 
-    // 2. タイプの白猫（タイプの色の円の中に、縦横比を保って描く）
-    var r = Math.round(150 * scale), cy = 290 + r + 14;
+    // 2. タイプの白猫（主役。タイプの色の輪の中に、縦横比を保って描く）
+    var extra = step.extra || 0; // 説明が短いタイプは、余った高さを余白に分ける
+    var R = Math.round(176 * step.cat), cy = y + 26 + 30 + 40 + Math.round(10 * step.gap) + extra + R;
+    var glow = ctx.createRadialGradient(W / 2, cy, R * 0.6, W / 2, cy, R + 150);
+    glow.addColorStop(0, rgba(theme, 0.38));
+    glow.addColorStop(1, rgba(theme, 0));
+    ctx.fillStyle = glow;
+    ctx.fillRect(W / 2 - R - 150, cy - R - 150, (R + 150) * 2, (R + 150) * 2);
     ctx.beginPath();
-    ctx.arc(W / 2, cy, r + 14, 0, Math.PI * 2);
-    ctx.fillStyle = type.color;
-    ctx.globalAlpha = 0.45;
+    ctx.arc(W / 2, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = rgba(theme, 0.6);
     ctx.fill();
-    ctx.globalAlpha = 1;
     ctx.beginPath();
-    ctx.arc(W / 2, cy, r, 0, Math.PI * 2);
+    ctx.arc(W / 2, cy, R - 14, 0, Math.PI * 2);
     ctx.fillStyle = "#ffffff";
     ctx.fill();
-    var size = r * 1.8;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(W / 2, cy, R - 26, 0, Math.PI * 2);
+    ctx.setLineDash([8, 10]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = rgba(theme, 0.9);
+    ctx.stroke();
+    ctx.restore();
+    var size = (R - 14) * 1.8;
     var k = Math.min(size / catImg.naturalWidth, size / catImg.naturalHeight);
     var iw = catImg.naturalWidth * k, ih = catImg.naturalHeight * k;
     ctx.drawImage(catImg, W / 2 - iw / 2, cy - ih / 2, iw, ih);
+    bow(ctx, W / 2, cy - R + 4, 36, "#f7a1c4", "#f07fb2");
+    // 白猫のまわりの飾り（文字にかからない左右の余白だけ）
+    var L = W / 2 - R, Rt = W / 2 + R;
+    moon(ctx, L - 100, cy - 70, 52, "#f6d36b");
+    sparkle(ctx, L - 165, cy + 10, 16, "#c9b8f0");
+    star(ctx, L - 80, cy + 92, 22, "#c9b8f0");
+    heart(ctx, L - 150, cy + 128, 16, "#ffc6dd");
+    star(ctx, Rt + 92, cy - 88, 32, "#f6d36b");
+    sparkle(ctx, Rt + 160, cy - 20, 15, "#9fd0f2");
+    heart(ctx, Rt + 88, cy + 56, 28, "#f7a1c4");
+    sparkle(ctx, Rt + 150, cy + 122, 12, "#f6d36b");
 
-    // 3. タイプ名とキャッチコピー（いちばん目立たせる）
-    var name = fitPhrase(ctx, type.name, "700", [76, 70, 64, 60], [64, 58, 54], TEXT_W, "のなと");
+    // 3. タイプ名（タイプの色のマーカーつき）とキャッチコピー（吹き出し）
+    var name = fitPhrase(ctx, type.name, "700", [76, 70, 64, 60], [66, 62, 58, 54], TEXT_W, "のなと");
     ctx.font = "700 " + name.size + "px " + FONT;
-    ctx.fillStyle = INK;
     ctx.textAlign = "center";
-    var y = centerLines(ctx, name.lines, cy + r + 34, name.size * 1.25);
-    var catchText = fitPhrase(ctx, type.catch, "700", [40, 36], [38, 34, 32], TEXT_W, "、。");
-    ctx.font = "700 " + catchText.size + "px " + FONT;
-    ctx.fillStyle = PINK;
-    y = centerLines(ctx, catchText.lines, y + 16, catchText.size * 1.45);
+    y = cy + R + Math.round(26 * step.gap);
+    name.lines.forEach(function (line, i) {
+      var ly = y + i * name.size * 1.22, lw = ctx.measureText(line).width;
+      roundRect(ctx, W / 2 - lw / 2 - 14, ly + name.size * 0.6, lw + 28, name.size * 0.42, name.size * 0.2);
+      ctx.fillStyle = rgba(theme, 0.55);
+      ctx.fill();
+      ctx.fillStyle = INK;
+      ctx.fillText(line, W / 2, ly);
+    });
+    y += name.lines.length * name.size * 1.22;
 
-    // 4. 取扱説明書（どんな人？・輝くところ・取り扱いのコツ・仲良くなるヒント）
+    var catchText = fitPhrase(ctx, type.catch, "700", [40, 38, 36], [38, 36, 34, 32], TEXT_W - 100, "、。");
+    var cs = catchText.size, clh = cs * 1.42;
+    ctx.font = "700 " + cs + "px " + FONT;
+    var cw = Math.max.apply(null, catchText.lines.map(function (l) { return ctx.measureText(l).width; })) + 84;
+    var ch = (catchText.lines.length - 1) * clh + cs + 36, cyTop = y + Math.round(12 * step.gap);
+    roundRect(ctx, W / 2 - cw / 2, cyTop, cw, ch, Math.min(40, ch / 2));
+    ctx.fillStyle = "#fff2f8";
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = rgba(PINK, 0.55);
+    ctx.stroke();
+    heart(ctx, W / 2 - cw / 2 + 4, cyTop + 6, 14, "#f7a1c4");
+    sparkle(ctx, W / 2 + cw / 2 - 4, cyTop + ch - 6, 14, "#f6d36b");
+    ctx.fillStyle = "#e3649e";
+    centerLines(ctx, catchText.lines, cyTop + 18, clh);
+    y = cyTop + ch;
+
+    // 4. 取扱説明書：パネルを3段（どんな人？／推し活で輝くところ／取り扱いのコツ＋仲良くなるヒント）
     // 文字は読みやすさを優先して下限を決める（見出し28px・本文30px以上）
-    var ls = Math.max(28, Math.round(30 * step.font)), bs = Math.max(30, Math.round(34 * step.font)), gap = Math.round(24 * scale);
-    y += Math.round(36 * scale);
-    y = label(ctx, "どんな人？", y, type.color, ls) + 12;
-    y = body(ctx, type.card.traits, y, bs, "", lines) + gap;
-    y = label(ctx, "推し活で輝くところ", y, type.color, ls) + 12;
-    type.strengths.slice(0, 2).forEach(function (t) { y = body(ctx, t, y, bs, "・", lines); });
-    y += gap;
-    y = label(ctx, "取り扱いのコツ", y, type.color, ls) + 12;
-    y = body(ctx, type.card.care, y, bs, "", lines) + gap;
-    y = label(ctx, "仲良くなるヒント", y, type.color, ls) + 12;
-    y = body(ctx, type.card.friend, y, bs, "", lines);
+    var ls = Math.max(28, Math.round(30 * step.font)), bs = Math.max(30, Math.round(32 * step.font));
+    var tab = Math.round(ls * 1.75), gap = Math.round(16 * step.gap) + tab / 2;
+    var half = (PW - COL_GAP) / 2;
+    function make(x, w, title, icon, items) {
+      var size = w < PW ? 30 : bs; // 2列のパネルは30px（読める大きさの下限）
+      return { x: x, w: w, title: title, icon: ICONS[icon], ls: ls, size: size, tab: tab, lines: panelLines(ctx, items, size, w - panelPad(w) * 2) };
+    }
+    var rows = [
+      [make(PX, PW, "どんな人？", "moon", [type.card.traits])],
+      [make(PX, PW, "推し活で輝くところ", "star", type.strengths.slice(0, 2))],
+      [make(PX, half, "取り扱いのコツ", "bow", [type.card.care]), make(PX + half + COL_GAP, half, "仲良くなるヒント", "heart", [type.card.friend])]
+    ];
+    y += Math.round(22 * step.gap) + extra + tab / 2;
+    rows.forEach(function (row, i) {
+      var h = Math.max.apply(null, row.map(panelHeight));
+      row.forEach(function (p) { p.y = y; p.h = h; panel(ctx, p, theme, records); });
+      y += h + (i < rows.length - 1 ? gap + extra : 0);
+    });
     var sectionsBottom = y;
 
     // 5. 診断への誘導・ハッシュタグ・サイトのアドレス（カードの下にそろえる）
     ctx.textAlign = "center";
-    var boxY = CTA_TOP + 20, boxH = 150;
-    var cta = ctx.createLinearGradient(LEFT, 0, LEFT + TEXT_W, 0);
+    var boxY = CTA_TOP + 16, boxH = 136;
+    var cta = ctx.createLinearGradient(PX, 0, PX + PW, 0);
     cta.addColorStop(0, "#ffe3f0");
     cta.addColorStop(1, "#ebe2ff");
-    roundRect(ctx, LEFT - 10, boxY, TEXT_W + 20, boxH, 34);
+    roundRect(ctx, PX, boxY, PW, boxH, 34);
     ctx.fillStyle = cta;
     ctx.fill();
-    ctx.font = "700 36px " + FONT;
+    ctx.save();
+    ctx.setLineDash([10, 8]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = rgba(PINK, 0.6);
+    ctx.stroke();
+    ctx.restore();
+    heart(ctx, PX + 52, boxY + boxH / 2, 22, "#f7a1c4");
+    heart(ctx, PX + PW - 52, boxY + boxH / 2, 22, "#c9b8f0");
+    ctx.font = "700 34px " + FONT;
     ctx.fillStyle = INK;
-    ctx.fillText("あなたは何タイプ？", W / 2, boxY + 26);
+    ctx.fillText("あなたは何タイプ？", W / 2, boxY + 20);
     ctx.font = "700 38px " + FONT;
-    ctx.fillStyle = PINK;
-    ctx.fillText("無料の推し活タイプ診断はこちら♡", W / 2, boxY + 82);
-    ctx.font = "700 40px " + FONT;
+    ctx.fillStyle = "#e3649e";
+    ctx.fillText("無料の推し活タイプ診断はこちら♡", W / 2, boxY + 72);
+    ctx.font = "700 38px " + FONT;
     ctx.fillStyle = LAVENDER;
-    ctx.fillText("#推しルナ占い", W / 2, boxY + boxH + 30);
-    var site = fitText(ctx, siteText, "400", [32, 28, 24], TEXT_W, 1);
-    ctx.font = "400 " + site.size + "px " + FONT;
-    ctx.fillStyle = INK_SOFT;
-    ctx.fillText(site.lines.join(""), W / 2, boxY + boxH + 90);
+    ctx.fillText("#推しルナ占い", W / 2, boxY + boxH + 20);
+    var site = fitText(ctx, siteText, "700", [32, 30, 28, 24], TEXT_W, 1);
+    ctx.font = "700 " + site.size + "px " + FONT;
+    ctx.fillStyle = INK;
+    var siteY = boxY + boxH + 74;
+    ctx.fillText(site.lines.join(""), W / 2, siteY);
 
     return {
-      scale: step, sectionsBottom: sectionsBottom, ctaTop: CTA_TOP, siteBottom: boxY + boxH + 90 + site.size,
-      cardBottom: CARD.y + CARD.h, nameLines: name.lines, catchLines: catchText.lines, bodyLines: lines,
-      minFont: Math.min(bs, ls, site.size, catchText.size)
+      scale: step, sectionsBottom: sectionsBottom, ctaTop: CTA_TOP, siteBottom: siteY + site.size,
+      cardBottom: CARD.y + CARD.h - 16, catRadius: R, nameLines: name.lines, catchLines: catchText.lines, bodyLines: records,
+      minFont: Math.min(bs, ls, site.size, cs, 30)
     };
   }
 
   // type: data.js の TYPES の1タイプ、siteText: 画像に入れるサイトのアドレス
-  // 本文が下の誘導エリアにかからない大きさになるまで、少しずつ小さくして描き直す
+  // 説明が下の誘導エリアにかからない大きさになるまで、少しずつ小さくして描き直す
   function draw(canvas, type, catImg, siteText) {
     canvas.width = W;
     canvas.height = H;
-    // まず白猫と余白を小さくし、それでも入らないときだけ文字を小さくする
+    // 大きい順に試す。入らなければ、まず余白、次に白猫を少し小さくし、最後に文字を小さくする（下限あり）
     var steps = [
-      { cat: 1.1, font: 1.1 }, { cat: 1.0, font: 1.06 }, { cat: 0.9, font: 1.02 },
-      { cat: 0.8, font: 0.98 }, { cat: 0.72, font: 0.94 }, { cat: 0.66, font: 0.9 }
-    ], layout;
+      { cat: 1.12, gap: 1.3, font: 1.06 }, { cat: 1.06, gap: 1.15, font: 1.06 }, { cat: 1.0, gap: 1.0, font: 1.03 },
+      { cat: 1.0, gap: 0.8, font: 1.0 }, { cat: 0.94, gap: 0.65, font: 1.0 }, { cat: 0.9, gap: 0.5, font: 0.97 },
+      { cat: 0.86, gap: 0.4, font: 0.94 }
+    ], layout, step;
     for (var i = 0; i < steps.length; i++) {
+      step = steps[i];
       canvas.getContext("2d").clearRect(0, 0, W, H);
-      layout = render(canvas, type, catImg, siteText, steps[i]);
+      layout = render(canvas, type, catImg, siteText, step);
       if (layout.sectionsBottom <= CTA_TOP) break;
+    }
+    // まだ下が空いていたら、その分を4か所の余白に分けて描き直す（下の誘導との間が空きすぎないように）
+    var slack = CTA_TOP - layout.sectionsBottom;
+    if (slack > 24) {
+      canvas.getContext("2d").clearRect(0, 0, W, H);
+      layout = render(canvas, type, catImg, siteText, { cat: step.cat, gap: step.gap, font: step.font, extra: Math.floor(Math.min(slack - 16, 160) / 4) });
     }
     canvas.layout = layout;
     return canvas;

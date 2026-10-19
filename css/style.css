@@ -261,8 +261,22 @@ body::before {
   -webkit-touch-callout: default; /* 長押しで保存できるように */
 }
 .share-preview[hidden] { display: none; }
-.share-hint { margin: 12px 0 0; font-size: 0.82rem; line-height: 1.7; color: var(--ink-soft); }
-.share-status { min-height: 1.6em; margin: 8px 0 0; font-size: 0.9rem; font-weight: 700; color: var(--pink-deep); }
+.share-hint { margin: 12px 0 4px; font-size: 0.82rem; line-height: 1.7; color: var(--ink-soft); }
+.share-hint:empty { display: none; }
+.share-status { min-height: 1.6em; margin: 8px 0 0; font-size: 0.9rem; font-weight: 700; line-height: 1.6; color: var(--pink-deep); }
+.share-guide {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  text-align: left;
+  background: #fff7fb;
+  border-radius: 16px;
+}
+.share-guide[hidden] { display: none; }
+.share-guide-title { margin: 0 0 6px; font-size: 0.88rem; font-weight: 700; color: var(--lavender-deep); }
+.share-steps { margin: 0; padding-left: 1.4em; font-size: 0.84rem; line-height: 1.7; color: var(--ink); }
+.share-steps li + li { margin-top: 4px; }
+.share-guide-note { margin: 8px 0 0; font-size: 0.78rem; line-height: 1.7; color: var(--ink-soft); }
+.share-guide-note:empty { display: none; }
 .daily-note { margin: 0; text-align: center; font-size: 0.78rem; color: var(--ink-soft); }
 .note { text-align: center; font-size: 0.8rem; color: var(--ink-soft); margin-top: 14px; }
 
