@@ -11,7 +11,8 @@
     quiz: "oshi-luna-quiz",   // 診断の途中の回答 { version, answers }
     daily: "oshi-luna-daily", // 今日の推し活占いの履歴 { version, history: [結果, ...] }（新しい順・最大7日分）
     legacy: "oshi-luna-last", // 旧4問版の診断の回答（読むだけ。消さない）
-    a2hs: "oshi-luna-a2hs"    // ホーム画面への追加の案内を閉じたかどうか { dismissed }（表示の設定のみ）
+    a2hs: "oshi-luna-a2hs",   // ホーム画面への追加の案内を閉じたかどうか { dismissed }（表示の設定のみ）
+    device: "oshi-luna-device" // 今日の運勢を一人ひとり変えるためのランダムなID { version, id }（運勢の計算にだけ使う）
   };
   var HISTORY_DAYS = 7;
 
@@ -52,6 +53,32 @@
     return ok ? v.answers : null;
   }
 
+  // ---- ブラウザごとのランダムなID（今日の運勢を一人ひとり変えるため） ----
+  // 名前や端末の情報は使わず、どこにも送らない。画面・シェア画像・URL・共有文にも出さない。
+  // 保存できない環境（プライベートブラウズなど）では null を返し、全員共通の運勢にする
+  // （読み込むたびに運勢が変わってしまわないように）
+  var deviceIdCache;
+  function randomId() {
+    var bytes = [], i;
+    try {
+      var buf = new Uint8Array(16);
+      window.crypto.getRandomValues(buf);
+      for (i = 0; i < 16; i++) bytes.push(buf[i]);
+    } catch (e) {
+      for (i = 0; i < 16; i++) bytes.push(Math.floor(Math.random() * 256) ^ ((Date.now() >> (i % 4) * 8) & 255));
+    }
+    return bytes.map(function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+  }
+  function deviceId() {
+    if (deviceIdCache !== undefined) return deviceIdCache;
+    var v = load(KEYS.device);
+    if (v && /^[0-9a-f]{32}$/.test(v.id)) return (deviceIdCache = v.id);
+    var id = randomId();
+    save(KEYS.device, { version: 1, id: id });
+    v = load(KEYS.device); // 本当に保存できたかを読み直して確かめる
+    return (deviceIdCache = v && v.id === id ? id : null);
+  }
+
   function isValidDaily(d) {
     return d && /^\d{4}-\d{2}-\d{2}$/.test(d.date) && d.luck && d.luck.stars >= 1 && d.luck.stars <= 5 &&
       d.luck.title && d.luck.text && Array.isArray(d.actions) && d.actions.length && d.lucky &&
@@ -68,7 +95,7 @@
     save(KEYS.daily, { version: 1, history: list.slice(0, HISTORY_DAYS) });
   }
 
-  // 日付のお試し表示：URL に ?preview-date=2026-10-19 を付けると、その日の占いを表示する（保存はしない）
+  // 日付のお試し表示：URL に ?preview-date=2026-10-19 を付けると、このブラウザのその日の占いを表示する（保存はしない）
   // 翌日の占いに保存したタイプが反映されるかを、日付が変わるのを待たずに確かめるためのもの
   var PREVIEW_DATE = (function () {
     var m = /[?&]preview-date=(\d{4}-\d{2}-\d{2})(?:&|$)/.exec(location.search);
@@ -82,8 +109,8 @@
     var key = todayKey();
     var saved = loadHistory().filter(function (x) { return x.date === key; })[0];
     if (saved) return saved;
-    if (PREVIEW_DATE) return F.getDailyFortune(new Date(PREVIEW_DATE + "T12:00:00+09:00"), savedTypeKey());
-    var d = F.getDailyFortune(new Date(), savedTypeKey());
+    if (PREVIEW_DATE) return F.getDailyFortune(new Date(PREVIEW_DATE + "T12:00:00+09:00"), savedTypeKey(), deviceId());
+    var d = F.getDailyFortune(new Date(), savedTypeKey(), deviceId());
     saveToHistory(d);
     return d;
   }
@@ -859,6 +886,7 @@
   window.addEventListener("pageshow", checkDate);
   window.addEventListener("focus", checkDate);
 
+  deviceId(); // はじめて開いたときに、運勢用のIDを用意しておく
   drawSky();
   checkDate();
 })();

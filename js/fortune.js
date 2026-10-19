@@ -79,12 +79,13 @@
   }
 
   // 候補を、リストごとに決まった並び（シャッフルした順番）で1日ずつ順番に出す。
-  // 並びは日付やタイプに関係なく固定なので、候補の数と同じ日数のあいだは同じものが出ず、
-  // 前の日と同じ内容が続くこともない（t は日付の番号。2つ選ぶときは 2日目 = 2t と 2t+1）
-  var orders = {};
+  // 並びはユーザーID（なければ全員共通）ごとに固定なので、同じ人には候補の数と同じ日数のあいだ
+  // 同じものが出ず、前の日と同じ内容が続くこともない（t は日付の番号。2つ選ぶときは 2t と 2t+1）
+  var orders = {}, orderCount = 0;
   function orderOf(n, salt) {
     var key = salt + "|" + n;
     if (orders[key]) return orders[key];
+    if (++orderCount > 2000) { orders = {}; orderCount = 1; } // たくさんのIDで計算するテスト用に、覚えておく数を抑える
     var rand = seededRandom(hash("order|" + key)), o = [];
     for (var i = 0; i < n; i++) o.push(i);
     for (var j = n - 1; j > 0; j--) {
@@ -102,38 +103,41 @@
     return [cycle(list, day * 2, salt), cycle(list, day * 2 + 1, salt)];
   }
 
+  // userId（ブラウザごとのランダムなID）があれば、「日本時間の日付＋ID」で一人ひとり違う運勢になる。
+  // userId がなければ、今までどおり日付だけで決まる全員共通の運勢。
   // typeKey（保存済みの推し活タイプ）があれば、メッセージ・ラッキーアクション・お守りの言葉をタイプに合わせる。
-  // 運勢の★・運勢文・ラッキーカラー/アイテム/時間帯・お守りは、タイプに関係なく全員同じ（不公平にしない）。
-  function getDailyFortune(date, typeKey) {
+  // 運勢の★・運勢文・ラッキーカラー/アイテム/時間帯・お守りはタイプを使わずに決める（タイプで有利・不利が出ない）。
+  function getDailyFortune(date, typeKey, userId) {
     var now = date || new Date();
     var key = jstDateKey(now);
     var day = jstDayNumber(now);
+    var u = userId ? "|u:" + userId : ""; // 並びと★の乱数を、ユーザーごとに変える
     // ★の数だけは日付ごとの乱数（出やすさに差をつけるため。前の日と同じ★になることはある）
-    var r = seededRandom(hash("daily|" + key))();
+    var r = seededRandom(hash("daily|" + key + u))();
     var stars = r < 0.06 ? 1 : r < 0.22 ? 2 : r < 0.52 ? 3 : r < 0.84 ? 4 : 5;
     var allActions = Object.keys(D.ACTIONS).reduce(function (list, k) { return list.concat(D.ACTIONS[k]); }, []);
     var result = {
       date: key,
       typeKey: null,
       // 同じ★が続いても、運勢文は前の日とちがうものになる
-      luck: { stars: stars, title: D.LUCK[stars].title, text: cycle(D.DAILY.luck[stars], day, "luck" + stars) },
-      actions: cyclePair(allActions, day, "actions"),
+      luck: { stars: stars, title: D.LUCK[stars].title, text: cycle(D.DAILY.luck[stars], day, "luck" + stars + u) },
+      actions: cyclePair(allActions, day, "actions" + u),
       lucky: {
-        color: cycle(D.LUCKY_COLORS, day, "color"),
-        item: cycle(D.LUCKY_ITEMS, day, "item"),
-        time: cycle(D.LUCKY_TIMES, day, "time")
+        color: cycle(D.LUCKY_COLORS, day, "color" + u),
+        item: cycle(D.LUCKY_ITEMS, day, "item" + u),
+        time: cycle(D.LUCKY_TIMES, day, "time" + u)
       },
-      message: cycle(D.DAILY.messages, day, "message"),
-      omamori: cycle(D.DAILY.omamori, day, "omamori")
+      message: cycle(D.DAILY.messages, day, "message" + u),
+      omamori: cycle(D.DAILY.omamori, day, "omamori" + u)
     };
     var type = typeKey && D.TYPES[typeKey];
     if (type) {
-      // タイプ別の部分は、タイプごとの並びで選ぶ（全員共通の部分は変えない）
+      // タイプ別の部分は、タイプごと（とユーザーごと）の並びで選ぶ。ほかの部分は変えない
       result.typeKey = typeKey;
-      result.actions = cyclePair(type.daily.actions, day, "actions|" + typeKey);
-      result.message = cycle(type.daily.messages, day, "message|" + typeKey);
+      result.actions = cyclePair(type.daily.actions, day, "actions|" + typeKey + u);
+      result.message = cycle(type.daily.messages, day, "message|" + typeKey + u);
       // タイプのお守りの言葉（結果画面のお守りの言葉と、毎日用の言葉を順番に）
-      result.typeOmamori = cycle([type.omamori.charm].concat(type.daily.charms || []), day, "charm|" + typeKey);
+      result.typeOmamori = cycle([type.omamori.charm].concat(type.daily.charms || []), day, "charm|" + typeKey + u);
     }
     return result;
   }

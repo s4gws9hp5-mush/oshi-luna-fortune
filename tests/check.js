@@ -212,6 +212,90 @@ for (let i = 0; i < DAYS; i++) {
 }
 assert.strictEqual(getDailyFortune(JST("2026-10-18T12:00:00"), "unknown-type").typeKey, null, "知らないタイプは未診断扱い");
 
+// ---- ブラウザごとのID（userId）で、一人ひとり違う今日の運勢 ----
+const crypto = require("crypto");
+const IDS = Array.from({ length: 1000 }, () => crypto.randomBytes(16).toString("hex"));
+const DAY0 = JST("2026-10-20T12:00:00");
+const at = (i) => new Date(DAY0.getTime() + i * 86400000);
+const baseOf = (d) => JSON.stringify([d.date, d.luck, d.lucky, d.omamori]);
+// 1. 同じID・同じ日付（朝と夜・何度計算しても）なら全項目が同じ
+IDS.slice(0, 50).forEach((id) => {
+  const a = getDailyFortune(JST("2026-10-20T00:00:00"), null, id);
+  assert.deepStrictEqual(getDailyFortune(JST("2026-10-20T23:59:59"), null, id), a, "同じID・同じ日は同じ結果");
+  assert.deepStrictEqual(getDailyFortune(JST("2026-10-20T12:00:00"), null, id), a, "同じID・同じ日は何度計算しても同じ");
+  TYPE_KEYS.forEach((k) => assert.deepStrictEqual(getDailyFortune(JST("2026-10-20T08:00:00"), k, id), getDailyFortune(JST("2026-10-20T21:00:00"), k, id), "同じID・同じタイプ・同じ日は同じ " + k));
+});
+// 2. 同じ日でもIDがちがえば個人差がある（1000人で統計的に確かめる）
+const sameDay = IDS.map((id) => getDailyFortune(DAY0, null, id));
+const kinds = (f) => new Set(sameDay.map(f)).size;
+assert.strictEqual(kinds((d) => d.luck.stars), 5, "★が人によって分かれない");
+assert.strictEqual(kinds((d) => d.lucky.color), D.LUCKY_COLORS.length, "ラッキーカラーが人によって分かれない");
+assert.strictEqual(kinds((d) => d.lucky.item), D.LUCKY_ITEMS.length, "ラッキーアイテムが人によって分かれない");
+assert.strictEqual(kinds((d) => d.lucky.time), D.LUCKY_TIMES.length, "ラッキータイムが人によって分かれない");
+assert.strictEqual(kinds((d) => d.luck.text), dailyTexts.length - D.DAILY.omamori.length, "運勢文が人によって分かれない");
+assert.ok(kinds((d) => d.omamori) >= 30 && kinds((d) => d.message) === D.DAILY.messages.length, "お守り・メッセージが人によって分かれない");
+assert.ok(kinds(baseOf) >= 990, "全体の組み合わせがほとんど人によってちがう " + kinds(baseOf));
+// どの候補もほぼ同じくらいの人に出る（特定の候補に偏らない）：期待値の半分〜2倍
+[[D.LUCKY_COLORS, (d) => d.lucky.color], [D.LUCKY_ITEMS, (d) => d.lucky.item], [D.LUCKY_TIMES, (d) => d.lucky.time]].forEach(([list, f]) => {
+  const c = {}; sameDay.forEach((d) => { c[f(d)] = (c[f(d)] || 0) + 1; });
+  list.forEach((x) => assert.ok(c[x] > 500 / list.length && c[x] < 2000 / list.length, "候補の出かたが偏っている " + x + " " + c[x]));
+});
+// 2人のIDを比べると、ほとんどの項目がちがう（偶然の一致はあってよい）
+let pairSame = 0;
+for (let i = 0; i < 500; i++) { const a = sameDay[i], b = sameDay[i + 500]; if (a.lucky.color === b.lucky.color && a.lucky.item === b.lucky.item && a.luck.text === b.luck.text) pairSame++; }
+assert.ok(pairSame <= 3, "別の人なのに運勢文・カラー・アイテムがそろって同じことが多い " + pairSame);
+// ★の出現率は今までと同じ（1:6% 2:16% 3:30% 4:32% 5:16%）。1人を1年続けて見ても偏りすぎない
+const starCount = [0, 0, 0, 0, 0, 0]; let sameStar = 0, pairs = 0;
+IDS.slice(0, 200).forEach((id) => {
+  let prev = null, five = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = getDailyFortune(at(i), null, id);
+    starCount[d.luck.stars]++; if (d.luck.stars === 5) five++;
+    // 3. 日付を進めると新しい日付の運勢
+    assert.strictEqual(d.date, jstDateKey(at(i)), "日付が進まない");
+    // 4. 同じ人の連日：★以外は前の日と同じにならない
+    if (prev) {
+      pairs++; if (prev.luck.stars === d.luck.stars) sameStar++;
+      assert.notStrictEqual(d.luck.text, prev.luck.text, "運勢文が前の日と同じ " + id + " " + d.date);
+      ["color", "item", "time"].forEach((f) => assert.notStrictEqual(d.lucky[f], prev.lucky[f], "ラッキー" + f + "が前の日と同じ " + id + " " + d.date));
+      assert.notStrictEqual(d.message, prev.message, "メッセージが前の日と同じ " + id);
+      assert.notStrictEqual(d.omamori, prev.omamori, "お守りが前の日と同じ " + id);
+      assert.ok(d.actions.every((x) => !prev.actions.includes(x)), "開運アクションが前の日と重なる " + id + " " + d.date);
+    }
+    prev = d;
+  }
+  assert.ok(five / 365 > 0.06 && five / 365 < 0.28, "1人の★5の割合が偏っている " + id + " " + five);
+});
+const total = 200 * 365;
+[[1, 0.06], [2, 0.16], [3, 0.30], [4, 0.32], [5, 0.16]].forEach(([s, p]) => assert.ok(Math.abs(starCount[s] / total - p) < 0.01, "★" + s + "の出現率が仕様とちがう " + (starCount[s] / total)));
+assert.ok(sameStar / pairs < 0.3, "前の日と同じ★が多すぎる " + sameStar / pairs);
+// 5・6. 同じID・同じ日なら、タイプを変えても基本運勢は同じ。タイプ別の部分はタイプに合わせる
+IDS.slice(0, 100).forEach((id) => {
+  for (let i = 0; i < 20; i++) {
+    const base = getDailyFortune(at(i), null, id);
+    TYPE_KEYS.forEach((k) => {
+      const d = getDailyFortune(at(i), k, id), t = D.TYPES[k];
+      assert.strictEqual(baseOf(d), baseOf(base), "タイプで基本運勢が変わる " + k + " " + id);
+      assert.ok(t.daily.messages.includes(d.message) && d.actions.length === 2 && d.actions.every((x) => t.daily.actions.includes(x)) && d.actions[0] !== d.actions[1] &&
+        [t.omamori.charm].concat(t.daily.charms).includes(d.typeOmamori) && d.typeKey === k, "タイプ別の内容 " + k);
+      if (i) {
+        const y = getDailyFortune(at(i - 1), k, id);
+        assert.ok(d.message !== y.message && d.typeOmamori !== y.typeOmamori && d.actions.every((x) => !y.actions.includes(x)), "タイプ別の内容が前の日と同じ " + k + " " + id);
+      }
+    });
+  }
+});
+// 同じタイプでも、人によってタイプ別の内容がちがう
+TYPE_KEYS.forEach((k) => assert.ok(new Set(IDS.slice(0, 200).map((id) => getDailyFortune(DAY0, k, id).message)).size === D.TYPES[k].daily.messages.length, "同じタイプで人によってメッセージが分かれない " + k));
+// 10. 日本時間の0時で切り替わる（UTC 14:59:59 と 15:00:00 の境目）
+IDS.slice(0, 20).forEach((id) => {
+  const before = getDailyFortune(new Date("2026-10-20T14:59:59Z"), null, id), after = getDailyFortune(new Date("2026-10-20T15:00:00Z"), null, id);
+  assert.ok(before.date === "2026-10-20" && after.date === "2026-10-21" && baseOf(before) !== baseOf(after), "日本時間0時で切り替わらない");
+});
+// ID がなければ今までどおり全員共通（保存できない環境の動き）
+assert.deepStrictEqual(getDailyFortune(DAY0, "cheer", null), getDailyFortune(DAY0, "cheer"), "IDなしは全員共通");
+
 console.log("OK: タイプ " + TYPE_KEYS.length + "種・質問 " + D.QUESTIONS.length + "問 / 全" + N + "通りの回答で判定（" +
   TYPE_KEYS.map((k) => k + " " + (dist[k] / N * 100).toFixed(1) + "%").join("・") + "）");
+console.log("OK: ブラウザごとのID 1000個で、同じ日の運勢が人ごとに分かれ（全体の組み合わせ " + kinds(baseOf) + "通り）、★の出現率は仕様どおり、前の日と同じ★は " + (sameStar / pairs * 100).toFixed(1) + "%");
 console.log("OK: 色コード " + D.LUCKY_COLORS.length + "色・アイコン " + (D.LUCKY_ITEMS.length + D.LUCKY_TIMES.length) + "個 / 毎日の占い " + DAYS + "日分（お守り " + seenOmamori.size + "種・運勢文 " + seenLuck.size + "種）");
