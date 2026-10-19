@@ -61,30 +61,51 @@
   }
 
   // ---- サブタイプコード（4つの軸）：8タイプの判定（diagnoseType）とは別に計算する ----
-  // axisAnswers: 追加の4問（Q11〜Q14）で選んだ選択肢の番号。mainAnswers: 既存の10問の答え（なければ流用しない）
-  // 軸ごとに「追加の質問 ±AXIS_WEIGHT ＋ 流用する選択肢 ±1」を合計し、
-  // 0 なら X（バランス型）、1〜2 なら「やや」、3以上ならその側
+  // axisAnswers: 追加の4問（Q11〜Q14）で選んだ選択肢の番号。mainAnswers: 既存の10問の答え（なければ追加の4問だけで決める）
+  //
+  // 軸ごとに、両側（例：E と W）の点数をそれぞれ合計し、「その側の平均的な点数」で割ってから比べる。
+  //   平均的な点数＝関係する質問ごとに、4つの選択肢のその側の点数の平均を足したもの
+  //   （選択肢の数のちがいで、片方の文字が有利にならないようにするため）
+  //   左側の割合 ＝ (左 + 補正) ÷ (左 + 右 + 補正×2)  … 補正で 0%・100% のような極端な値を避ける
+  // 割合が 45〜55% なら X（バランス型）、56〜65% なら「やや」、66% 以上ならその側。
+  // 割合は回答から出した傾向の目安で、確率ではない
   function isValidAxisAnswers(axisAnswers) {
     return Array.isArray(axisAnswers) && axisAnswers.length === D.AXIS_QUESTIONS.length && axisAnswers.every(function (v, q) {
       return v === Math.floor(v) && v >= 0 && v < D.AXIS_QUESTIONS[q].options.length;
     });
   }
 
+  // 質問ごとの「選択肢 → [軸, 文字, 点数] の一覧」。追加の4問は AXIS_QUESTIONS から作る
+  function dedicatedTags(i) {
+    return D.AXIS_QUESTIONS[i].options.map(function (o) { return [[D.AXIS_QUESTIONS[i].axis, o.pole, o.points]]; });
+  }
+
   function diagnoseAxes(mainAnswers, axisAnswers) {
     if (!isValidAxisAnswers(axisAnswers)) throw new Error("サブタイプの回答が正しくありません");
     var reuse = isValidAnswers(mainAnswers);
-    var axes = D.AXES.map(function (axis, i) {
-      var first = axis.letters[0];
-      var sign = function (pole) { return pole === first ? 1 : -1; };
-      var score = sign(D.AXIS_QUESTIONS[i].options[axisAnswers[i]].pole) * D.AXIS_WEIGHT;
-      if (reuse) {
-        D.AXIS_REUSE[axis.key].forEach(function (r) {
-          if (mainAnswers[r[0]] === r[1]) score += sign(r[2]);
+    var R = D.AXIS_RULES;
+    // 使う質問：[その質問の選択肢ごとのタグ, 選んだ選択肢の番号]
+    var sources = D.AXIS_QUESTIONS.map(function (q, i) { return [dedicatedTags(i), axisAnswers[i]]; });
+    if (reuse) D.AXIS_TAGS.forEach(function (tags, q) { sources.push([tags, mainAnswers[q]]); });
+    var axes = D.AXES.map(function (axis) {
+      var got = [0, 0], base = [0, 0];
+      sources.forEach(function (src) {
+        var tags = src[0];
+        tags.forEach(function (optionTags, o) {
+          optionTags.forEach(function (t) {
+            if (t[0] !== axis.key) return;
+            var side = t[1] === axis.letters[0] ? 0 : 1;
+            base[side] += t[2] / tags.length;          // 平均的な点数
+            if (o === src[1]) got[side] += t[2];        // 選んだ選択肢の点数
+          });
         });
-      }
-      var letter = score === 0 ? "X" : score > 0 ? first : axis.letters[1];
-      var strength = score === 0 ? "balance" : Math.abs(score) < 3 ? "slight" : "clear";
-      return { key: axis.key, letter: letter, score: score, strength: strength };
+      });
+      var left = got[0] / base[0], right = got[1] / base[1];
+      var percent = Math.round((left + R.smoothing) / (left + right + R.smoothing * 2) * 100);
+      var lean = Math.max(percent, 100 - percent);
+      var letter = lean <= R.balance ? "X" : percent > 50 ? axis.letters[0] : axis.letters[1];
+      var strength = letter === "X" ? "balance" : lean < R.clear ? "slight" : "clear";
+      return { key: axis.key, letter: letter, strength: strength, percent: percent, points: got };
     });
     return { code: axes.map(function (a) { return a.letter; }).join(""), axes: axes, reused: reuse };
   }

@@ -314,7 +314,19 @@ body::before {
   border-radius: 50%;
 }
 .subtype-letter.is-balance { background: linear-gradient(135deg, #a8e3c8, #9fcdf2); }
+.subtype-axis > div { flex: 1; min-width: 0; }
 .subtype-head { margin: 0; font-size: 0.88rem; font-weight: 700; color: var(--ink); }
+.subtype-meter { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-soft); }
+.subtype-bar {
+  display: block;
+  height: 6px;
+  margin: 4px 0 2px;
+  overflow: hidden;
+  background: #cfe6f8; /* 右側の文字の分 */
+  border-radius: 3px;
+}
+.subtype-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #f8a8cc, #b9a2f2); border-radius: 3px 0 0 3px; }
+.subtype-caption { margin: 8px 0 0; font-size: 0.74rem; line-height: 1.6; color: var(--ink-soft); }
 .subtype-text { margin: 2px 0 0; font-size: 0.86rem; line-height: 1.7; }
 .subtype-invite p { margin: 0 0 8px; }
 

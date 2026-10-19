@@ -456,10 +456,28 @@
       labelEl.className = "nowrap";
       labelEl.textContent = "（" + label + "）";
       head.appendChild(labelEl);
+      // 割合（例：伝える 62%／見守る 38%）と、その長さのバー
+      var meter = document.createElement("p");
+      meter.className = "subtype-meter";
+      [[def.letters[0], a.percent], [def.letters[1], 100 - a.percent]].forEach(function (side, j) {
+        if (j) meter.appendChild(document.createTextNode("／"));
+        var part = document.createElement("span");
+        part.className = "nowrap";
+        part.textContent = def.labels[side[0]] + " " + side[1] + "%";
+        meter.appendChild(part);
+      });
+      var bar = document.createElement("span");
+      bar.className = "subtype-bar";
+      bar.setAttribute("aria-hidden", "true");
+      var fill = document.createElement("span");
+      fill.style.width = a.percent + "%";
+      bar.appendChild(fill);
       var text = document.createElement("p");
       text.className = "subtype-text";
       text.textContent = def.texts[a.letter];
       body.appendChild(head);
+      body.appendChild(meter);
+      body.appendChild(bar);
       body.appendChild(text);
       li.appendChild(mark);
       li.appendChild(body);

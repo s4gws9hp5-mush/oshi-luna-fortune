@@ -315,54 +315,94 @@ D.AXES.forEach((axis, i) => {
   assert.strictEqual(q.axis, axis.key, "追加の質問の順番が軸とちがう " + i);
   nonEmpty(q.text, "AXIS_QUESTIONS" + i); noBanned(q.text, "AXIS_QUESTIONS" + i);
   assert.strictEqual(q.options.length, 4, "追加の質問は4択 " + i);
-  axis.letters.forEach((l) => assert.strictEqual(q.options.filter((o) => o.pole === l).length, 2, "追加の質問の選択肢はそれぞれの側に2つずつ " + axis.key + l));
-  q.options.forEach((o, j) => { nonEmpty(o.label, "AXIS_QUESTIONS" + i + "." + j); noBanned(o.label, "AXIS_QUESTIONS" + i + "." + j); assert.ok(!("main" in o) && !("sub" in o), "追加の質問は8タイプに点を入れない"); });
+  axis.letters.forEach((l) => {
+    const opts = q.options.filter((o) => o.pole === l);
+    assert.strictEqual(opts.length, 2, "追加の質問の選択肢はそれぞれの側に2つずつ " + axis.key + l);
+    assert.ok(opts.some((o) => o.points === 4), "追加の質問のそれぞれの側に4点の選択肢がある " + axis.key + l);
+  });
+  q.options.forEach((o, j) => { nonEmpty(o.label, "AXIS_QUESTIONS" + i + "." + j); noBanned(o.label, "AXIS_QUESTIONS" + i + "." + j);
+    assert.ok(o.points === 2 || o.points === 4, "追加の質問の点数は2か4"); assert.ok(!("main" in o) && !("sub" in o), "追加の質問は8タイプに点を入れない"); });
   assert.strictEqual(new Set(q.options.map((o) => o.label)).size, 4);
 });
-// 流用する選択肢：番号が正しく、その軸の文字で、1つの選択肢を2つの軸で数えない
-const reused = new Set();
-D.AXES.forEach((axis) => D.AXIS_REUSE[axis.key].forEach(([q, o, l]) => {
-  assert.ok(D.QUESTIONS[q] && D.QUESTIONS[q].options[o] && axis.letters.includes(l), "流用の指定が不正 " + axis.key + " " + q + "-" + o);
-  assert.ok(!reused.has(q + "-" + o), "同じ選択肢を2回数えている " + q + "-" + o); reused.add(q + "-" + o);
-}));
+// 既存の10問と4軸の関係：番号・軸・文字・点数（1か2）が正しく、同じ選択肢を同じ軸で2回数えない
+assert.strictEqual(D.AXIS_TAGS.length, D.QUESTIONS.length);
+D.AXIS_TAGS.forEach((options, q) => {
+  assert.strictEqual(options.length, D.QUESTIONS[q].options.length, "選択肢の数 Q" + (q + 1));
+  options.forEach((tags, o) => {
+    const seen = new Set();
+    tags.forEach(([key, l, pts]) => {
+      const axis = D.AXES.find((a) => a.key === key);
+      assert.ok(axis && axis.letters.includes(l) && (pts === 1 || pts === 2), "関係の指定が不正 Q" + (q + 1) + "-" + o);
+      assert.ok(!seen.has(key), "同じ選択肢を同じ軸で2回数えている Q" + (q + 1) + "-" + o); seen.add(key);
+    });
+  });
+});
 assert.ok(!isValidAxisAnswers([0, 0, 0]) && !isValidAxisAnswers([0, 0, 0, 4]) && !isValidAxisAnswers(null) && isValidAxisAnswers([3, 2, 1, 0]));
 assert.throws(() => diagnoseAxes(null, [0, 0, 0]));
-// 全1048576通りの既存の答え × 追加の質問の4つの選択肢で、軸ごとに判定を確かめる
-const axisStats = D.AXES.map(() => ({ X: 0 }));
-for (let i = 0; i < N; i += 1) {
-  const ans = []; let x = i;
-  for (let q = 0; q < D.QUESTIONS.length; q++) { ans.push(x & 3); x >>= 2; }
-  for (let o = 0; o < 4; o++) {
-    const r = diagnoseAxes(ans, [o, o, o, o]);
-    r.axes.forEach((a, k) => {
-      const axis = D.AXES[k];
-      // 自分で数え直した点数と一致する
-      let score = (D.AXIS_QUESTIONS[k].options[o].pole === axis.letters[0] ? 1 : -1) * D.AXIS_WEIGHT;
-      D.AXIS_REUSE[axis.key].forEach(([q, opt, l]) => { if (ans[q] === opt) score += l === axis.letters[0] ? 1 : -1; });
-      assert.strictEqual(a.score, score);
-      // 同点は X、1〜2点差は「やや」、3点差以上ははっきり
-      assert.strictEqual(a.letter, score === 0 ? "X" : score > 0 ? axis.letters[0] : axis.letters[1]);
-      assert.strictEqual(a.strength, score === 0 ? "balance" : Math.abs(score) < 3 ? "slight" : "clear");
-      axisStats[k][a.letter] = (axisStats[k][a.letter] || 0) + 1;
-    });
-    if (i % 49999 === 0) {
-      assert.strictEqual(r.code, r.axes.map((a) => a.letter).join(""));
-      assert.deepStrictEqual(diagnoseAxes(ans.slice(), [o, o, o, o]), r, "同じ答えなら同じ結果");
-      assert.deepStrictEqual(diagnoseType(ans), diagnoseType(ans.slice()), "追加の質問は8タイプに影響しない");
+
+// 判定の決まりを、テストの中で別に計算して照らし合わせる
+const R = D.AXIS_RULES;
+const tagsOf = (q) => q < D.QUESTIONS.length ? D.AXIS_TAGS[q] : D.AXIS_QUESTIONS[q - D.QUESTIONS.length].options.map((o) => [[D.AXIS_QUESTIONS[q - D.QUESTIONS.length].axis, o.pole, o.points]]);
+function expectAxis(axis, picks) { // picks: { 質問の番号（0〜13）: 選んだ選択肢 }
+  const got = [0, 0], base = [0, 0];
+  Object.keys(picks).forEach((q) => tagsOf(+q).forEach((tags, o) => tags.forEach(([key, l, pts]) => {
+    if (key !== axis.key) return; const side = l === axis.letters[0] ? 0 : 1;
+    base[side] += pts / 4; if (o === picks[q]) got[side] += pts;
+  })));
+  const left = got[0] / base[0], right = got[1] / base[1];
+  const percent = Math.round((left + R.smoothing) / (left + right + R.smoothing * 2) * 100);
+  const lean = Math.max(percent, 100 - percent);
+  return { percent, letter: lean <= R.balance ? "X" : percent > 50 ? axis.letters[0] : axis.letters[1], strength: lean <= R.balance ? "balance" : lean < R.clear ? "slight" : "clear" };
+}
+// 軸ごとに、関係する質問の全組み合わせで確かめる（関係しない質問の答えは結果に影響しない）
+const axisSummary = D.AXES.map((axis, k) => {
+  const qs = []; for (let q = 0; q < D.QUESTIONS.length; q++) if (D.AXIS_TAGS[q].some((t) => t.some((g) => g[0] === axis.key))) qs.push(q);
+  const n = Math.pow(4, qs.length + 1), cnt = { X: 0, [axis.letters[0]]: 0, [axis.letters[1]]: 0 };
+  let lo = 100, hi = 0;
+  for (let i = 0; i < n; i++) {
+    const main = new Array(D.QUESTIONS.length).fill(i % 4); const ax = [0, 0, 0, 0]; let x = i;
+    ax[k] = x & 3; x >>= 2;
+    qs.forEach((q) => { main[q] = x & 3; x >>= 2; });
+    const picks = { [D.QUESTIONS.length + k]: ax[k] }; qs.forEach((q) => { picks[q] = main[q]; });
+    const r = diagnoseAxes(main, ax).axes[k], e = expectAxis(axis, picks);
+    assert.deepStrictEqual([r.percent, r.letter, r.strength], [e.percent, e.letter, e.strength], "判定が決まりどおりでない " + axis.key + " " + JSON.stringify(picks));
+    assert.ok(Number.isInteger(r.percent) && r.percent > 0 && r.percent < 100, "割合が範囲外 " + r.percent);
+    lo = Math.min(lo, r.percent); hi = Math.max(hi, r.percent); cnt[r.letter]++;
+    if (i % 997 === 0) {
+      // 関係しない質問の答えを変えても、この軸の結果は変わらない
+      const other = main.map((v, q) => qs.includes(q) ? v : (v + 1) % 4);
+      assert.deepStrictEqual(diagnoseAxes(other, ax).axes[k], r, "関係しない質問で結果が変わる " + axis.key);
+      // 片側の点がいちばん高い選択肢に変えると、その側の割合は下がらない（逆の側も同じ）
+      qs.concat([D.QUESTIONS.length + k]).forEach((q) => [0, 1].forEach((side) => {
+        let best = -1, bestPts = -1;
+        tagsOf(q).forEach((tags, o) => { const t = tags.find((g) => g[0] === axis.key); const v = t ? (t[1] === axis.letters[side] ? t[2] : -t[2]) : 0; if (v > bestPts) { bestPts = v; best = o; } });
+        const m2 = main.slice(), a2 = ax.slice();
+        if (q < D.QUESTIONS.length) m2[q] = best; else a2[k] = best;
+        const p2 = diagnoseAxes(m2, a2).axes[k].percent;
+        assert.ok(side === 0 ? p2 >= r.percent : p2 <= r.percent, "選択肢を変えると逆向きに動く " + axis.key + " Q" + (q + 1));
+      }));
     }
   }
-}
-// どちらの側にもほぼ半々に分かれる（全回答を同じ重みで数えた場合）
-const axisSummary = D.AXES.map((axis, k) => {
-  const t = N * 4, st = axisStats[k];
-  axis.letters.forEach((l) => assert.ok(st[l] / t > 0.4 && st[l] / t < 0.6, "軸が片寄っている " + axis.key + l + " " + st[l] / t));
-  assert.ok(st.X / t < 0.05, "バランス型が多すぎる " + axis.key);
-  return axis.letters.map((l) => l + " " + (st[l] / t * 100).toFixed(1) + "%").join("/") + " X " + (st.X / t * 100).toFixed(1) + "%";
+  // どの選択肢も同じ確率で選ばれたとき、左右の割合の差は5ポイント以内、X は 20% 未満
+  const s0 = cnt[axis.letters[0]] / n, s1 = cnt[axis.letters[1]] / n, sx = cnt.X / n;
+  assert.ok(Math.abs(s0 - s1) <= 0.05, "片方の文字が有利 " + axis.key + " " + s0 + " " + s1);
+  assert.ok(sx < 0.2, "バランス型が多すぎる " + axis.key + " " + sx);
+  assert.ok(lo >= 5 && hi <= 95, "割合が極端 " + lo + "〜" + hi);
+  return axis.letters[0] + " " + (s0 * 100).toFixed(1) + "%/" + axis.letters[1] + " " + (s1 * 100).toFixed(1) + "% X " + (sx * 100).toFixed(1) + "%（" + lo + "〜" + hi + "%）";
 });
-// 既存の答えがない（古い保存データ）ときは、追加の質問だけで決まる（X にはならない）
-for (let o = 0; o < 4; o++) {
-  const r = diagnoseAxes(null, [o, o, o, o]);
-  assert.ok(!r.reused && r.axes.every((a) => a.strength === "clear" && a.letter !== "X"));
+// 同じ答えなら同じ結果・答えの配列を書きかえない
+{
+  const main = [1, 0, 0, 0, 0, 0, 0, 1, 0, 1], ax = [0, 2, 1, 3], copy = JSON.stringify([main, ax]);
+  assert.deepStrictEqual(diagnoseAxes(main, ax), diagnoseAxes(main.slice(), ax.slice()));
+  assert.strictEqual(JSON.stringify([main, ax]), copy);
+  assert.strictEqual(diagnoseAxes(main, ax).code, "EHIP");
+}
+// 既存の10問の答えがない（古い保存データ）：追加の4問だけで決まり、X にはならない
+for (let i = 0; i < 256; i++) {
+  const ax = [i & 3, (i >> 2) & 3, (i >> 4) & 3, (i >> 6) & 3];
+  const r = diagnoseAxes(null, ax);
+  assert.ok(!r.reused && r.axes.every((a) => a.letter !== "X" && a.strength === "clear"), "古いデータの判定 " + ax);
+  assert.deepStrictEqual(diagnoseAxes([0, 0], ax), r, "答えの数がちがう古いデータも同じ扱い");
 }
 assert.strictEqual(diagnoseAxes(null, [0, 0, 0, 0]).code, "EFIS");
 assert.strictEqual(diagnoseAxes(null, [3, 3, 3, 3]).code, "WHAP");
