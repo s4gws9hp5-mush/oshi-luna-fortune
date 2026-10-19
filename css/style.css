@@ -851,6 +851,22 @@ button:focus-visible {
   font-size: 0.75rem;
   color: var(--ink-soft);
 }
+/* お問い合わせ（Googleフォームを別のタブで開く） */
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding: 0 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--lavender-deep);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1.5px solid var(--lavender);
+  border-radius: 999px;
+}
+.footer-link:active { transform: scale(0.97); }
 
 /* 動きを減らす設定の人にはアニメーションを止める */
 @media (prefers-reduced-motion: reduce) {
