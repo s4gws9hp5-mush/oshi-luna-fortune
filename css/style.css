@@ -240,6 +240,49 @@ body::before {
 .sheet-note p[hidden] { display: none; }
 .sheet-note-title { font-weight: 700; color: var(--ink); }
 
+/* 未診断の人への診断の案内（ホーム画面への追加の案内と同じ見た目を、画面の中央に） */
+.popup-backdrop { align-items: center; }
+.popup {
+  position: relative;
+  max-width: 360px;
+  padding: 20px 18px 14px;
+  text-align: center;
+  box-shadow: 0 10px 34px rgba(90, 74, 120, 0.28);
+}
+.popup-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.popup-art { display: block; width: 104px; height: auto; margin: 2px auto 6px; }
+.popup-title {
+  margin: 0 0 8px;
+  font-size: clamp(0.94rem, 4.6vw, 1.18rem); /* iPhone SE でも1行に収まる大きさ */
+  line-height: 1.5;
+  color: var(--lavender-deep);
+  outline: none;
+}
+.popup-text { margin: 0 0 14px; font-size: 0.9rem; line-height: 1.7; }
+.popup .btn + .btn { margin-top: 6px; }
+.popup-sub { width: 100%; }
+.popup-note { margin: 4px 0 0; font-size: 0.78rem; color: var(--ink-soft); }
+@media (max-width: 380px) {
+  /* iPhone SE などの細い画面：説明文は2行、メインのボタンは1行に収める */
+  .popup { padding-left: 12px; padding-right: 12px; }
+  .popup-text { font-size: 0.84rem; }
+  .popup .btn-type { padding-left: 10px; padding-right: 10px; font-size: 1rem; }
+}
+
 /* 推し活タイプのシェア画像 */
 .share-panel {
   margin: 14px 0 4px;

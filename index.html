@@ -246,6 +246,19 @@
   </main>
 
   <!-- ホーム画面への追加方法（ブラウザに合わせた手順と、データの保存についての注意） -->
+  <!-- 未診断の人が「今日の推し活占いを見る！」を押したときの、診断の案内 -->
+  <div class="sheet-backdrop popup-backdrop" id="invite-popup" hidden>
+    <section class="sheet popup" role="dialog" aria-modal="true" aria-labelledby="invite-popup-title">
+      <button type="button" class="popup-close" id="invite-close-btn" aria-label="閉じる">×</button>
+      <img class="popup-art" src="images/luna-cat.png" width="640" height="513" alt="">
+      <h2 class="popup-title" id="invite-popup-title">🌙 推し活タイプを診断しませんか？</h2>
+      <p class="popup-text"><span class="nowrap">あなたにぴったりの</span><span class="nowrap">推し活メッセージや</span><span class="nowrap">アドバイスが見つかります♡</span></p>
+      <button type="button" class="btn btn-type" id="invite-quiz-btn">🎀 推し活タイプ診断をする</button>
+      <button type="button" class="btn btn-text popup-sub" id="invite-daily-btn">このまま今日の占いを見る</button>
+      <p class="popup-note">あとで診断するのもOKだよ！</p>
+    </section>
+  </div>
+
   <div class="sheet-backdrop" id="a2hs-sheet" hidden>
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="a2hs-sheet-title">
       <h2 class="sheet-title" id="a2hs-sheet-title">📱 ホーム画面に追加する方法</h2>

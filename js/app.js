@@ -712,6 +712,21 @@
     $("a2hs-sheet").hidden = true;
   }
 
+  // ---- 未診断の人への診断の案内 ----
+  // トップの「今日の推し活占いを見る！」：診断済みならそのまま占いへ。未診断なら診断を案内する（強制はしない）
+  function onDailyButton() {
+    if (busy) return;
+    var typed = false;
+    try { typed = !!savedTypeKey(); } catch (e) { typed = false; } // 判定できないときは未診断として案内する
+    if (typed) { openDaily(); return; }
+    $("invite-popup").hidden = false;
+    $("invite-popup-title").setAttribute("tabindex", "-1");
+    $("invite-popup-title").focus({ preventScroll: true });
+  }
+  function closeInvitePopup() {
+    $("invite-popup").hidden = true;
+  }
+
   // ---- 共有 ----
   function toast(msg, toastId) {
     var el = $(toastId || "toast");
@@ -782,7 +797,7 @@
 
   // ---- ボタン ----
   // トップ
-  $("daily-btn").addEventListener("click", openDaily);
+  $("daily-btn").addEventListener("click", onDailyButton);
   $("start-btn").addEventListener("click", function () { startQuiz(false); });
   $("resume-btn").addEventListener("click", function () { startQuiz(true); });
   $("mytype-btn").addEventListener("click", openSavedType);
@@ -851,7 +866,17 @@
   $("a2hs-later-btn").addEventListener("click", dismissA2hsCard);
   $("a2hs-close-btn").addEventListener("click", closeA2hsSheet);
   $("a2hs-sheet").addEventListener("click", function (e) { if (e.target === $("a2hs-sheet")) closeA2hsSheet(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("a2hs-sheet").hidden) closeA2hsSheet(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!$("a2hs-sheet").hidden) closeA2hsSheet();
+    if (!$("invite-popup").hidden) { closeInvitePopup(); $("daily-btn").focus(); }
+  });
+
+  // 診断の案内：診断する（既存の診断へ。途中の回答があれば続きから）／このまま占いへ／閉じる（トップのまま）
+  $("invite-quiz-btn").addEventListener("click", function () { closeInvitePopup(); startQuiz(!!loadQuizProgress()); });
+  $("invite-daily-btn").addEventListener("click", function () { closeInvitePopup(); openDaily(); });
+  $("invite-close-btn").addEventListener("click", function () { closeInvitePopup(); $("daily-btn").focus(); });
+  $("invite-popup").addEventListener("click", function (e) { if (e.target === $("invite-popup")) { closeInvitePopup(); $("daily-btn").focus(); } });
   // Android の Chrome などでは、ブラウザの「インストール」画面をボタンから呼び出せる
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault();
