@@ -181,14 +181,6 @@
         <button type="button" class="btn-text" id="type-view-saved-btn" hidden>保存中のタイプを見る</button>
       </div>
 
-      <!-- はじめて診断を終えた人への、ホーム画面への追加の案内（「あとで」を押したら次からは出さない） -->
-      <aside class="a2hs-card" id="a2hs-card" aria-labelledby="a2hs-card-title" hidden>
-        <h3 class="a2hs-title" id="a2hs-card-title">🌙 推しルナ占いをもっと身近に♡</h3>
-        <p class="a2hs-text">ホーム画面に追加すると、いつでもすぐに今日の推し活占いを見に来られるよ。あなたの推し活タイプも、いつでも振り返ってね🎀</p>
-        <button type="button" class="btn btn-type" id="a2hs-howto-btn">ホーム画面への追加方法を見る</button>
-        <button type="button" class="btn-text" id="a2hs-later-btn">あとで</button>
-      </aside>
-
       <article class="card card-lavender">
         <h3 class="card-title"><span aria-hidden="true">🔮</span> 基本の性格</h3>
         <p id="type-personality"></p>
@@ -238,6 +230,13 @@
           <p class="share-guide-note" id="share-guide-note"></p>
         </div>
       </div>
+      <!-- はじめて診断を終えた人への、ホーム画面への追加の案内（結果を読み終えたあと・シェアの近くに表示。「あとで」を押したら次からは出さない） -->
+      <aside class="a2hs-card" id="a2hs-card" aria-labelledby="a2hs-card-title" hidden>
+        <h3 class="a2hs-title" id="a2hs-card-title">🌙 推しルナ占いをもっと身近に♡</h3>
+        <p class="a2hs-text">ホーム画面に追加すると、いつでもすぐに今日の推し活占いを見に来られるよ。あなたの推し活タイプも、いつでも振り返ってね🎀</p>
+        <button type="button" class="btn btn-type" id="a2hs-howto-btn">ホーム画面への追加方法を見る</button>
+        <button type="button" class="btn-text" id="a2hs-later-btn">あとで</button>
+      </aside>
       <button type="button" class="btn btn-ghost" id="retry-btn">もう一度診断する</button>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>
       <button type="button" class="btn-text" id="result-home-btn">トップに戻る</button>
@@ -245,7 +244,6 @@
     </section>
   </main>
 
-  <!-- ホーム画面への追加方法（ブラウザに合わせた手順と、データの保存についての注意） -->
   <!-- 未診断の人が「今日の推し活占いを見る！」を押したときの、診断の案内 -->
   <div class="sheet-backdrop popup-backdrop" id="invite-popup" hidden>
     <section class="sheet popup" role="dialog" aria-modal="true" aria-labelledby="invite-popup-title">
@@ -259,6 +257,7 @@
     </section>
   </div>
 
+  <!-- ホーム画面への追加方法（ブラウザに合わせた手順と、データの保存についての注意） -->
   <div class="sheet-backdrop" id="a2hs-sheet" hidden>
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="a2hs-sheet-title">
       <h2 class="sheet-title" id="a2hs-sheet-title">📱 ホーム画面に追加する方法</h2>

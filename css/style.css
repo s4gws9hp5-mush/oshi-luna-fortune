@@ -159,7 +159,7 @@ body::before {
 
 /* ホーム画面への追加の案内 */
 .a2hs-card {
-  margin: 0 0 16px;
+  margin: 16px 0;
   padding: 20px 18px 12px;
   text-align: center;
   background: linear-gradient(160deg, #fff6fb 0%, #f1e8ff 60%, #e6f3ff 100%);
