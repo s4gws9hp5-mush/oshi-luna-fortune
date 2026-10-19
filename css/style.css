@@ -283,6 +283,41 @@ body::before {
   .popup .btn-type { padding-left: 10px; padding-right: 10px; font-size: 1rem; }
 }
 
+/* サブタイプコード（4つの軸） */
+.subtype-code {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em; /* 字間のぶん、中央にそろえる */
+  color: var(--lavender-deep);
+}
+.subtype-order { margin: 0 0 10px; text-align: center; font-size: 0.74rem; color: var(--ink-soft); }
+.subtype-axes { margin: 0; padding: 0; list-style: none; }
+.subtype-axis {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-top: 1px dashed rgba(166, 140, 232, 0.35);
+}
+.subtype-letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-weight: 700;
+  color: var(--white);
+  background: linear-gradient(135deg, #f8a8cc, #b9a2f2);
+  border-radius: 50%;
+}
+.subtype-letter.is-balance { background: linear-gradient(135deg, #a8e3c8, #9fcdf2); }
+.subtype-head { margin: 0; font-size: 0.88rem; font-weight: 700; color: var(--ink); }
+.subtype-text { margin: 2px 0 0; font-size: 0.86rem; line-height: 1.7; }
+.subtype-invite p { margin: 0 0 8px; }
+
 /* 推し活タイプのシェア画像 */
 .share-panel {
   margin: 14px 0 4px;

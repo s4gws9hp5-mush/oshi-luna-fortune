@@ -12,11 +12,13 @@
     daily: "oshi-luna-daily", // 今日の推し活占いの履歴 { version, history: [結果, ...] }（新しい順・最大7日分）
     legacy: "oshi-luna-last", // 旧4問版の診断の回答（読むだけ。消さない）
     a2hs: "oshi-luna-a2hs",   // ホーム画面への追加の案内を閉じたかどうか { dismissed }（表示の設定のみ）
-    device: "oshi-luna-device" // 今日の運勢を一人ひとり変えるためのランダムなID { version, id }（運勢の計算にだけ使う）
+    device: "oshi-luna-device", // 今日の運勢を一人ひとり変えるためのランダムなID { version, id }（運勢の計算にだけ使う）
+    subtypeQuiz: "oshi-luna-subtype-quiz" // 診断済みの人がサブタイプの4問だけ答えている途中の回答 { version, answers }
   };
   var HISTORY_DAYS = 7;
 
   var answers = [];
+  var quizMode = "full";    // "full"：既存の10問＋サブタイプの4問 ／ "axes"：診断済みの人がサブタイプの4問だけ答える
   var pendingChoice = null; // 選択の演出中に保留している回答
   var busy = false;         // 読み込み演出中（連打による二重処理を防ぐ）
   var shownDaily = null;    // 表示中の今日の占い
@@ -46,11 +48,24 @@
     return v ? v.type : null;
   }
 
-  function loadQuizProgress() {
-    var v = load(KEYS.quiz);
-    if (!v || !Array.isArray(v.answers) || !v.answers.length || v.answers.length >= D.QUESTIONS.length) return null;
-    var ok = v.answers.every(function (a, q) { return a === Math.floor(a) && a >= 0 && a < D.QUESTIONS[q].options.length; });
+  // 診断の質問：既存の10問のあとにサブタイプの4問（Q11〜Q14）
+  var FULL_QUESTIONS = D.QUESTIONS.concat(D.AXIS_QUESTIONS);
+  function quizQuestions() { return quizMode === "axes" ? D.AXIS_QUESTIONS : FULL_QUESTIONS; }
+
+  // 途中の回答（全部答える前のもの）。10問だけの古い途中データも、そのまま続きから使える
+  function validProgress(v, list) {
+    if (!v || !Array.isArray(v.answers) || !v.answers.length || v.answers.length >= list.length) return null;
+    var ok = v.answers.every(function (a, q) { return a === Math.floor(a) && a >= 0 && a < list[q].options.length; });
     return ok ? v.answers : null;
+  }
+  function loadQuizProgress() { return validProgress(load(KEYS.quiz), FULL_QUESTIONS); }
+  function loadSubtypeProgress() { return validProgress(load(KEYS.subtypeQuiz), D.AXIS_QUESTIONS); }
+
+  // 保存済みの結果のサブタイプ。サブタイプの項目がない古いデータ・こわれたデータは「まだ調べていない」（null）
+  // コードは保存した文字ではなく、保存した答えから計算し直す
+  function subtypeOf(record) {
+    var s = record && record.subtype;
+    return s && F.isValidAxisAnswers(s.answers) ? F.diagnoseAxes(record.answers, s.answers) : null;
   }
 
   // ---- ブラウザごとのランダムなID（今日の運勢を一人ひとり変えるため） ----
@@ -178,7 +193,7 @@
       $("top-type-name").textContent = "「" + t.name + "」";
       $("top-type-catch").textContent = t.catch;
     } else if (progress) {
-      $("resume-btn").textContent = "続きから再開する（" + progress.length + "/" + D.QUESTIONS.length + "問まで回答済み）";
+      $("resume-btn").textContent = "続きから再開する（" + progress.length + "/" + FULL_QUESTIONS.length + "問まで回答済み）";
     }
   }
 
@@ -276,22 +291,36 @@
   // ---- 推し活タイプ診断 ----
   function startQuiz(resume) {
     if (busy) return;
+    quizMode = "full";
     answers = resume ? (loadQuizProgress() || []) : [];
     if (!resume) remove(KEYS.quiz);
     showScreen("quiz");
     renderQuestion();
   }
 
+  // 診断済みの人が、サブタイプの4問だけ答える（8タイプはそのまま）
+  function startSubtypeQuiz() {
+    if (busy || !loadSavedType()) return;
+    quizMode = "axes";
+    answers = loadSubtypeProgress() || [];
+    showScreen("quiz");
+    renderQuestion();
+  }
+
   function renderQuestion() {
+    var list = quizQuestions();
     var q = answers.length;
-    var question = D.QUESTIONS[q];
-    $("q-count").textContent = "Q" + (q + 1) + " / " + D.QUESTIONS.length;
+    var question = list[q];
+    var note = question.note ||
+      (quizMode === "axes" && q === 0 ? "サブタイプコードの質問（全" + list.length + "問）" : "") ||
+      (quizMode === "full" && q === D.QUESTIONS.length ? "ここからはサブタイプの質問（あと" + (list.length - q) + "問）" : "");
+    $("q-count").textContent = "Q" + (q + 1) + " / " + list.length;
     $("q-text").textContent = question.text;
-    $("q-note").hidden = !question.note;
-    $("q-note").textContent = question.note || "";
-    $("progress").setAttribute("aria-valuemax", D.QUESTIONS.length);
+    $("q-note").hidden = !note;
+    $("q-note").textContent = note;
+    $("progress").setAttribute("aria-valuemax", list.length);
     $("progress").setAttribute("aria-valuenow", q + 1);
-    $("progress-bar").style.width = ((q + 1) / D.QUESTIONS.length) * 100 + "%";
+    $("progress-bar").style.width = ((q + 1) / list.length) * 100 + "%";
 
     var box = $("options");
     box.innerHTML = "";
@@ -306,7 +335,7 @@
       btn.addEventListener("click", function () { choose(i, btn); });
       box.appendChild(btn);
     });
-    $("back-btn").textContent = q === 0 ? "‹ トップに戻る" : "‹ ひとつ戻る";
+    $("back-btn").textContent = q > 0 ? "‹ ひとつ戻る" : quizMode === "axes" ? "‹ 結果に戻る" : "‹ トップに戻る";
     $("quiz-home-btn").hidden = q === 0; // 1問目は「‹ トップに戻る」と重なるので出さない
     var title = $("q-text");
     title.setAttribute("tabindex", "-1");
@@ -319,13 +348,21 @@
     pendingChoice = setTimeout(function () {
       pendingChoice = null;
       answers.push(index);
-      if (answers.length < D.QUESTIONS.length) {
-        save(KEYS.quiz, { version: 2, answers: answers }); // 途中で閉じても続きから再開できるように
+      if (answers.length < quizQuestions().length) {
+        saveProgress(); // 途中で閉じても続きから再開できるように
         renderQuestion();
+      } else if (quizMode === "axes") {
+        finishSubtype();
       } else {
         finishQuiz();
       }
     }, 220);
+  }
+
+  function saveProgress() {
+    var key = quizMode === "axes" ? KEYS.subtypeQuiz : KEYS.quiz;
+    if (answers.length) save(key, quizMode === "axes" ? { version: 1, answers: answers } : { version: 2, answers: answers });
+    else remove(key);
   }
 
   function cancelPendingChoice() {
@@ -336,13 +373,17 @@
   }
 
   function finishQuiz() {
-    var finalAnswers = answers.slice();
+    // 8タイプは既存の10問だけで判定する。サブタイプの4問は 8タイプに使わない
+    var finalAnswers = answers.slice(0, D.QUESTIONS.length);
+    var axisAnswers = answers.slice(D.QUESTIONS.length);
     runWithLoading("白猫が、あなたの推し活タイプを読み解いています…", 1200, function () {
       var r = F.diagnoseType(finalAnswers);
-      var record = { version: 2, type: r.type, sub: r.sub, answers: finalAnswers, date: todayKey() };
+      var axes = F.diagnoseAxes(finalAnswers, axisAnswers);
+      var record = { version: 2, type: r.type, sub: r.sub, answers: finalAnswers, date: todayKey(),
+        subtype: { version: 1, answers: axisAnswers, code: axes.code } };
       var saved = loadSavedType();
       remove(KEYS.quiz);
-      renderType(r.type, r.sub);
+      renderType(r.type, r.sub, axes);
       if (!saved) {
         save(KEYS.type, record);
         var stored = loadSavedType();
@@ -364,9 +405,71 @@
     });
   }
 
-  function renderType(typeKey, subKey) {
+  // 診断済みの人がサブタイプの4問に答え終えたとき：保存済みの結果にサブタイプを足す（8タイプは変えない）
+  function finishSubtype() {
+    var axisAnswers = answers.slice();
+    runWithLoading("白猫が、あなたのサブタイプを読み解いています…", 1200, function () {
+      remove(KEYS.subtypeQuiz);
+      var saved = loadSavedType();
+      if (!saved) { goTop(); return; }
+      var axes = F.diagnoseAxes(saved.answers, axisAnswers);
+      var record = {};
+      Object.keys(saved).forEach(function (k) { record[k] = saved[k]; });
+      record.subtype = { version: 1, answers: axisAnswers, code: axes.code };
+      save(KEYS.type, record);
+      var stored = loadSavedType();
+      var ok = !!(stored && stored.type === saved.type && stored.subtype && stored.subtype.code === axes.code);
+      renderType(saved.type, saved.sub, axes);
+      showTypeStatus(ok ? "サブタイプコードを保存したよ♡ この結果画面から、いつでも見返せるよ🌙" :
+        "サブタイプコードを保存できませんでした。ブラウザの設定（プライベートブラウズなど）を確認してね。");
+      showScreen("result");
+    });
+  }
+
+  // サブタイプコードのカード。まだ調べていない診断済みの人には、4問だけ答える案内を出す
+  function renderSubtype(typeKey, axes) {
+    var saved = loadSavedType();
+    $("subtype-card").hidden = !axes;
+    $("subtype-invite").hidden = !!axes || !(saved && saved.type === typeKey);
+    if (!axes) {
+      $("subtype-start-btn").textContent = loadSubtypeProgress() ? "🧭 サブタイプの質問を続きから答える" : "🧭 サブタイプコードを調べる（4問）";
+      return;
+    }
+    $("subtype-code").textContent = axes.code;
+    var list = $("subtype-axes");
+    list.innerHTML = "";
+    axes.axes.forEach(function (a, i) {
+      var def = D.AXES[i];
+      var label = a.letter === "X" ? "バランス型：" + def.labels[def.letters[0]] + "・" + def.labels[def.letters[1]] :
+        a.strength === "slight" ? "やや" + def.labels[a.letter] + "寄り" : def.labels[a.letter];
+      var li = document.createElement("li");
+      li.className = "subtype-axis";
+      var mark = document.createElement("span");
+      mark.className = "subtype-letter" + (a.letter === "X" ? " is-balance" : "");
+      mark.setAttribute("aria-hidden", "true");
+      mark.textContent = a.letter;
+      var body = document.createElement("div");
+      var head = document.createElement("p");
+      head.className = "subtype-head";
+      head.textContent = def.name + "：" + a.letter;
+      var labelEl = document.createElement("span");
+      labelEl.className = "nowrap";
+      labelEl.textContent = "（" + label + "）";
+      head.appendChild(labelEl);
+      var text = document.createElement("p");
+      text.className = "subtype-text";
+      text.textContent = def.texts[a.letter];
+      body.appendChild(head);
+      body.appendChild(text);
+      li.appendChild(mark);
+      li.appendChild(body);
+      list.appendChild(li);
+    });
+  }
+
+  function renderType(typeKey, subKey, axes) {
     var t = D.TYPES[typeKey];
-    shownType = { type: typeKey, sub: subKey };
+    shownType = { type: typeKey, sub: subKey, axes: axes || null };
     pendingType = null;
     $("type-confirm").hidden = true;
     $("type-status").hidden = true;
@@ -406,6 +509,7 @@
     $("type-action").textContent = t.smallAction;
     $("type-charm").textContent = t.omamori.charm;
     $("type-omamori-msg").textContent = t.omamori.message;
+    renderSubtype(typeKey, axes || null);
     $("toast").textContent = "";
     prepareShareImage(typeKey);
   }
@@ -428,13 +532,14 @@
   function openSavedType() {
     var saved = loadSavedType();
     if (!saved) return;
-    renderType(saved.type, saved.sub);
+    renderType(saved.type, saved.sub, subtypeOf(saved));
     showScreen("result");
   }
 
-  function typeShareText(typeKey) {
+  function typeShareText(typeKey, axes) {
     var t = D.TYPES[typeKey];
-    return "【推しルナ占い】私の推し活タイプは\n" + t.emoji + "「" + t.name + "」\n" + t.catch + "\n#推しルナ占い";
+    return "【推しルナ占い】私の推し活タイプは\n" + t.emoji + "「" + t.name + "」\n" + t.catch + "\n" +
+      (axes ? "サブタイプコード：" + axes.code + "\n" : "") + "#推しルナ占い";
   }
 
   // ---- 推し活タイプのシェア画像 ----
@@ -817,11 +922,12 @@
     // 回答直後（演出中）に戻った場合は、保留中の回答を取り消してから戻る
     cancelPendingChoice();
     if (answers.length === 0) {
+      if (quizMode === "axes") { remove(KEYS.subtypeQuiz); openSavedType(); return; }
       remove(KEYS.quiz);
       goTop();
     } else {
       answers.pop();
-      if (answers.length) save(KEYS.quiz, { version: 2, answers: answers }); else remove(KEYS.quiz);
+      saveProgress();
       renderQuestion();
     }
   });
@@ -848,12 +954,13 @@
     showTypeStatus("保存中のタイプ「" + (saved ? D.TYPES[saved.type].name : "") + "」のままにしました。", true);
   });
   $("type-view-saved-btn").addEventListener("click", openSavedType);
+  $("subtype-start-btn").addEventListener("click", startSubtypeQuiz);
   $("to-daily-btn").addEventListener("click", openDaily);
   $("share-btn").addEventListener("click", openSharePanel);
   $("share-save-btn").addEventListener("click", saveOrShareImage);
   $("share-copy-btn").addEventListener("click", function () {
     if (!shownType) return;
-    copyText(typeShareText(shownType.type) + "\n" + siteUrl(), function (ok) {
+    copyText(typeShareText(shownType.type, shownType.axes) + "\n" + siteUrl(), function (ok) {
       shareStatus(ok ? "タイプ名とURLをコピーしたよ♡ SNSに貼り付けて使ってね。" : "コピーできませんでした。画面をスクリーンショットしてね。");
     });
   });

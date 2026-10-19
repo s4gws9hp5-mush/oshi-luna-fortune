@@ -181,6 +181,18 @@
         <button type="button" class="btn-text" id="type-view-saved-btn" hidden>保存中のタイプを見る</button>
       </div>
 
+      <!-- サブタイプコード（4つの軸）。まだ調べていない診断済みの人には、4問だけ答える案内 -->
+      <article class="card card-blue subtype-card" id="subtype-card" aria-labelledby="subtype-title" hidden>
+        <h3 class="card-title" id="subtype-title"><span aria-hidden="true">🧭</span> サブタイプコード</h3>
+        <p class="subtype-code" id="subtype-code"></p>
+        <p class="subtype-order"><span class="nowrap">愛情表現・応援スタイル・</span><span class="nowrap">気持ちの整理・楽しみ方の順</span></p>
+        <ul class="subtype-axes" id="subtype-axes"></ul>
+      </article>
+      <div class="notice subtype-invite" id="subtype-invite" hidden>
+        <p>4つの質問に答えると、あなたのサブタイプコード（例：EFIS）がわかるよ。推し活タイプはそのままです。</p>
+        <button type="button" class="btn btn-ghost" id="subtype-start-btn">🧭 サブタイプコードを調べる（4問）</button>
+      </div>
+
       <article class="card card-lavender">
         <h3 class="card-title"><span aria-hidden="true">🔮</span> 基本の性格</h3>
         <p id="type-personality"></p>

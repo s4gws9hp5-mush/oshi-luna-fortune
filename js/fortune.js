@@ -60,6 +60,35 @@
     });
   }
 
+  // ---- サブタイプコード（4つの軸）：8タイプの判定（diagnoseType）とは別に計算する ----
+  // axisAnswers: 追加の4問（Q11〜Q14）で選んだ選択肢の番号。mainAnswers: 既存の10問の答え（なければ流用しない）
+  // 軸ごとに「追加の質問 ±AXIS_WEIGHT ＋ 流用する選択肢 ±1」を合計し、
+  // 0 なら X（バランス型）、1〜2 なら「やや」、3以上ならその側
+  function isValidAxisAnswers(axisAnswers) {
+    return Array.isArray(axisAnswers) && axisAnswers.length === D.AXIS_QUESTIONS.length && axisAnswers.every(function (v, q) {
+      return v === Math.floor(v) && v >= 0 && v < D.AXIS_QUESTIONS[q].options.length;
+    });
+  }
+
+  function diagnoseAxes(mainAnswers, axisAnswers) {
+    if (!isValidAxisAnswers(axisAnswers)) throw new Error("サブタイプの回答が正しくありません");
+    var reuse = isValidAnswers(mainAnswers);
+    var axes = D.AXES.map(function (axis, i) {
+      var first = axis.letters[0];
+      var sign = function (pole) { return pole === first ? 1 : -1; };
+      var score = sign(D.AXIS_QUESTIONS[i].options[axisAnswers[i]].pole) * D.AXIS_WEIGHT;
+      if (reuse) {
+        D.AXIS_REUSE[axis.key].forEach(function (r) {
+          if (mainAnswers[r[0]] === r[1]) score += sign(r[2]);
+        });
+      }
+      var letter = score === 0 ? "X" : score > 0 ? first : axis.letters[1];
+      var strength = score === 0 ? "balance" : Math.abs(score) < 3 ? "slight" : "clear";
+      return { key: axis.key, letter: letter, score: score, strength: strength };
+    });
+    return { code: axes.map(function (a) { return a.letter; }).join(""), axes: axes, reused: reuse };
+  }
+
   // ---- 毎日の推し活占い（質問なし）：端末のタイムゾーンに関係なく日本時間（UTC+9）で日付を決める ----
   var DAY_MS = 86400000;
   var JST_OFFSET_MS = 9 * 3600000;
@@ -144,6 +173,7 @@
 
   var api = {
     diagnoseType: diagnoseType, isValidAnswers: isValidAnswers,
+    diagnoseAxes: diagnoseAxes, isValidAxisAnswers: isValidAxisAnswers,
     getDailyFortune: getDailyFortune, jstDateKey: jstDateKey, msUntilNextJstDay: msUntilNextJstDay
   };
   root.OshiLuna = api;

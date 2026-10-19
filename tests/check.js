@@ -2,7 +2,7 @@
 // 実行: node tests/check.js
 "use strict";
 require("../js/data.js");
-const { diagnoseType, isValidAnswers } = require("../js/fortune.js");
+const { diagnoseType, isValidAnswers, diagnoseAxes, isValidAxisAnswers } = require("../js/fortune.js");
 const assert = require("assert");
 
 const D = globalThis.OshiLunaData;
@@ -98,11 +98,13 @@ TYPE_KEYS.forEach((k) => {
 // ---- 判定：全組み合わせで必ずどれか1タイプになり、全タイプに到達でき、極端に偏らない ----
 const N = Math.pow(4, D.QUESTIONS.length);
 const dist = {};
+let fingerprint = 2166136261;
 for (let i = 0; i < N; i++) {
   const ans = []; let x = i;
   for (let q = 0; q < D.QUESTIONS.length; q++) { ans.push(x & 3); x >>= 2; }
   const r = diagnoseType(ans);
   dist[r.type] = (dist[r.type] || 0) + 1;
+  for (const ch of r.type + r.sub) { fingerprint ^= ch.charCodeAt(0); fingerprint = Math.imul(fingerprint, 16777619); }
   if (i % 9973 === 0) {
     // 同じ回答なら何度判定しても同じ（日付や乱数を使っていない）
     assert.deepStrictEqual(diagnoseType(ans.slice()), r);
@@ -295,7 +297,78 @@ IDS.slice(0, 20).forEach((id) => {
 // ID がなければ今までどおり全員共通（保存できない環境の動き）
 assert.deepStrictEqual(getDailyFortune(DAY0, "cheer", null), getDailyFortune(DAY0, "cheer"), "IDなしは全員共通");
 
+// ---- 8タイプの判定が変わっていないこと（全1048576通りのタイプとサブの並びの指紋。サブタイプコードを足す前と同じ） ----
+assert.strictEqual((fingerprint >>> 0).toString(16), "fcb7705", "8タイプの判定結果が変わっています");
+assert.throws(() => diagnoseType(new Array(D.QUESTIONS.length + D.AXIS_QUESTIONS.length).fill(0)), "8タイプの判定に14問ぶんの答えを渡せてしまう");
+
+// ---- サブタイプコード（4つの軸） ----
+assert.strictEqual(D.AXES.length, 4);
+assert.strictEqual(D.AXIS_QUESTIONS.length, D.AXES.length);
+const axisLetters = new Set();
+D.AXES.forEach((axis, i) => {
+  assert.strictEqual(axis.letters.length, 2);
+  axis.letters.forEach((l) => { assert.ok(/^[A-Z]$/.test(l) && l !== "X" && !axisLetters.has(l), "軸の文字 " + l); axisLetters.add(l); });
+  axis.letters.concat("X").forEach((l) => { nonEmpty(axis.texts[l], axis.key + ".texts." + l); noBanned(axis.texts[l], axis.key + "." + l); });
+  axis.letters.forEach((l) => nonEmpty(axis.labels[l], axis.key + ".labels." + l));
+  nonEmpty(axis.name, axis.key + ".name");
+  const q = D.AXIS_QUESTIONS[i];
+  assert.strictEqual(q.axis, axis.key, "追加の質問の順番が軸とちがう " + i);
+  nonEmpty(q.text, "AXIS_QUESTIONS" + i); noBanned(q.text, "AXIS_QUESTIONS" + i);
+  assert.strictEqual(q.options.length, 4, "追加の質問は4択 " + i);
+  axis.letters.forEach((l) => assert.strictEqual(q.options.filter((o) => o.pole === l).length, 2, "追加の質問の選択肢はそれぞれの側に2つずつ " + axis.key + l));
+  q.options.forEach((o, j) => { nonEmpty(o.label, "AXIS_QUESTIONS" + i + "." + j); noBanned(o.label, "AXIS_QUESTIONS" + i + "." + j); assert.ok(!("main" in o) && !("sub" in o), "追加の質問は8タイプに点を入れない"); });
+  assert.strictEqual(new Set(q.options.map((o) => o.label)).size, 4);
+});
+// 流用する選択肢：番号が正しく、その軸の文字で、1つの選択肢を2つの軸で数えない
+const reused = new Set();
+D.AXES.forEach((axis) => D.AXIS_REUSE[axis.key].forEach(([q, o, l]) => {
+  assert.ok(D.QUESTIONS[q] && D.QUESTIONS[q].options[o] && axis.letters.includes(l), "流用の指定が不正 " + axis.key + " " + q + "-" + o);
+  assert.ok(!reused.has(q + "-" + o), "同じ選択肢を2回数えている " + q + "-" + o); reused.add(q + "-" + o);
+}));
+assert.ok(!isValidAxisAnswers([0, 0, 0]) && !isValidAxisAnswers([0, 0, 0, 4]) && !isValidAxisAnswers(null) && isValidAxisAnswers([3, 2, 1, 0]));
+assert.throws(() => diagnoseAxes(null, [0, 0, 0]));
+// 全1048576通りの既存の答え × 追加の質問の4つの選択肢で、軸ごとに判定を確かめる
+const axisStats = D.AXES.map(() => ({ X: 0 }));
+for (let i = 0; i < N; i += 1) {
+  const ans = []; let x = i;
+  for (let q = 0; q < D.QUESTIONS.length; q++) { ans.push(x & 3); x >>= 2; }
+  for (let o = 0; o < 4; o++) {
+    const r = diagnoseAxes(ans, [o, o, o, o]);
+    r.axes.forEach((a, k) => {
+      const axis = D.AXES[k];
+      // 自分で数え直した点数と一致する
+      let score = (D.AXIS_QUESTIONS[k].options[o].pole === axis.letters[0] ? 1 : -1) * D.AXIS_WEIGHT;
+      D.AXIS_REUSE[axis.key].forEach(([q, opt, l]) => { if (ans[q] === opt) score += l === axis.letters[0] ? 1 : -1; });
+      assert.strictEqual(a.score, score);
+      // 同点は X、1〜2点差は「やや」、3点差以上ははっきり
+      assert.strictEqual(a.letter, score === 0 ? "X" : score > 0 ? axis.letters[0] : axis.letters[1]);
+      assert.strictEqual(a.strength, score === 0 ? "balance" : Math.abs(score) < 3 ? "slight" : "clear");
+      axisStats[k][a.letter] = (axisStats[k][a.letter] || 0) + 1;
+    });
+    if (i % 49999 === 0) {
+      assert.strictEqual(r.code, r.axes.map((a) => a.letter).join(""));
+      assert.deepStrictEqual(diagnoseAxes(ans.slice(), [o, o, o, o]), r, "同じ答えなら同じ結果");
+      assert.deepStrictEqual(diagnoseType(ans), diagnoseType(ans.slice()), "追加の質問は8タイプに影響しない");
+    }
+  }
+}
+// どちらの側にもほぼ半々に分かれる（全回答を同じ重みで数えた場合）
+const axisSummary = D.AXES.map((axis, k) => {
+  const t = N * 4, st = axisStats[k];
+  axis.letters.forEach((l) => assert.ok(st[l] / t > 0.4 && st[l] / t < 0.6, "軸が片寄っている " + axis.key + l + " " + st[l] / t));
+  assert.ok(st.X / t < 0.05, "バランス型が多すぎる " + axis.key);
+  return axis.letters.map((l) => l + " " + (st[l] / t * 100).toFixed(1) + "%").join("/") + " X " + (st.X / t * 100).toFixed(1) + "%";
+});
+// 既存の答えがない（古い保存データ）ときは、追加の質問だけで決まる（X にはならない）
+for (let o = 0; o < 4; o++) {
+  const r = diagnoseAxes(null, [o, o, o, o]);
+  assert.ok(!r.reused && r.axes.every((a) => a.strength === "clear" && a.letter !== "X"));
+}
+assert.strictEqual(diagnoseAxes(null, [0, 0, 0, 0]).code, "EFIS");
+assert.strictEqual(diagnoseAxes(null, [3, 3, 3, 3]).code, "WHAP");
+
 console.log("OK: タイプ " + TYPE_KEYS.length + "種・質問 " + D.QUESTIONS.length + "問 / 全" + N + "通りの回答で判定（" +
   TYPE_KEYS.map((k) => k + " " + (dist[k] / N * 100).toFixed(1) + "%").join("・") + "）");
 console.log("OK: ブラウザごとのID 1000個で、同じ日の運勢が人ごとに分かれ（全体の組み合わせ " + kinds(baseOf) + "通り）、★の出現率は仕様どおり、前の日と同じ★は " + (sameStar / pairs * 100).toFixed(1) + "%");
+console.log("OK: 8タイプの判定は変更なし（全通りの指紋が一致）／サブタイプコード " + axisSummary.join("・"));
 console.log("OK: 色コード " + D.LUCKY_COLORS.length + "色・アイコン " + (D.LUCKY_ITEMS.length + D.LUCKY_TIMES.length) + "個 / 毎日の占い " + DAYS + "日分（お守り " + seenOmamori.size + "種・運勢文 " + seenLuck.size + "種）");
