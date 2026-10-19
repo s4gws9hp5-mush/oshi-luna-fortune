@@ -25,19 +25,6 @@
     };
   }
 
-  function pick(list, rand) {
-    return list[Math.floor(rand() * list.length)];
-  }
-
-  function pickDistinct(list, count, rand) {
-    var pool = list.slice();
-    var out = [];
-    while (out.length < count && pool.length) {
-      out.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
-    }
-    return out;
-  }
-
   // ---- 推し活タイプ診断：回答だけでタイプを決める（日付・乱数は使わない） ----
   // answers: 各質問で選んだ選択肢の番号（0〜3）。選んだ選択肢の main に2点、sub に1点。
   // 同点のときの順位：
@@ -91,13 +78,28 @@
     return DAY_MS - ((date.getTime() + JST_OFFSET_MS) % DAY_MS);
   }
 
-  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
-
-  // 日付ごとに文章を順番に巡らせる（文章の数だけ連続した日では同じ文が出ない）
-  function rotate(list, day) {
-    var step = 7;
-    while (gcd(step, list.length) !== 1) step++;
-    return list[(((day * step + 3) % list.length) + list.length) % list.length];
+  // 候補を、リストごとに決まった並び（シャッフルした順番）で1日ずつ順番に出す。
+  // 並びは日付やタイプに関係なく固定なので、候補の数と同じ日数のあいだは同じものが出ず、
+  // 前の日と同じ内容が続くこともない（t は日付の番号。2つ選ぶときは 2日目 = 2t と 2t+1）
+  var orders = {};
+  function orderOf(n, salt) {
+    var key = salt + "|" + n;
+    if (orders[key]) return orders[key];
+    var rand = seededRandom(hash("order|" + key)), o = [];
+    for (var i = 0; i < n; i++) o.push(i);
+    for (var j = n - 1; j > 0; j--) {
+      var r = Math.floor(rand() * (j + 1)), tmp = o[j];
+      o[j] = o[r];
+      o[r] = tmp;
+    }
+    return (orders[key] = o);
+  }
+  function cycle(list, t, salt) {
+    var n = list.length;
+    return list[orderOf(n, salt)[((t % n) + n) % n]];
+  }
+  function cyclePair(list, day, salt) {
+    return [cycle(list, day * 2, salt), cycle(list, day * 2 + 1, salt)];
   }
 
   // typeKey（保存済みの推し活タイプ）があれば、メッセージ・ラッキーアクション・お守りの言葉をタイプに合わせる。
@@ -106,31 +108,32 @@
     var now = date || new Date();
     var key = jstDateKey(now);
     var day = jstDayNumber(now);
-    var rand = seededRandom(hash("daily|" + key));
-    var r = rand();
+    // ★の数だけは日付ごとの乱数（出やすさに差をつけるため。前の日と同じ★になることはある）
+    var r = seededRandom(hash("daily|" + key))();
     var stars = r < 0.06 ? 1 : r < 0.22 ? 2 : r < 0.52 ? 3 : r < 0.84 ? 4 : 5;
     var allActions = Object.keys(D.ACTIONS).reduce(function (list, k) { return list.concat(D.ACTIONS[k]); }, []);
     var result = {
       date: key,
       typeKey: null,
-      luck: { stars: stars, title: D.LUCK[stars].title, text: pick(D.DAILY.luck[stars], rand) },
-      actions: pickDistinct(allActions, 2, rand),
+      // 同じ★が続いても、運勢文は前の日とちがうものになる
+      luck: { stars: stars, title: D.LUCK[stars].title, text: cycle(D.DAILY.luck[stars], day, "luck" + stars) },
+      actions: cyclePair(allActions, day, "actions"),
       lucky: {
-        color: pick(D.LUCKY_COLORS, rand),
-        item: pick(D.LUCKY_ITEMS, rand),
-        time: pick(D.LUCKY_TIMES, rand)
+        color: cycle(D.LUCKY_COLORS, day, "color"),
+        item: cycle(D.LUCKY_ITEMS, day, "item"),
+        time: cycle(D.LUCKY_TIMES, day, "time")
       },
-      message: rotate(D.DAILY.messages, day),
-      omamori: rotate(D.DAILY.omamori, day)
+      message: cycle(D.DAILY.messages, day, "message"),
+      omamori: cycle(D.DAILY.omamori, day, "omamori")
     };
     var type = typeKey && D.TYPES[typeKey];
     if (type) {
-      // タイプ別の部分は別の乱数で選ぶ（全員共通の部分の抽選結果を変えない）
-      var typeRand = seededRandom(hash("daily|" + key + "|" + typeKey));
+      // タイプ別の部分は、タイプごとの並びで選ぶ（全員共通の部分は変えない）
       result.typeKey = typeKey;
-      result.actions = pickDistinct(type.daily.actions, 2, typeRand);
-      result.message = rotate(type.daily.messages, day);
-      result.typeOmamori = type.omamori.charm; // タイプのお守りの言葉（全員共通のお守りに添える）
+      result.actions = cyclePair(type.daily.actions, day, "actions|" + typeKey);
+      result.message = cycle(type.daily.messages, day, "message|" + typeKey);
+      // タイプのお守りの言葉（結果画面のお守りの言葉と、毎日用の言葉を順番に）
+      result.typeOmamori = cycle([type.omamori.charm].concat(type.daily.charms || []), day, "charm|" + typeKey);
     }
     return result;
   }

@@ -33,6 +33,8 @@ for (const k of TYPE_KEYS) {
   t.match.types.forEach((m) => assert.ok(t.match.text.includes(D.TYPES[m].name), "相性の説明に " + D.TYPES[m].name + " がない（" + k + "）"));
   nonEmpty(t.omamori.charm, k + ".omamori.charm"); nonEmpty(t.omamori.message, k + ".omamori.message");
   assert.ok(t.daily.actions.length >= 5 && t.daily.messages.length >= 5, "今日の占い用の文章が足りない " + k);
+  assert.ok(Array.isArray(t.daily.charms) && t.daily.charms.length >= 1, "毎日のお守りの言葉がない " + k);
+  t.daily.charms.forEach((x, i) => { nonEmpty(x, k + ".daily.charms" + i); noBanned(x, k + ".daily.charms" + i); unique(x, k + ".charms" + i); });
   [t.catch, t.personality, t.smallAction, t.omamori.charm, t.omamori.message, t.match.text]
     .concat(t.daily.messages).forEach((x, i) => { noBanned(x, k + "#" + i); unique(x, k + "#" + i); });
   t.daily.actions.forEach((x, i) => { nonEmpty(x, k + ".daily.actions" + i); noBanned(x, k + ".daily.actions" + i); });
@@ -148,6 +150,8 @@ assert.deepStrictEqual(getDailyFortune(JST("2026-10-18T00:00:00")), getDailyFort
 assert.notDeepStrictEqual(getDailyFortune(JST("2026-10-18T23:59:59")), getDailyFortune(JST("2026-10-19T00:00:00")), "翌日は別の結果");
 
 const dailyTexts = [].concat(D.DAILY.omamori, ...D.DAILY.luck.filter(Boolean));
+[D.DAILY.messages, D.LUCKY_COLORS, D.LUCKY_ITEMS, D.LUCKY_TIMES, Object.values(D.ACTIONS).flat()].concat(D.DAILY.luck.filter(Boolean))
+  .forEach((list) => assert.strictEqual(new Set(list).size, list.length, "毎日の占いの候補に重複があります " + list[0]));
 dailyTexts.forEach((t) => BANNED.forEach((w) => assert.ok(!t.includes(w), "毎日の占いに「" + w + "」 " + t)));
 assert.strictEqual(new Set(D.DAILY.omamori).size, D.DAILY.omamori.length, "毎日のお守りに重複があります");
 
@@ -165,6 +169,13 @@ for (let i = 0; i < DAYS; i++) {
   // お守りメッセージは、文章の数（31）と同じ日数のあいだ同じ文が出ない
   assert.ok(!recent.includes(d.omamori), "お守りが" + D.DAILY.omamori.length + "日以内に重複 " + d.date);
   recent.push(d.omamori); if (recent.length >= D.DAILY.omamori.length) recent.shift();
+  // 前の日と同じ内容が続かない（★の数だけは続くことがある）
+  if (prev) {
+    assert.notStrictEqual(d.luck.text, prev.luck.text, "運勢文が前の日と同じ " + d.date);
+    ["color", "item", "time"].forEach((f) => assert.notStrictEqual(d.lucky[f], prev.lucky[f], "ラッキー" + f + "が前の日と同じ " + d.date));
+    assert.notStrictEqual(d.message, prev.message, "メッセージが前の日と同じ " + d.date);
+    assert.ok(d.actions.every((a) => !prev.actions.includes(a)), "ラッキーアクションが前の日と重なる " + d.date);
+  }
   seenOmamori.add(d.omamori); seenLuck.add(d.luck.text);
   prev = d;
 }
@@ -189,6 +200,14 @@ for (let i = 0; i < DAYS; i++) {
     assert.ok(!r.includes(d.message), "メッセージが連続した日で重複 " + k + " " + d.date);
     r.push(d.message); if (r.length >= D.TYPES[k].daily.messages.length) r.shift();
     assert.deepStrictEqual(getDailyFortune(t, k), d, "同じ日・同じタイプなら同じ結果");
+    const charms = [D.TYPES[k].omamori.charm].concat(D.TYPES[k].daily.charms);
+    assert.ok(charms.includes(d.typeOmamori), "タイプのお守りの言葉 " + k);
+    const y = i > 0 && getDailyFortune(new Date(t.getTime() - 86400000), k);
+    if (y) {
+      assert.notStrictEqual(d.message, y.message, "タイプ別メッセージが前の日と同じ " + k + " " + d.date);
+      assert.notStrictEqual(d.typeOmamori, y.typeOmamori, "タイプのお守りの言葉が前の日と同じ " + k + " " + d.date);
+      assert.ok(d.actions.every((a) => !y.actions.includes(a)), "タイプ別アクションが前の日と重なる " + k + " " + d.date);
+    }
   }
 }
 assert.strictEqual(getDailyFortune(JST("2026-10-18T12:00:00"), "unknown-type").typeKey, null, "知らないタイプは未診断扱い");
