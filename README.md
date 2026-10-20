@@ -147,6 +147,7 @@ URL の最後に `?preview-date=2026-10-19` のように日付を付けると、
 
 ```
 index.html            画面（トップ / 読み込み / 今日の占い / 質問 / タイプ結果）
+types/index.html      8つの推し活タイプ一覧と診断のしくみ（検索から来た人向けのくわしい説明。JavaScript なし）
 css/style.css         デザイン
 js/data.js            質問・タイプ・占いの文章データ
 js/fortune.js         タイプ判定と今日の占いのロジック（ブラウザと Node.js の両方で動く）
@@ -154,7 +155,7 @@ js/share-card.js      推し活タイプのシェア画像を作る
 manifest.webmanifest  ホーム画面に追加したときの名前・アイコン・色（PWA）
 sw.js                 Service Worker（ネットワーク優先。つながらないときだけ保存したファイルで表示）
 robots.txt            検索エンジン向け：サイト全体のクロールを許可し、サイトマップの場所を書く
-sitemap.xml           検索エンジン向け：公開しているページの一覧（今はトップの1ページだけ）
+sitemap.xml           検索エンジン向け：公開しているページの一覧（トップと types/ の2ページ）
 js/app.js             画面遷移・保存・共有
 images/luna-cat.png   公式マスコット（三日月の上で眠る白猫）。トップ・読み込み・質問・案内カードなど
 images/types/         推し活タイプごとの白猫（下の表。どのタイプの絵かは js/data.js の TYPES の image で指定）
@@ -197,10 +198,13 @@ tests/subtype.js      サブタイプコードの判定のテスト（検討で�
 ## 検索エンジン向けのファイル
 
 - 公開URLは `https://oshi-luna.com/` として、`robots.txt` と `sitemap.xml` に書いています（このリポジトリには独自ドメインの設定ファイル `CNAME` はありません。Cloudflare などの管理画面で設定している場合も、そのドメインのいちばん上（`https://oshi-luna.com/robots.txt`）で開けることを確認してください）
-- `sitemap.xml` には公開しているページだけを入れます。診断・今日の占い・結果は同じページの中で切り替わるので、URL はトップの1つだけです。お試し表示（`?preview-date=`）や診断結果のような、人ごと・一時的な表示は入れません
-- ページを増やしたときは `sitemap.xml` に足し、`<lastmod>` を更新してください（`node tests/check.js` で、存在しないページや ? のつくURLが入っていないかを確認します）
+- `sitemap.xml` には公開しているページだけを入れます。診断・今日の占い・結果は同じページの中で切り替わるので、URL はトップと、タイプ一覧（`types/`）の2つです。お試し表示（`?preview-date=`）や診断結果のような、人ごと・一時的な表示は入れません
+- ページを増やしたときは `sitemap.xml` に足し、`<lastmod>` を更新してください（`node tests/check.js` で、すべての HTML が入っているか、存在しないページや ? のつくURLが入っていないかを確認します）
 - `index.html` の `<head>` に、title・description・canonical（`https://oshi-luna.com/`）・OGP・構造化データ（WebSite）を入れています。お試し表示（`?preview-date=`）や GitHub Pages のアドレスで開いたときも、正式なURLは canonical の1つです
-- トップの下の方に、はじめての人向けの紹介「推しルナ占いでできること」（診断と占いの中身・8つのタイプ・よくある質問）があります。タイプ名や問題数を変えたときは、紹介文と description も直してください（`node tests/check.js` で、8タイプの名前と問題数がデータと合っているかを確認します）
+- トップは短く：ルナとキャッチコピー → 推し活タイプ診断のカード → 今日の推し活占い → 8つのタイプ（絵とタイプ名）→ よくある質問（3つ）。診断済みの人には、今日の占いのボタンを診断カードより先に出します（`app.js` の `refreshTop`）
+- くわしい説明は `types/index.html`（8つのタイプの特徴・サブタイプコードの4つの傾向・診断のしくみ・よくある質問）。トップの8タイプの絵から、そのタイプの説明へ移動できます
+- `types/index.html` のタイプの文章（名前・キャッチ・性格・輝くところ）と4つの傾向の説明は `js/data.js` と同じ文章です。データを直したときは、このページも同じように直してください（`node tests/check.js` が、文章のずれ・問題数・リンク切れ・各ページの title／description／canonical／OGP を確認します）
+- 「無料」は、サービス全体のキャッチコピーにはしません。title・description・OGP には入れず、診断ボタンの下の案内とよくある質問で、今の機能が無料で使えることだけを伝えます
 
 ## アクセス解析（Google Analytics 4）
 

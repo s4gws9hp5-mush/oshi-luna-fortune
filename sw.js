@@ -5,9 +5,9 @@
  */
 "use strict";
 
-var CACHE = "oshi-luna-v3";
+var CACHE = "oshi-luna-v4";
 var CORE = [
-  "./", "index.html", "css/style.css",
+  "./", "index.html", "types/", "css/style.css",
   "js/data.js", "js/fortune.js", "js/share-card.js", "js/app.js",
   "images/luna-cat.png", "images/apple-touch-icon.png", "images/icon-192.png",
   "images/types/solo-moon-book.png", "images/types/cheer-penlight.png", "images/types/memory-photos-goods.png",

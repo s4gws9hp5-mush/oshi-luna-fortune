@@ -185,6 +185,8 @@
     $("type-card-new").hidden = !!saved;
     $("type-card-renewal").hidden = !!saved || !load(KEYS.legacy);
     $("resume-btn").hidden = !!saved || !progress;
+    // 初めての人には診断の案内を先に、診断済みの人には毎日の占いを先に
+    $("screen-top").insertBefore($("daily-entry"), saved ? $("type-card") : $("type-card").nextSibling);
     if (saved) {
       var t = D.TYPES[saved.type];
       $("top-type-emblem").style.setProperty("--type-color", t.color);

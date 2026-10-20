@@ -417,7 +417,7 @@ assert.ok(locs.length >= 1 && (sitemap.match(/<url>/g) || []).length === locs.le
 locs.forEach((u) => {
   // 公開しているページだけ：サイトのアドレスで始まり、?・# のつく一時的な表示（お試し表示・診断結果など）は入れない
   assert.ok(u.startsWith(SITE) && !/[?#]/.test(u), "sitemap.xml に入れないURL " + u);
-  const file = u === SITE ? "index.html" : u.slice(SITE.length);
+  const file = u.slice(SITE.length).replace(/(^|\/)$/, "$1index.html");
   assert.ok(fs.existsSync(path.join(__dirname, "..", file)), "sitemap.xml のページが存在しない " + u);
 });
 [...sitemap.matchAll(/<lastmod>([^<]*)<\/lastmod>/g)].forEach((m) => assert.match(m[1], /^\d{4}-\d{2}-\d{2}$/, "lastmod の形式"));
@@ -428,7 +428,12 @@ assert.match(robots, new RegExp("^Sitemap: " + SITE.replace(/[.]/g, "\\.") + "si
 
 // ---- アクセス解析：Google Analytics 4 の公式タグ（gtag.js）が、公開ページの <head> に1回だけある ----
 const GA_ID = "G-GW3MQNMW58";
-fs.readdirSync(path.join(__dirname, "..")).filter((f) => f.endsWith(".html")).forEach((f) => {
+const PAGES = ["index.html", "types/index.html"]; // 公開しているページ（sitemap.xml と同じ）
+const htmlFiles = (dir) => fs.readdirSync(path.join(__dirname, "..", dir), { withFileTypes: true }).flatMap((e) =>
+  e.isDirectory() ? (/^(\.|tests$|node_modules$)/.test(e.name) ? [] : htmlFiles(path.join(dir, e.name))) : e.name.endsWith(".html") ? [path.join(dir, e.name)] : []);
+assert.deepStrictEqual(htmlFiles("").sort(), PAGES.slice().sort(), "HTML ファイルの一覧（ページを増やしたら PAGES と sitemap.xml に足す）");
+assert.deepStrictEqual(locs.map((u) => u.slice(SITE.length).replace(/(^|\/)$/, "$1index.html")).sort(), PAGES.slice().sort(), "sitemap.xml にすべてのページ");
+PAGES.forEach((f) => {
   const html = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
   const head = html.slice(0, html.indexOf("</head>"));
   const count = (re) => (html.match(re) || []).length;
@@ -440,29 +445,60 @@ fs.readdirSync(path.join(__dirname, "..")).filter((f) => f.endsWith(".html")).fo
   assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset="utf-8">'))) < 1024, f + "：文字コードの指定は先頭1024バイト以内");
 });
 
-// ---- 検索・SNS向けの情報：title・description・canonical・OGP・構造化データ、トップの紹介文がデータと合っている ----
-{
-  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+// ---- 検索・SNS向けの情報：ページごとの title・description・canonical・OGP・構造化データ、紹介文がデータと合っている ----
+const text = (html) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+const TOTAL_Q = D.QUESTIONS.length + D.AXIS_QUESTIONS.length;
+const pageInfo = PAGES.map((f) => {
+  const html = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
   const head = html.slice(0, html.indexOf("</head>"));
-  const one = (re, what) => { const m = [...head.matchAll(re)]; assert.strictEqual(m.length, 1, what + " は1つだけ"); return m[0][1]; };
+  const one = (re, what) => { const m = [...head.matchAll(re)]; assert.strictEqual(m.length, 1, f + "：" + what + " は1つだけ"); return m[0][1]; };
+  const url = SITE + f.replace(/index\.html$/, "");
   const title = one(/<title>([^<]*)<\/title>/g, "title");
-  assert.ok(title.includes("推しルナ占い") && title.length <= 40, "title " + title);
+  assert.ok(title.includes("推しルナ占い") && title.length <= 40, f + "：title " + title);
   const desc = one(/<meta name="description" content="([^"]*)">/g, "description");
-  assert.ok(desc.length >= 50 && desc.length <= 140, "description の長さ " + desc.length);
-  assert.strictEqual(one(/<link rel="canonical" href="([^"]*)">/g, "canonical"), SITE);
-  assert.strictEqual(one(/<meta property="og:url" content="([^"]*)">/g, "og:url"), SITE);
+  assert.ok(desc.length >= 50 && desc.length <= 120, f + "：description の長さ " + desc.length);
+  assert.strictEqual(one(/<link rel="canonical" href="([^"]*)">/g, "canonical"), url, f + "：canonical");
+  assert.strictEqual(one(/<meta property="og:url" content="([^"]*)">/g, "og:url"), url, f + "：og:url");
   const ogImage = one(/<meta property="og:image" content="([^"]*)">/g, "og:image");
-  assert.ok(ogImage.startsWith(SITE) && fs.existsSync(path.join(__dirname, "..", ogImage.slice(SITE.length))), "og:image のファイル " + ogImage);
-  assert.deepStrictEqual(pngSize(path.join(__dirname, "..", ogImage.slice(SITE.length))),
-    [+one(/<meta property="og:image:width" content="(\d+)">/g, "og:image:width"), +one(/<meta property="og:image:height" content="(\d+)">/g, "og:image:height")], "og:image の大きさ");
+  const ogFile = path.join(__dirname, "..", ogImage.slice(SITE.length));
+  assert.ok(ogImage.startsWith(SITE) && fs.existsSync(ogFile), f + "：og:image のファイル " + ogImage);
+  assert.deepStrictEqual(pngSize(ogFile), [+one(/<meta property="og:image:width" content="(\d+)">/g, "og:image:width"), +one(/<meta property="og:image:height" content="(\d+)">/g, "og:image:height")], f + "：og:image の大きさ");
   const ld = JSON.parse(one(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g, "構造化データ"));
-  assert.ok(ld["@context"] === "https://schema.org" && ld["@type"] === "WebSite" && ld.url === SITE && ld.name === "推しルナ占い", "構造化データ WebSite");
-  // トップの紹介：8タイプの名前・質問の数がデータと同じ（タイプ名や問題数を変えたら紹介文も直す）
-  const types = [...html.matchAll(/<ul class="about-types">([\s\S]*?)<\/ul>/g)][0][1];
-  assert.deepStrictEqual([...types.matchAll(/<li>\S+ ([^<]+)<\/li>/g)].map((m) => m[1]), TYPE_KEYS.map((k) => D.TYPES[k].name), "トップの紹介の8タイプ");
-  const total = D.QUESTIONS.length + D.AXIS_QUESTIONS.length;
-  [...html.matchAll(/(\d+)の質問|全(\d+)問/g)].forEach((m) => assert.strictEqual(+(m[1] || m[2]), total, "紹介文の問題数 " + m[0]));
-  assert.ok(desc.includes(total + "の質問"), "description の問題数");
+  assert.strictEqual(ld["@context"], "https://schema.org", f + "：構造化データ");
+  assert.strictEqual((html.match(/<h1[\s>]/g) || []).length, 1, f + "：h1 は1つだけ");
+  // ページ内のリンク・画像：同じサイトの中は、ファイルがあり、#のついたリンクは行き先の id がある
+  const ids = (h) => new Set([...h.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
+  [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !/^(https?:|data:|#$)/.test(u)).forEach((u) => {
+    const [p, hash] = u.split("#");
+    const target = path.normalize(path.join(path.dirname(f), p || path.basename(f))).replace(/(^|\/)$|^\.$/, "$1index.html").replace(/^\.?$/, "index.html");
+    const file = fs.existsSync(path.join(__dirname, "..", target)) && fs.statSync(path.join(__dirname, "..", target)).isDirectory() ? path.join(target, "index.html") : target;
+    assert.ok(fs.existsSync(path.join(__dirname, "..", file)), f + "：リンク切れ " + u);
+    if (hash) assert.ok(ids(fs.readFileSync(path.join(__dirname, "..", file), "utf8")).has(hash), f + "：行き先の id がない " + u);
+  });
+  // 問題数を書いているところは、すべて実際の問題数
+  [...text(html).matchAll(/(\d+)の質問|全(\d+)問/g)].forEach((m) => assert.strictEqual(+(m[1] || m[2]), TOTAL_Q, f + "：問題数 " + m[0]));
+  return { f, html, ld, title, desc };
+});
+{
+  const [top, types] = pageInfo;
+  assert.ok(top.ld["@type"] === "WebSite" && top.ld.url === SITE && top.ld.name === "推しルナ占い", "トップの構造化データ WebSite");
+  assert.ok(/推し活タイプ診断/.test(top.title) && /今日の推し活占い/.test(top.title), "トップの title に診断と占い");
+  assert.ok(top.desc.includes(TOTAL_Q + "の質問") && top.desc.includes("8つ") && top.desc.includes("サブタイプコード") && top.desc.includes("今日の推し活占い"), "トップの description");
+  // 「無料」は前面に出しすぎない：title・description・OGP・構造化データには入れない
+  pageInfo.forEach((p) => assert.ok(!/無料/.test(p.html.slice(0, p.html.indexOf("</head>"))), p.f + "：head に「無料」"));
+  // トップの8タイプ：名前・順番・リンク先がデータと同じ
+  const grid = [...top.html.matchAll(/<li><a href="types\/#(\w+)"><img src="([^"]+)"[^>]*><span>(.*?)<\/span><\/a><\/li>/g)];
+  assert.deepStrictEqual(grid.map((m) => [m[1], m[2], text(m[3])]), TYPE_KEYS.map((k) => [k, D.TYPES[k].image, D.TYPES[k].name]), "トップの8タイプ");
+  // types/：パンくず、8タイプの名前・キャッチ・性格・輝くところ、4つの軸の説明がデータと同じ
+  assert.ok(types.ld["@type"] === "BreadcrumbList" && types.ld.itemListElement.map((x) => x.item).join() === SITE + "," + SITE + "types/", "types/ のパンくずリスト");
+  TYPE_KEYS.forEach((k) => {
+    const t = D.TYPES[k];
+    const art = (types.html.match(new RegExp('<article class="card guide-type" id="' + k + '"[\\s\\S]*?</article>')) || [""])[0];
+    assert.ok(art.includes('src="../' + t.image + '"'), "types/ の画像 " + k);
+    const tx = text(art);
+    [t.name, t.catch, t.personality].concat(t.strengths).forEach((s) => assert.ok(tx.includes(s), "types/ の " + k + " にデータの文章がない：" + s));
+  });
+  D.AXES.forEach((a) => a.letters.concat("X").forEach((L) => assert.ok(text(types.html).includes(L + (L === "X" ? "バランス型" : a.labels[L]) + a.texts[L]), "types/ の軸の説明 " + a.key + L)));
 }
 
 console.log("OK: タイプ " + TYPE_KEYS.length + "種・質問 " + D.QUESTIONS.length + "問 / 全" + N + "通りの回答で判定（" +
