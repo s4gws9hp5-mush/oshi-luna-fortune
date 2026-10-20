@@ -426,6 +426,20 @@ assert.match(robots, /^User-agent: \*$/m, "robots.txt に User-agent: *");
 assert.ok(!/^Disallow:\s*\/\s*$/m.test(robots), "robots.txt でサイト全体をブロックしている");
 assert.match(robots, new RegExp("^Sitemap: " + SITE.replace(/[.]/g, "\\.") + "sitemap\\.xml$", "m"), "robots.txt にサイトマップのURL");
 
+// ---- アクセス解析：Google Analytics 4 の公式タグ（gtag.js）が、公開ページの <head> に1回だけある ----
+const GA_ID = "G-GW3MQNMW58";
+fs.readdirSync(path.join(__dirname, "..")).filter((f) => f.endsWith(".html")).forEach((f) => {
+  const html = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const head = html.slice(0, html.indexOf("</head>"));
+  const count = (re) => (html.match(re) || []).length;
+  assert.strictEqual(count(/googletagmanager\.com\/gtag\/js/g), 1, f + "：gtag.js の読み込みは1回だけ（二重計測しない）");
+  assert.ok(head.includes('<script async src="https://www.googletagmanager.com/gtag/js?id=' + GA_ID + '"></script>'), f + "：gtag.js は <head> で非同期に読み込む");
+  assert.strictEqual(count(/gtag\('config',/g), 1, f + "：gtag('config') は1回だけ");
+  assert.ok(head.includes("gtag('config', '" + GA_ID + "');"), f + "：測定ID");
+  assert.ok(!/G-(?!GW3MQNMW58)[A-Z0-9]{6,}|UA-\d|GTM-/.test(html), f + "：ほかの測定ID・タグがない");
+  assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset="utf-8">'))) < 1024, f + "：文字コードの指定は先頭1024バイト以内");
+});
+
 console.log("OK: タイプ " + TYPE_KEYS.length + "種・質問 " + D.QUESTIONS.length + "問 / 全" + N + "通りの回答で判定（" +
   TYPE_KEYS.map((k) => k + " " + (dist[k] / N * 100).toFixed(1) + "%").join("・") + "）");
 console.log("OK: ブラウザごとのID 1000個で、同じ日の運勢が人ごとに分かれ（全体の組み合わせ " + kinds(baseOf) + "通り）、★の出現率は仕様どおり、前の日と同じ★は " + (sameStar / pairs * 100).toFixed(1) + "%");
