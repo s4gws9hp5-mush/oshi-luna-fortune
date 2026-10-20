@@ -199,6 +199,8 @@ tests/subtype.js      サブタイプコードの判定のテスト（検討で�
 - 公開URLは `https://oshi-luna.com/` として、`robots.txt` と `sitemap.xml` に書いています（このリポジトリには独自ドメインの設定ファイル `CNAME` はありません。Cloudflare などの管理画面で設定している場合も、そのドメインのいちばん上（`https://oshi-luna.com/robots.txt`）で開けることを確認してください）
 - `sitemap.xml` には公開しているページだけを入れます。診断・今日の占い・結果は同じページの中で切り替わるので、URL はトップの1つだけです。お試し表示（`?preview-date=`）や診断結果のような、人ごと・一時的な表示は入れません
 - ページを増やしたときは `sitemap.xml` に足し、`<lastmod>` を更新してください（`node tests/check.js` で、存在しないページや ? のつくURLが入っていないかを確認します）
+- `index.html` の `<head>` に、title・description・canonical（`https://oshi-luna.com/`）・OGP・構造化データ（WebSite）を入れています。お試し表示（`?preview-date=`）や GitHub Pages のアドレスで開いたときも、正式なURLは canonical の1つです
+- トップの下の方に、はじめての人向けの紹介「推しルナ占いでできること」（診断と占いの中身・8つのタイプ・よくある質問）があります。タイプ名や問題数を変えたときは、紹介文と description も直してください（`node tests/check.js` で、8タイプの名前と問題数がデータと合っているかを確認します）
 
 ## アクセス解析（Google Analytics 4）
 

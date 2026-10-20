@@ -13,8 +13,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6e9f7">
-  <meta name="description" content="推しを好きな気持ちも、自分のことも大切に。毎日の推し活占いと、あなたの推し活タイプがわかる診断。">
-  <title>推しルナ占い</title>
+  <meta name="description" content="14の質問に答えるだけの無料の推し活タイプ診断。8つのタイプと4文字のサブタイプコードで、あなたらしい推し活の楽しみ方や性格の傾向がわかります。毎日0時に届く今日の推し活占いも。登録不要でスマホから楽しめます。">
+  <title>推しルナ占い｜無料の推し活タイプ診断と今日の推し活占い</title>
+  <link rel="canonical" href="https://oshi-luna.com/">
+  <!-- SNS で共有されたときの表示（OGP） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="推しルナ占い">
+  <meta property="og:title" content="推しルナ占い｜無料の推し活タイプ診断と今日の推し活占い">
+  <meta property="og:description" content="14の質問でわかる、8つの推し活タイプ診断と、毎日0時に届く今日の推し活占い。推しを好きな気持ちも、自分のことも大切に。">
+  <meta property="og:url" content="https://oshi-luna.com/">
+  <meta property="og:image" content="https://oshi-luna.com/images/luna-cat.png">
+  <meta property="og:image:width" content="640">
+  <meta property="og:image:height" content="513">
+  <meta property="og:image:alt" content="三日月の上で眠る白猫（推しルナ占いのマスコット）">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary">
+  <!-- 検索エンジン向けのサイト情報（構造化データ） -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "推しルナ占い",
+    "url": "https://oshi-luna.com/",
+    "inLanguage": "ja",
+    "description": "14の質問でわかる無料の推し活タイプ診断と、毎日0時に届く今日の推し活占い。"
+  }
+  </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -51,7 +75,7 @@
         <!-- A. 診断結果が保存されていない人向け（途中まで答えた人には「続きから」も出す） -->
         <div id="type-card-new">
           <h2 class="type-card-title" id="type-card-title">🌙 あなたの推し活タイプ、<br>知ってる？</h2>
-          <p class="type-card-text"><span class="nowrap">今日の運勢だけじゃなく、</span><span class="nowrap">あなたらしい推し活スタイルも</span><span class="nowrap">見つけてみよう♡</span><br><span class="nowrap">いくつかの質問に答えるだけで、</span><span class="nowrap">あなたの推し活タイプがわかるよ！</span></p>
+          <p class="type-card-text"><span class="nowrap">今日の運勢だけじゃなく、</span><span class="nowrap">あなたらしい推し活スタイルも</span><span class="nowrap">見つけてみよう♡</span><br><span class="nowrap">14の質問に答えるだけで、</span><span class="nowrap">あなたの推し活タイプがわかるよ！</span></p>
           <div class="type-card-art" aria-hidden="true">
             <img class="mascot" src="images/luna-cat.png" width="640" height="513" alt="">
           </div>
@@ -76,6 +100,49 @@
 
       <!-- ホーム画面への追加（目立ちすぎない小さなリンク。ホーム画面から開いているときは出さない） -->
       <button type="button" class="btn-text a2hs-link" id="a2hs-top-btn">📱 ホーム画面に追加する方法</button>
+
+      <!-- はじめての人向けの紹介（診断と占いの中身・8タイプ・よくある質問） -->
+      <section class="about" aria-labelledby="about-title">
+        <h2 class="about-title" id="about-title">推しルナ占いでできること</h2>
+        <p class="about-lead">アイドル、俳優、アニメやゲームのキャラクター、VTuberなど、ジャンルを問わず推しがいる人のための、無料の推し活診断と占いです。推しを好きな気持ちも、自分のことも大切にできるように、白猫のルナがそっと寄りそいます。</p>
+
+        <div class="card card-pink">
+          <h3 class="card-title"><span aria-hidden="true">🎀</span> 推し活タイプ診断<span class="nowrap">（全14問）</span></h3>
+          <p>推し活のときの気持ちや過ごし方についての質問に答えると、8つの推し活タイプからあなたのタイプがわかる、オタク・ファンのためのタイプ診断です。結果では、基本の性格、推し活で輝くところ、無理をしやすいポイント、自分らしく楽しむヒント、相性のよい推し活スタイル、今日からできる小さなアクションを紹介します。</p>
+          <p class="about-note">さらに「愛情表現」「応援スタイル」「気持ちの整理」「楽しみ方」の4つの傾向から、4文字のサブタイプコードもわかります。結果は画像として保存・シェアできます。</p>
+        </div>
+
+        <div class="card card-lavender">
+          <h3 class="card-title"><span aria-hidden="true">🌙</span> 今日の推し活占い<span class="nowrap">（毎日0時更新）</span></h3>
+          <p>日本時間の毎日0時に、新しい占いが届きます。今日の運勢（★5段階）、ラッキーカラー・アイテム・時間帯、ラッキーアクション、白猫からのお守りメッセージをチェックできます。推し活タイプを診断しておくと、メッセージやラッキーアクションがあなたのタイプに合わせた内容になります。</p>
+        </div>
+
+        <div class="card card-blue">
+          <h3 class="card-title"><span aria-hidden="true">✨</span> 8つの推し活タイプ</h3>
+          <ul class="about-types">
+            <li>🌙 月夜のおひとりさま鑑賞家</li>
+            <li>📣 ときめき全力応援隊長</li>
+            <li>📷 思い出アルバムコレクター</li>
+            <li>💬 推し語りコミュニケーター</li>
+            <li>🌱 そっと寄りそう見守りさん</li>
+            <li>🎨 ときめき探究クリエイター</li>
+            <li>☁️ マイペースな癒やし系ファン</li>
+            <li>🔭 情報キャッチの星読みリサーチャー</li>
+          </ul>
+        </div>
+
+        <div class="card card-cream">
+          <h3 class="card-title"><span aria-hidden="true">💡</span> よくある質問</h3>
+          <dl class="about-faq">
+            <dt>無料で使えますか？</dt>
+            <dd>はい。推し活タイプ診断も今日の推し活占いも無料です。</dd>
+            <dt>会員登録は必要ですか？</dt>
+            <dd>いりません。診断結果はこの端末のブラウザにだけ保存され、いつでも見返せます。</dd>
+            <dt>診断にはどのくらい時間がかかりますか？</dt>
+            <dd>全14問で、約1分です。途中でやめても、続きから答えられます。</dd>
+          </dl>
+        </div>
+      </section>
     </section>
 
     <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->

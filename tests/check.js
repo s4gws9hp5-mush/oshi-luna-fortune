@@ -440,6 +440,31 @@ fs.readdirSync(path.join(__dirname, "..")).filter((f) => f.endsWith(".html")).fo
   assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset="utf-8">'))) < 1024, f + "：文字コードの指定は先頭1024バイト以内");
 });
 
+// ---- 検索・SNS向けの情報：title・description・canonical・OGP・構造化データ、トップの紹介文がデータと合っている ----
+{
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const head = html.slice(0, html.indexOf("</head>"));
+  const one = (re, what) => { const m = [...head.matchAll(re)]; assert.strictEqual(m.length, 1, what + " は1つだけ"); return m[0][1]; };
+  const title = one(/<title>([^<]*)<\/title>/g, "title");
+  assert.ok(title.includes("推しルナ占い") && title.length <= 40, "title " + title);
+  const desc = one(/<meta name="description" content="([^"]*)">/g, "description");
+  assert.ok(desc.length >= 50 && desc.length <= 140, "description の長さ " + desc.length);
+  assert.strictEqual(one(/<link rel="canonical" href="([^"]*)">/g, "canonical"), SITE);
+  assert.strictEqual(one(/<meta property="og:url" content="([^"]*)">/g, "og:url"), SITE);
+  const ogImage = one(/<meta property="og:image" content="([^"]*)">/g, "og:image");
+  assert.ok(ogImage.startsWith(SITE) && fs.existsSync(path.join(__dirname, "..", ogImage.slice(SITE.length))), "og:image のファイル " + ogImage);
+  assert.deepStrictEqual(pngSize(path.join(__dirname, "..", ogImage.slice(SITE.length))),
+    [+one(/<meta property="og:image:width" content="(\d+)">/g, "og:image:width"), +one(/<meta property="og:image:height" content="(\d+)">/g, "og:image:height")], "og:image の大きさ");
+  const ld = JSON.parse(one(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g, "構造化データ"));
+  assert.ok(ld["@context"] === "https://schema.org" && ld["@type"] === "WebSite" && ld.url === SITE && ld.name === "推しルナ占い", "構造化データ WebSite");
+  // トップの紹介：8タイプの名前・質問の数がデータと同じ（タイプ名や問題数を変えたら紹介文も直す）
+  const types = [...html.matchAll(/<ul class="about-types">([\s\S]*?)<\/ul>/g)][0][1];
+  assert.deepStrictEqual([...types.matchAll(/<li>\S+ ([^<]+)<\/li>/g)].map((m) => m[1]), TYPE_KEYS.map((k) => D.TYPES[k].name), "トップの紹介の8タイプ");
+  const total = D.QUESTIONS.length + D.AXIS_QUESTIONS.length;
+  [...html.matchAll(/(\d+)の質問|全(\d+)問/g)].forEach((m) => assert.strictEqual(+(m[1] || m[2]), total, "紹介文の問題数 " + m[0]));
+  assert.ok(desc.includes(total + "の質問"), "description の問題数");
+}
+
 console.log("OK: タイプ " + TYPE_KEYS.length + "種・質問 " + D.QUESTIONS.length + "問 / 全" + N + "通りの回答で判定（" +
   TYPE_KEYS.map((k) => k + " " + (dist[k] / N * 100).toFixed(1) + "%").join("・") + "）");
 console.log("OK: ブラウザごとのID 1000個で、同じ日の運勢が人ごとに分かれ（全体の組み合わせ " + kinds(baseOf) + "通り）、★の出現率は仕様どおり、前の日と同じ★は " + (sameStar / pairs * 100).toFixed(1) + "%");

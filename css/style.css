@@ -922,3 +922,17 @@ button:focus-visible {
     transition: none !important;
   }
 }
+
+/* トップの紹介（はじめての人向け：診断と占いの中身・8タイプ・よくある質問） */
+.about { margin-top: 34px; }
+.about-title { margin: 0 0 10px; text-align: center; font-size: 1.15rem; letter-spacing: 0.06em; color: var(--lavender-deep); }
+.about-lead { margin: 0 0 18px; font-size: 0.9rem; line-height: 1.85; }
+.about .card { font-size: 0.9rem; line-height: 1.8; }
+.about .card p + p { margin-top: 8px; }
+.about-note { font-size: 0.85rem; color: var(--ink-soft); }
+.about-types { margin: 0; padding: 0; list-style: none; }
+.about-types li { padding: 3px 0; font-weight: 700; }
+.about-faq { margin: 0; }
+.about-faq dt { font-weight: 700; color: var(--pink-deep); }
+.about-faq dd { margin: 2px 0 10px; }
+.about-faq dd:last-child { margin-bottom: 0; }
