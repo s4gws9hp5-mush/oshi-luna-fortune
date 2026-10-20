@@ -311,9 +311,9 @@
     var list = quizQuestions();
     var q = answers.length;
     var question = list[q];
+    // 14問の診断では、Q11〜Q14 も他の質問と同じように続けて出す（途中で「サブタイプ」とは言わない）
     var note = question.note ||
-      (quizMode === "axes" && q === 0 ? "サブタイプコードの質問（全" + list.length + "問）" : "") ||
-      (quizMode === "full" && q === D.QUESTIONS.length ? "ここからはサブタイプの質問（あと" + (list.length - q) + "問）" : "");
+      (quizMode === "axes" && q === 0 ? "サブタイプコードの質問（全" + list.length + "問）" : "");
     $("q-count").textContent = "Q" + (q + 1) + " / " + list.length;
     $("q-text").textContent = question.text;
     $("q-note").hidden = !note;
