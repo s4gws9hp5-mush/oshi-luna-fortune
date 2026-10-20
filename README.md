@@ -153,6 +153,8 @@ js/fortune.js         タイプ判定と今日の占いのロジック（ブラ�
 js/share-card.js      推し活タイプのシェア画像を作る
 manifest.webmanifest  ホーム画面に追加したときの名前・アイコン・色（PWA）
 sw.js                 Service Worker（ネットワーク優先。つながらないときだけ保存したファイルで表示）
+robots.txt            検索エンジン向け：サイト全体のクロールを許可し、サイトマップの場所を書く
+sitemap.xml           検索エンジン向け：公開しているページの一覧（今はトップの1ページだけ）
 js/app.js             画面遷移・保存・共有
 images/luna-cat.png   公式マスコット（三日月の上で眠る白猫）。トップ・読み込み・質問・案内カードなど
 images/types/         推し活タイプごとの白猫（下の表。どのタイプの絵かは js/data.js の TYPES の image で指定）
@@ -191,6 +193,12 @@ tests/subtype.js      サブタイプコードの判定のテスト（検討で�
 - トップの小さなリンク「📱 ホーム画面に追加する方法」からいつでも手順を見られます（ホーム画面から開いているときは出ません）
 - 手順は iPhone の Safari／iPhone の Chrome など／LINE などのアプリ内ブラウザ／Android／その他 で出し分けます
 - Android の Chrome などで、ブラウザがインストール画面を用意したときだけ「ホーム画面に追加する」ボタンを表示します
+
+## 検索エンジン向けのファイル
+
+- 公開URLは `https://oshi-luna.com/` として、`robots.txt` と `sitemap.xml` に書いています（このリポジトリには独自ドメインの設定ファイル `CNAME` はありません。Cloudflare などの管理画面で設定している場合も、そのドメインのいちばん上（`https://oshi-luna.com/robots.txt`）で開けることを確認してください）
+- `sitemap.xml` には公開しているページだけを入れます。診断・今日の占い・結果は同じページの中で切り替わるので、URL はトップの1つだけです。お試し表示（`?preview-date=`）や診断結果のような、人ごと・一時的な表示は入れません
+- ページを増やしたときは `sitemap.xml` に足し、`<lastmod>` を更新してください（`node tests/check.js` で、存在しないページや ? のつくURLが入っていないかを確認します）
 
 ## 確認方法
 

@@ -1,0 +1,5 @@
+# 推しルナ占い：すべての検索エンジンに、サイト全体のクロールを許可する
+User-agent: *
+Allow: /
+
+Sitemap: https://oshi-luna.com/sitemap.xml

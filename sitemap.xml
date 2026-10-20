@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 推しルナ占いのサイトマップ。公開しているページはトップ（診断・今日の占い・結果はこのページの中で切り替わる）だけ。
+     お試し表示（?preview-date=）や診断結果など、人ごと・一時的な表示は入れない -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://oshi-luna.com/</loc>
+    <lastmod>2026-10-20</lastmod>
+  </url>
+</urlset>

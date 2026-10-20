@@ -407,6 +407,25 @@ for (let i = 0; i < 256; i++) {
 assert.strictEqual(diagnoseAxes(null, [0, 0, 0, 0]).code, "EFIS");
 assert.strictEqual(diagnoseAxes(null, [3, 3, 3, 3]).code, "WHAP");
 
+// ---- 検索エンジン向け：sitemap.xml と robots.txt ----
+const SITE = "https://oshi-luna.com/";
+const sitemap = fs.readFileSync(path.join(__dirname, "..", "sitemap.xml"), "utf8");
+assert.match(sitemap, /^<\?xml version="1\.0" encoding="UTF-8"\?>/, "sitemap.xml の先頭");
+assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">[\s\S]*<\/urlset>\s*$/, "sitemap.xml の urlset");
+const locs = [...sitemap.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
+assert.ok(locs.length >= 1 && (sitemap.match(/<url>/g) || []).length === locs.length, "sitemap.xml の url");
+locs.forEach((u) => {
+  // 公開しているページだけ：サイトのアドレスで始まり、?・# のつく一時的な表示（お試し表示・診断結果など）は入れない
+  assert.ok(u.startsWith(SITE) && !/[?#]/.test(u), "sitemap.xml に入れないURL " + u);
+  const file = u === SITE ? "index.html" : u.slice(SITE.length);
+  assert.ok(fs.existsSync(path.join(__dirname, "..", file)), "sitemap.xml のページが存在しない " + u);
+});
+[...sitemap.matchAll(/<lastmod>([^<]*)<\/lastmod>/g)].forEach((m) => assert.match(m[1], /^\d{4}-\d{2}-\d{2}$/, "lastmod の形式"));
+const robots = fs.readFileSync(path.join(__dirname, "..", "robots.txt"), "utf8");
+assert.match(robots, /^User-agent: \*$/m, "robots.txt に User-agent: *");
+assert.ok(!/^Disallow:\s*\/\s*$/m.test(robots), "robots.txt でサイト全体をブロックしている");
+assert.match(robots, new RegExp("^Sitemap: " + SITE.replace(/[.]/g, "\\.") + "sitemap\\.xml$", "m"), "robots.txt にサイトマップのURL");
+
 console.log("OK: タイプ " + TYPE_KEYS.length + "種・質問 " + D.QUESTIONS.length + "問 / 全" + N + "通りの回答で判定（" +
   TYPE_KEYS.map((k) => k + " " + (dist[k] / N * 100).toFixed(1) + "%").join("・") + "）");
 console.log("OK: ブラウザごとのID 1000個で、同じ日の運勢が人ごとに分かれ（全体の組み合わせ " + kinds(baseOf) + "通り）、★の出現率は仕様どおり、前の日と同じ★は " + (sameStar / pairs * 100).toFixed(1) + "%");
