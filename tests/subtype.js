@@ -85,6 +85,9 @@ test("応援スタイルの表示名は「体験型／マイペース型」（�
   assert.deepStrictEqual(place.labels, { F: "体験型", H: "マイペース型" });
   assert.strictEqual(place.texts.H, "自分の空間で、落ち着いて推しを味わう人。");
   assert.strictEqual(place.texts.F, "その場の空気を感じて、全身で推しを楽しむ人。");
+  assert.strictEqual(place.texts.X, "体験するときも、マイペースに楽しむときも、そのときの自分に合った楽しみ方ができる人。");
+  // 前の分類（現場・おうち）を思わせる言葉を、応援スタイルの表示名・説明文に残さない
+  Object.values(place.labels).concat(Object.values(place.texts)).forEach((t) => assert.ok(!/現場|おうち|会場/.test(t), t));
 });
 
 // ---- 2. 14問に答えたときの判定（手計算した例） ----
