@@ -79,6 +79,14 @@ test("判定の決まり（補正 0.25・X は 45〜55%・はっきりは 66% �
   assert.deepStrictEqual(D.AXIS_RULES, RULES);
 });
 
+test("応援スタイルの表示名は「体験型／マイペース型」（文字は F・H のまま、説明文はそのまま）", () => {
+  const place = D.AXES.find((x) => x.key === "place");
+  assert.deepStrictEqual(place.letters, ["F", "H"]);
+  assert.deepStrictEqual(place.labels, { F: "体験型", H: "マイペース型" });
+  assert.strictEqual(place.texts.H, "自分の空間で、落ち着いて推しを味わう人。");
+  assert.strictEqual(place.texts.F, "その場の空気を感じて、全身で推しを楽しむ人。");
+});
+
 // ---- 2. 14問に答えたときの判定（手計算した例） ----
 test("手計算の例1：点数・平均的な点数・最大点・割合（愛情表現）", () => {
   // Q1-B(E2) Q2-A(E1) Q8-B(E2) Q10-B(E2) Q11-A(E4) → E 11点・W 0点
@@ -94,7 +102,7 @@ test("手計算の例1：点数・平均的な点数・最大点・割合（愛�
 test("手計算の例1：4軸すべてとコード（EHIP）", () => {
   // 応援スタイル：Q4-A(H1) Q9-A(F2) Q12-C(H4) → F 2点・H 5点
   //   平均的な点数 F = Q9 2/4 + Q12 6/4 = 2.0、H = Q1 1/4 + Q4 1/4 + Q9 3/4 + Q12 8/4 = 3.25
-  //   F の割合 = (2/2 + 0.25) / (1 + 5/3.25 + 0.5) = 1.25 / 3.038 = 41.1% → 41%（ややおうち寄り）
+  //   F の割合 = (2/2 + 0.25) / (1 + 5/3.25 + 0.5) = 1.25 / 3.038 = 41.1% → 41%（ややマイペース型寄り）
   const r = diagnoseAxes([1, 0, 0, 0, 0, 0, 0, 1, 0, 1], [0, 2, 1, 3]);
   assert.strictEqual(r.code, "EHIP");
   assert.deepStrictEqual([r.axes[1].points, r.axes[1].percent, r.axes[1].strength], [[2, 5], 41, "slight"]);
