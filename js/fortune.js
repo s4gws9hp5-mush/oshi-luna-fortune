@@ -100,7 +100,8 @@
           });
         });
       });
-      var left = got[0] / base[0], right = got[1] / base[1];
+      // 片側の平均的な点数が 0（その側に点の入る選択肢がない）なら、その側は 0 として扱う（NaN・Infinity にしない）
+      var left = base[0] ? got[0] / base[0] : 0, right = base[1] ? got[1] / base[1] : 0;
       var percent = Math.round((left + R.smoothing) / (left + right + R.smoothing * 2) * 100);
       var lean = Math.max(percent, 100 - percent);
       var letter = lean <= R.balance ? "X" : percent > 50 ? axis.letters[0] : axis.letters[1];

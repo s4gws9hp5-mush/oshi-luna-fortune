@@ -159,6 +159,7 @@ images/types/         推し活タイプごとの白猫（下の表。どのタ�
 images/apple-touch-icon.png  ホーム画面用アイコン（iPhone）
 images/icon-*.png     ホーム画面用アイコン（Android など。元の白猫の画像から作成）
 tests/check.js        データとロジックの検証
+tests/subtype.js      サブタイプコードの判定のテスト（検討で決めた対応表・計算方法と照らし合わせる）
 ```
 
 ### 保存データ（localStorage）
@@ -195,6 +196,7 @@ tests/check.js        データとロジックの検証
 
 ```sh
 node tests/check.js            # データとロジックの検証（Node.js）
+node tests/subtype.js          # サブタイプコード（4つの軸）の判定のテスト
 python3 -m http.server 8000    # ブラウザで確認
 ```
 
