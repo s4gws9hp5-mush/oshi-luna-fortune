@@ -45,6 +45,8 @@
     image.height = asset.height;
     image.src = asset.src;
   }
+  // カード画像はタロット画面を開いているときだけ読み込む（トップを開いただけ・日付の変更・別タブの更新では取得しない）
+  function isOpen() { return $("screen-tarot").classList.contains("is-active"); }
   $("tarot-entry").hidden = false;
   $("tarot-preview-note").hidden = !preview;
   function checkDate() {
@@ -59,23 +61,27 @@
     $("tarot-result").hidden = !current;
     $("tarot-draw").hidden = !!current;
     $("tarot-storage-note").hidden = !current || daily.isPersisted(current);
-    $("tarot-status").textContent = current ? "今日の一枚です。同じ日はこの結果を見返せます。" : "心を落ち着けて、今日の一枚を引いてみよう。";
+    // 結果を表示しているときは案内を出さない（空の行も残さない）。引く前の案内とエラーには使う
+    $("tarot-status").textContent = current ? "" : "心を落ち着けて、今日の一枚を引いてみよう。";
+    $("tarot-status").hidden = !!current;
     if (!current) { showArtwork(null); return; }
     var card = data.cards.find(function (c) { return c.id === current.cardId; });
     var copy = card.readings && card.readings[current.position];
     $("tarot-name").textContent = card.name.ja;
     $("tarot-position").textContent = current.position === "upright" ? "正位置" : "逆位置";
     $("tarot-art").setAttribute("data-position", current.position);
-    showArtwork(card);
+    if (isOpen()) showArtwork(card);
     $("tarot-keywords").textContent = copy ? copy.keywords.join("・") : "無料公開用の解釈は確認中です";
     $("tarot-message").textContent = copy ? copy.message : "プレビューでは、カード名と正逆位置・日付・保存の動作を確認できます。";
     $("tarot-action").textContent = copy ? copy.action : "公開する文章と採用画像を確認してから、正式に公開します。";
   }
   $("tarot-open").addEventListener("click", function () {
-    checkDate();
     document.querySelectorAll(".screen").forEach(function (el) {
       el.classList.toggle("is-active", el.id === "screen-tarot");
     });
+    // 画面を開いてから描画する（ここで初めてカード画像を読み込む）
+    checkDate();
+    render();
     window.scrollTo(0, 0);
     $("tarot-title").focus({ preventScroll: true });
   });

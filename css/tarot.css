@@ -2,9 +2,10 @@
 .tarot-panel { background: var(--white); padding: 28px 22px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
 .tarot-panel h2 { font-size: 1.6rem; }
 .tarot-date, .tarot-note { color: var(--ink-soft); font-size: .85rem; line-height: 1.8; }
-.tarot-card { width: min(220px, 100%); aspect-ratio: 1 / 2; border-radius: 10px; margin: 24px auto; display: grid; place-items: center; overflow: hidden; background: linear-gradient(150deg,var(--lavender),var(--blue)); box-shadow: var(--shadow); }
+.tarot-card { position: relative; width: min(220px, 100%); aspect-ratio: 1 / 2; border-radius: 10px; margin: 24px auto; display: grid; place-items: center; background: linear-gradient(150deg,var(--lavender),var(--blue)); box-shadow: var(--shadow); }
 .tarot-card span { font-size: 60px; color: var(--ink); }
-.tarot-card img { width: 100%; height: 100%; object-fit: contain; display: block; grid-area: 1 / 1; }
+/* 画像は枠と同じ大きさに置き、元の縦横比のまま全体を収める（280×561 のような 1:2 ちょうどでない画像も切らない） */
+.tarot-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
 .tarot-card img[hidden], .tarot-card span[hidden] { display: none; }
 .tarot-card[data-position="reversed"] img { transform: rotate(180deg); }
 .tarot-copy { margin: 24px 0; text-align: left; line-height: 1.9; }

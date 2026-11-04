@@ -16,4 +16,9 @@ for (const c of cards) {
 }
 const css = fs.readFileSync(path.join(__dirname, "../css/tarot.css"), "utf8");
 assert.match(css, /data-position="reversed"\] img\s*\{\s*transform: rotate\(180deg\)/);
+// 1:2 ちょうどでない画像（280×561 など）も切らずに全体を収める：画像は枠と同じ大きさで contain、枠ははみ出しを切らない
+const rule = (sel) => (css.match(new RegExp("(?:^|\\n)" + sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*\\{([^}]*)\\}")) || [])[1] || "";
+assert.match(rule(".tarot-card img"), /position: absolute;[^}]*inset: 0;[^}]*width: 100%;[^}]*height: 100%;[^}]*object-fit: contain;/);
+assert.match(rule(".tarot-card"), /position: relative;/);
+assert.ok(!/overflow:\s*(hidden|clip)/.test(rule(".tarot-card")), "カードの枠で画像を切らない");
 console.log("Tarot assets: 78 unique local paths, PNG dimensions and reversed-image CSS: PASS");
