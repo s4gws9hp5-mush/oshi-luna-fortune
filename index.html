@@ -154,9 +154,9 @@
         <p class="eyebrow">白猫ルナの推し活タロット</p>
         <h2 id="tarot-title" tabindex="-1">今日の一枚</h2>
         <p class="tarot-date" id="tarot-date"></p>
-        <p class="tarot-preview-note" id="tarot-preview-note" hidden>動作確認用プレビューです。無料用の文章を確認できます。カード絵は準備中です。</p>
-        <div class="tarot-card" id="tarot-art" aria-hidden="true"><span>☾</span></div>
-        <p class="tarot-note">カード絵は採用画像の確認後に反映します。</p>
+        <p class="tarot-preview-note" id="tarot-preview-note" hidden>公開前の動作確認用プレビューです。</p>
+        <div class="tarot-card" id="tarot-art"><span id="tarot-placeholder" aria-hidden="true">☾</span><img id="tarot-image" alt="" decoding="async" hidden></div>
+        <p class="tarot-note" id="tarot-image-note" hidden>カード画像を読み込めませんでした。メッセージと行動ヒントはそのまま読めます。</p>
         <p id="tarot-status" role="status" aria-live="polite"></p>
         <button type="button" class="btn btn-primary" id="tarot-draw">今日の一枚を引く</button>
         <div id="tarot-result" hidden>
@@ -397,6 +397,7 @@
   <script src="js/share-card.js"></script>
   <script src="js/app.js"></script>
   <script src="js/tarot-public.js"></script>
+  <script src="js/tarot-assets.js"></script>
   <script src="js/tarot.js"></script>
   <script src="js/tarot-ui.js"></script>
 </body>

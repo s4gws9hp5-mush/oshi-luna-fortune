@@ -2,9 +2,11 @@
 .tarot-panel { background: var(--white); padding: 28px 22px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
 .tarot-panel h2 { font-size: 1.6rem; }
 .tarot-date, .tarot-note { color: var(--ink-soft); font-size: .85rem; line-height: 1.8; }
-.tarot-card { width: 170px; height: 255px; border: 3px solid var(--lavender-deep); outline: 5px solid var(--cream); border-radius: 14px; margin: 28px auto; display: grid; place-items: center; background: linear-gradient(150deg,var(--lavender),var(--blue)); }
+.tarot-card { width: min(220px, 100%); aspect-ratio: 1 / 2; border-radius: 10px; margin: 24px auto; display: grid; place-items: center; overflow: hidden; background: linear-gradient(150deg,var(--lavender),var(--blue)); box-shadow: var(--shadow); }
 .tarot-card span { font-size: 60px; color: var(--ink); }
-.tarot-card[data-position="reversed"] span { transform: rotate(180deg); }
+.tarot-card img { width: 100%; height: 100%; object-fit: contain; display: block; grid-area: 1 / 1; }
+.tarot-card img[hidden], .tarot-card span[hidden] { display: none; }
+.tarot-card[data-position="reversed"] img { transform: rotate(180deg); }
 .tarot-copy { margin: 24px 0; text-align: left; line-height: 1.9; }
 .tarot-copy h3 { font-size: 1rem; margin-bottom: 8px; }
 .tarot-preview-note { padding: 12px; border: 1px dashed var(--lavender-deep); border-radius: 12px; font-size: .85rem; }
