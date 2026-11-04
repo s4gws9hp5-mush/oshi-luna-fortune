@@ -47,6 +47,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tarot.css">
 </head>
 <body>
   <!-- 背景の星 -->
@@ -61,6 +62,11 @@
         <h1 id="top-title" class="title">推しルナ占い</h1>
         <p class="concept">推しを好きな気持ちも、<br>自分のことも大切に。</p>
         <p class="concept-sub"><span class="nowrap">白猫ルナと一緒に、</span><span class="nowrap">あなたらしい推し活を見つけよう。</span></p>
+      </div>
+
+      <div class="tarot-entry" id="tarot-entry" hidden>
+        <button type="button" class="btn btn-primary" id="tarot-open">🌙 今日の一枚を引く</button>
+        <p class="tarot-note">タロット78枚から1日1枚。毎日0時（日本時間）に切り替わります。</p>
       </div>
 
       <!-- 推し活タイプ診断への案内（保存済みのタイプがあるかどうかで表示を切り替える）。
@@ -143,6 +149,28 @@
     </section>
 
     <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->
+    <section class="screen" id="screen-tarot" aria-labelledby="tarot-title">
+      <div class="tarot-panel">
+        <p class="eyebrow">白猫ルナの推し活タロット</p>
+        <h2 id="tarot-title" tabindex="-1">今日の一枚</h2>
+        <p class="tarot-date" id="tarot-date"></p>
+        <p class="tarot-preview-note" id="tarot-preview-note" hidden>動作確認用プレビューです。無料用の文章を確認できます。カード絵は準備中です。</p>
+        <div class="tarot-card" id="tarot-art" aria-hidden="true"><span>☾</span></div>
+        <p class="tarot-note">カード絵は採用画像の確認後に反映します。</p>
+        <p id="tarot-status" role="status" aria-live="polite"></p>
+        <button type="button" class="btn btn-primary" id="tarot-draw">今日の一枚を引く</button>
+        <div id="tarot-result" hidden>
+          <h2 id="tarot-name"></h2><p id="tarot-position"></p>
+          <div class="tarot-copy"><h3>キーワード</h3><p id="tarot-keywords"></p>
+            <h3>今日の推し活メッセージ</h3><p id="tarot-message"></p>
+            <h3>小さな行動ヒント</h3><p id="tarot-action"></p></div>
+        </div>
+        <p class="tarot-note" id="tarot-storage-note" hidden>このブラウザでは保存できません。ページを閉じると今日の結果を保持できない場合があります。</p>
+        <p class="tarot-note">結果はこの端末のブラウザに保存されます。別の端末・ブラウザや、保存データの削除後には引き継がれません。</p>
+        <button type="button" class="btn-text" id="tarot-home">トップへ戻る</button>
+      </div>
+    </section>
+
     <section class="screen" id="screen-loading" aria-live="polite">
       <div class="loading">
         <div class="loading-sky" aria-hidden="true"><span>✦</span><span>☾</span><span>✦</span></div>
@@ -368,5 +396,8 @@
   <script src="js/fortune.js"></script>
   <script src="js/share-card.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/tarot-public.js"></script>
+  <script src="js/tarot.js"></script>
+  <script src="js/tarot-ui.js"></script>
 </body>
 </html>

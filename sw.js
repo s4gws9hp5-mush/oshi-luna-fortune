@@ -5,9 +5,10 @@
  */
 "use strict";
 
-var CACHE = "oshi-luna-v4";
+var CACHE = "oshi-luna-v5";
 var CORE = [
   "./", "index.html", "types/", "css/style.css",
+  "css/tarot.css", "js/tarot-public.js", "js/tarot.js", "js/tarot-ui.js",
   "js/data.js", "js/fortune.js", "js/share-card.js", "js/app.js",
   "images/luna-cat.png", "images/apple-touch-icon.png", "images/icon-192.png",
   "images/types/solo-moon-book.png", "images/types/cheer-penlight.png", "images/types/memory-photos-goods.png",
