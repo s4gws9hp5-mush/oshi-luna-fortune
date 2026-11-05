@@ -150,25 +150,51 @@
 
     <!-- 今日の一枚（タロット。公開前は enabled:false で入口を出さない） -->
     <section class="screen" id="screen-tarot" aria-labelledby="tarot-title">
-      <div class="tarot-panel">
+      <div class="result-head tarot-head">
         <p class="eyebrow">白猫ルナの推し活タロット</p>
-        <h2 id="tarot-title" tabindex="-1">今日の一枚</h2>
-        <p class="tarot-date" id="tarot-date"></p>
-        <p class="tarot-preview-note" id="tarot-preview-note" hidden>公開前の動作確認用プレビューです。</p>
-        <div class="tarot-card" id="tarot-art"><span id="tarot-placeholder" aria-hidden="true">☾</span><img id="tarot-image" alt="" decoding="async" hidden></div>
-        <p class="tarot-note" id="tarot-image-note" hidden>カード画像を読み込めませんでした。メッセージと行動ヒントはそのまま読めます。</p>
-        <p id="tarot-status" role="status" aria-live="polite"></p>
-        <button type="button" class="btn btn-primary" id="tarot-draw">今日の一枚を引く</button>
-        <div id="tarot-result" hidden>
-          <h2 id="tarot-name"></h2><p id="tarot-position"></p>
-          <div class="tarot-copy"><h3>キーワード</h3><p id="tarot-keywords"></p>
-            <h3>今日の推し活メッセージ</h3><p id="tarot-message"></p>
-            <h3>小さな行動ヒント</h3><p id="tarot-action"></p></div>
-        </div>
-        <p class="tarot-note" id="tarot-storage-note" hidden>このブラウザでは保存できません。ページを閉じると今日の結果を保持できない場合があります。</p>
-        <p class="tarot-note">結果はこの端末のブラウザに保存されます。別の端末・ブラウザや、保存データの削除後には引き継がれません。</p>
-        <button type="button" class="btn-text" id="tarot-home">トップへ戻る</button>
+        <h2 class="daily-title" id="tarot-title" tabindex="-1">今日の一枚</h2>
+        <p class="result-date" id="tarot-date"></p>
       </div>
+      <p class="notice tarot-preview-note" id="tarot-preview-note" hidden>公開前の動作確認用プレビューです。</p>
+
+      <!-- カード（主役）。画像はこの画面を開いたときだけ読み込む -->
+      <div class="tarot-stage">
+        <div class="tarot-card" id="tarot-art"><span id="tarot-placeholder" aria-hidden="true">☾</span><img id="tarot-image" alt="" decoding="async" hidden></div>
+        <p class="tarot-image-note" id="tarot-image-note" hidden>カード画像を読み込めませんでした。メッセージと行動ヒントはそのまま読めます。</p>
+      </div>
+
+      <!-- 引く前：ルナの案内と引くボタン -->
+      <div class="tarot-guide" id="tarot-guide">
+        <img class="mascot tarot-guide-art" src="images/luna-cat.png" width="640" height="513" alt="">
+        <p class="tarot-bubble" id="tarot-status" role="status" aria-live="polite"></p>
+      </div>
+      <button type="button" class="btn btn-primary btn-big" id="tarot-draw">🌙 今日の一枚を引く</button>
+
+      <!-- 結果 -->
+      <div class="tarot-result" id="tarot-result" hidden>
+        <div class="tarot-name-row">
+          <h3 class="tarot-name" id="tarot-name"></h3>
+          <p class="tarot-badge" id="tarot-position"></p>
+        </div>
+        <ul class="tarot-keywords" id="tarot-keywords" aria-label="キーワード"></ul>
+        <article class="tarot-box tarot-box-message">
+          <div class="tarot-box-head">
+            <img class="mascot tarot-box-art" src="images/luna-cat.png" width="640" height="513" alt="">
+            <h3 class="tarot-box-title"><span class="phrase">💌 今日の</span><span class="phrase">推し活メッセージ</span></h3>
+          </div>
+          <p id="tarot-message"></p>
+        </article>
+        <article class="tarot-box tarot-box-action">
+          <h3 class="tarot-box-title">⭐ 小さな行動ヒント</h3>
+          <p id="tarot-action"></p>
+        </article>
+      </div>
+
+      <div class="tarot-notes">
+        <p id="tarot-storage-note" hidden>このブラウザでは保存できません。ページを閉じると今日の結果を保持できない場合があります。</p>
+        <p>結果はこの端末のブラウザに保存されます。別の端末・ブラウザや、保存データの削除後には引き継がれません。</p>
+      </div>
+      <button type="button" class="btn btn-ghost" id="tarot-home">トップへ戻る</button>
     </section>
 
     <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->

@@ -7,13 +7,22 @@ const data = globalThis.OshiLunaTarotPublic, engine = require("../js/tarot.js");
 const assets = globalThis.OshiLunaTarotAssets;
 const ui = fs.readFileSync(path.join(__dirname, "../js/tarot-ui.js"), "utf8");
 
+// textContent を書きかえると子要素が消える（ブラウザと同じ）、子要素を足せる最小限の要素
+function node() {
+  let text = "";
+  return { children: [],
+    get textContent() { return text + this.children.map((c) => c.textContent).join(""); },
+    set textContent(v) { text = String(v); this.children = []; },
+    appendChild(c) { this.children.push(c); return c; } };
+}
+
 function mount(record, preview) {
   const elements = new Map(), events = {}, timers = [];
   function el(id) {
     if (!elements.has(id)) {
       const classes = new Set(id === "screen-top" ? ["is-active"] : []);
-      elements.set(id, {
-        id, hidden: true, textContent: "", attributes: {}, listeners: {},
+      elements.set(id, Object.assign(node(), {
+        id, hidden: true, attributes: {}, listeners: {},
         addEventListener(name, fn) { this.listeners[name] = fn; },
         setAttribute(name, value) { this.attributes[name] = value; },
         removeAttribute(name) { delete this.attributes[name]; delete this[name]; },
@@ -22,7 +31,7 @@ function mount(record, preview) {
           contains(name) { return classes.has(name); }
         },
         focus() {}
-      });
+      }));
     }
     return elements.get(id);
   }
@@ -31,7 +40,7 @@ function mount(record, preview) {
   const window = { OshiLunaTarotPublic: data, OshiLunaTarotAssets: assets,
     OshiLunaTarot: { ...engine, dateKey: () => day, createDaily: () => daily },
     localStorage: {}, crypto: {}, scrollTo() {}, addEventListener(name, fn) { events[name] = fn; } };
-  const document = { getElementById: el, querySelectorAll: () => [el("screen-top"), el("screen-tarot")],
+  const document = { getElementById: el, querySelectorAll: () => [el("screen-top"), el("screen-tarot")], createElement: () => node(),
     addEventListener(name, fn) { events[name] = fn; }, hidden: false };
   vm.runInNewContext(ui, { window, document, location: {search: preview ? "?tarot-preview=1" : ""},
     URLSearchParams, Date, setInterval(fn) { timers.push(fn); } });
@@ -50,7 +59,9 @@ for (const card of data.cards) {
     assert.equal(app.el("tarot-draw").hidden, true);
     assert.equal(app.el("tarot-name").textContent, card.name.ja);
     assert.equal(app.el("tarot-position").textContent, position === "upright" ? "正位置" : "逆位置");
-    assert.equal(app.el("tarot-keywords").textContent, reading.keywords.join("・"));
+    assert.deepEqual(app.el("tarot-keywords").children.map((li) => li.textContent), reading.keywords, "キーワードは一つずつタグにする");
+    assert.equal(app.el("tarot-position").attributes["data-position"], position, "正逆のバッジ");
+    assert.equal(app.el("tarot-guide").hidden, true, "結果の表示中はルナの案内を出さない");
     assert.equal(app.el("tarot-message").textContent, reading.message);
     assert.equal(app.el("tarot-action").textContent, reading.action);
     assert.equal(app.el("tarot-art").attributes["data-position"], position);
@@ -70,6 +81,7 @@ for (const card of data.cards) {
     app.events.storage({ key: engine.KEY });
     assert.equal(app.el("tarot-image-note").hidden, false, "再描画でも画像エラーの案内を維持");
     assert.equal(app.el("tarot-message").textContent, reading.message, "画像失敗でも文章を維持");
+    assert.equal(app.el("tarot-keywords").children.length, 3, "再描画してもタグは増えない");
     app.el("tarot-home").listeners.click();
   }
 }
@@ -107,6 +119,7 @@ const empty = mount(null, true);
 assert.equal(empty.el("tarot-image").hidden, true);
 assert.equal(empty.el("tarot-image").src, undefined, "引く前は画像をダウンロードしない");
 assert.equal(empty.el("tarot-status").hidden, false, "引く前の案内は表示する");
+assert.equal(empty.el("tarot-guide").hidden, false, "引く前はルナの案内を表示する");
 assert.equal(empty.el("tarot-status").textContent, "心を落ち着けて、今日の一枚を引いてみよう。");
 empty.el("tarot-open").listeners.click();
 assert.equal(empty.el("tarot-image").src, undefined, "開いても、引く前は画像をダウンロードしない");

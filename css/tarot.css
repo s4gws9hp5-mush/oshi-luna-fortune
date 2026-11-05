@@ -1,14 +1,106 @@
+/* 今日の一枚：今日の推し活占い（#screen-daily）と同じ見出し・角丸・余白・ボタンにそろえる。色は style.css の変数を使う */
 .tarot-entry { margin: 24px 0; text-align: center; }
-.tarot-panel { background: var(--white); padding: 28px 22px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
-.tarot-panel h2 { font-size: 1.6rem; }
-.tarot-date, .tarot-note { color: var(--ink-soft); font-size: .85rem; line-height: 1.8; }
-.tarot-card { position: relative; width: min(220px, 100%); aspect-ratio: 1 / 2; border-radius: 10px; margin: 24px auto; display: grid; place-items: center; background: linear-gradient(150deg,var(--lavender),var(--blue)); box-shadow: var(--shadow); }
+.tarot-head .eyebrow { margin-bottom: 2px; background: var(--lavender); }
+.tarot-head .result-date { margin-top: 6px; }
+.tarot-preview-note { text-align: center; }
+
+/* カード（主役） */
+.tarot-stage {
+  margin: 0 0 16px;
+  padding: 26px 18px 24px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 20%, rgba(255, 255, 255, 0.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 88%, rgba(255, 255, 255, 0.9) 0 2px, transparent 3px),
+    linear-gradient(160deg, #fff6fb 0%, #f1e8ff 55%, #e6f3ff 100%);
+  border: 2px solid var(--white);
+  border-radius: 32px;
+  box-shadow: 0 14px 34px rgba(166, 140, 232, 0.28);
+}
+.tarot-card { position: relative; width: min(220px, 100%); aspect-ratio: 1 / 2; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; background: linear-gradient(150deg,var(--lavender),var(--blue)); box-shadow: 0 12px 26px rgba(166, 140, 232, 0.32); }
 .tarot-card span { font-size: 60px; color: var(--ink); }
 /* 画像は枠と同じ大きさに置き、元の縦横比のまま全体を収める（280×561 のような 1:2 ちょうどでない画像も切らない） */
 .tarot-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
 .tarot-card img[hidden], .tarot-card span[hidden] { display: none; }
 .tarot-card[data-position="reversed"] img { transform: rotate(180deg); }
-.tarot-copy { margin: 24px 0; text-align: left; line-height: 1.9; }
-.tarot-copy h3 { font-size: 1rem; margin-bottom: 8px; }
-.tarot-preview-note { padding: 12px; border: 1px dashed var(--lavender-deep); border-radius: 12px; font-size: .85rem; }
+.tarot-image-note { margin: 14px 0 0; font-size: 0.85rem; line-height: 1.7; color: var(--ink-soft); }
+
+/* 引く前：ルナの案内（カードより控えめ） */
+.tarot-guide { display: flex; align-items: center; gap: 10px; margin: 0 2px; }
+.tarot-guide[hidden] { display: none; }
+.tarot-guide-art { flex: none; width: 64px; margin: 0; }
+.tarot-bubble {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  box-shadow: 0 6px 16px rgba(166, 140, 232, 0.16);
+}
+.tarot-bubble::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: inherit;
+  transform: translateY(-50%) rotate(45deg);
+  border-radius: 3px;
+}
+
+/* 結果：カード名と正位置／逆位置のバッジ、キーワードのタグ */
+.tarot-name-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; margin: 2px 0 0; }
+.tarot-name { margin: 0; font-size: 1.5rem; line-height: 1.4; letter-spacing: 0.06em; color: var(--ink); }
+.tarot-badge {
+  margin: 0;
+  padding: 2px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--lavender);
+  border: 2px solid var(--white);
+  border-radius: 999px;
+}
+.tarot-badge[data-position="reversed"] { background: var(--pink); }
+.tarot-keywords { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 14px 0 18px; padding: 0; list-style: none; }
+.tarot-keywords li {
+  padding: 4px 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--lavender-deep);
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid var(--lavender);
+  border-radius: 999px;
+}
+
+/* 今日の推し活メッセージ・小さな行動ヒント：淡い背景のボックス */
+.tarot-box {
+  margin: 0 0 16px;
+  padding: 18px 20px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.tarot-box-message { background: linear-gradient(160deg, #fff 0%, var(--pink) 140%); }
+.tarot-box-action { background: linear-gradient(160deg, #fff 0%, var(--blue) 140%); }
+.tarot-box-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.tarot-box-art { flex: none; width: 48px; margin: 0; }
+.tarot-box-title { margin: 0 0 8px; font-size: 1rem; letter-spacing: 0.06em; color: var(--pink-deep); }
+.tarot-box-head .tarot-box-title { margin: 0; min-width: 0; }
+.tarot-box-title .phrase { display: inline-block; } /* 「今日の」「推し活メッセージ」の区切りでだけ改行する */
+.tarot-box-action .tarot-box-title { color: var(--lavender-deep); }
+/* 最後の行が1〜2文字だけにならないように（対応しているブラウザだけ。文章は変えない） */
+.tarot-box p { margin: 0; font-size: 1rem; line-height: 1.9; text-wrap: pretty; word-break: auto-phrase; }
+
+/* 保存の注意書き（下部で控えめに） */
+.tarot-notes { margin: 4px 4px 0; text-align: center; font-size: 0.8rem; line-height: 1.8; color: var(--ink-soft); }
+.tarot-notes p { margin: 0 0 4px; }
 #tarot-title:focus { outline: none; }
