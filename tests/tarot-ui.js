@@ -62,8 +62,14 @@ for (const card of data.cards) {
     assert.deepEqual(app.el("tarot-keywords").children.map((li) => li.textContent), reading.keywords, "キーワードは一つずつタグにする");
     assert.equal(app.el("tarot-position").attributes["data-position"], position, "正逆のバッジ");
     assert.equal(app.el("tarot-guide").hidden, true, "結果の表示中はルナの案内を出さない");
-    assert.equal(app.el("tarot-message").textContent, reading.message);
+    assert.equal(app.el("tarot-current-box").hidden, false, "今のあなたへを表示する");
+    assert.equal(app.el("tarot-current").textContent, reading.currentYou);
+    assert.equal(app.el("tarot-message").textContent, reading.cardMessage, "カードが伝えるメッセージを表示する（既存の短文は画面に出さない）");
     assert.equal(app.el("tarot-action").textContent, reading.action);
+    for (const id of ["tarot-current", "tarot-message", "tarot-action"]) {
+      const keep = app.el(id).children;
+      assert.ok(keep.length === 1 && keep[0].className === "tarot-keep" && Array.from(keep[0].textContent).length === 6, id + "：末尾6文字を改行しないまとまりにする");
+    }
     assert.equal(app.el("tarot-art").attributes["data-position"], position);
     assert.equal(app.el("tarot-status").textContent, "", "結果の表示中は案内文を出さない");
     assert.equal(app.el("tarot-status").hidden, true, "結果の表示中は案内の行も残さない");
@@ -80,7 +86,8 @@ for (const card of data.cards) {
     assert.equal(app.el("tarot-image-note").hidden, false);
     app.events.storage({ key: engine.KEY });
     assert.equal(app.el("tarot-image-note").hidden, false, "再描画でも画像エラーの案内を維持");
-    assert.equal(app.el("tarot-message").textContent, reading.message, "画像失敗でも文章を維持");
+    assert.equal(app.el("tarot-current").textContent, reading.currentYou, "画像失敗でも文章を維持");
+    assert.equal(app.el("tarot-message").textContent, reading.cardMessage, "画像失敗でも文章を維持");
     assert.equal(app.el("tarot-keywords").children.length, 3, "再描画してもタグは増えない");
     app.el("tarot-home").listeners.click();
   }
@@ -115,6 +122,18 @@ for (const card of data.cards) {
   assert.equal(app.el("tarot-status").hidden, false);
 }
 
+// 追加文がないカードでは、既存の短い message を表示し、今のあなたへは隠す（データは変えずに表示だけで確かめる）
+{
+  const card = data.cards[3], saved = card.readings.upright, { currentYou, cardMessage, ...short } = saved;
+  card.readings.upright = short;
+  try {
+    const app = mount({version: 1, date: engine.dateKey(new Date()), cardId: card.id, position: "upright"}, true);
+    assert.equal(app.el("tarot-current-box").hidden, true);
+    assert.equal(app.el("tarot-message").textContent, saved.message);
+    assert.equal(app.el("tarot-action").textContent, saved.action);
+  } finally { card.readings.upright = saved; }
+}
+
 const empty = mount(null, true);
 assert.equal(empty.el("tarot-image").hidden, true);
 assert.equal(empty.el("tarot-image").src, undefined, "引く前は画像をダウンロードしない");
@@ -123,4 +142,4 @@ assert.equal(empty.el("tarot-guide").hidden, false, "引く前はルナの案内
 assert.equal(empty.el("tarot-status").textContent, "心を落ち着けて、今日の一枚を引いてみよう。");
 empty.el("tarot-open").listeners.click();
 assert.equal(empty.el("tarot-image").src, undefined, "開いても、引く前は画像をダウンロードしない");
-console.log("Tarot UI: disabled entry, all 156 readings/artwork mappings, image loading only while open, loading/fallback, status and pre-draw state: PASS");
+console.log("Tarot UI: disabled entry, all 156 readings (currentYou/cardMessage/action, short message kept as fallback)/artwork mappings, image loading only while open, loading/fallback, status and pre-draw state: PASS");

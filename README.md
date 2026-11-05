@@ -222,8 +222,8 @@ tests/tarot-assets.js 今日の一枚のカード画像と対応表のテスト
 ```sh
 node tests/check.js            # データとロジックの検証（Node.js）
 node tests/subtype.js          # サブタイプコード（4つの軸）の判定のテスト
-node tests/tarot.js            # 今日の一枚（タロット）：無料データの項目・78枚・日本時間の切り替え・抽選と保存
-node tests/tarot-ui.js         # 今日の一枚の画面：156件の文章と画像の対応・画像を読み込むタイミング・入口の無効化
+node tests/tarot.js            # 今日の一枚（タロット）：無料データの項目・追加文312項目・78枚・日本時間の切り替え・抽選と保存
+node tests/tarot-ui.js         # 今日の一枚の画面：156件の文章（今のあなたへ・カードが伝えるメッセージ・行動ヒント）と画像の対応・画像を読み込むタイミング・入口の無効化
 node tests/tarot-assets.js     # 今日の一枚のカード画像：対応表・ファイル・寸法・収まり
 python3 -m http.server 8000    # ブラウザで確認（今日の一枚は ?tarot-preview=1 を付けたときだけ表示）
 ```

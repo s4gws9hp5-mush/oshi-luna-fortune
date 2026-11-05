@@ -66,6 +66,16 @@
       list.appendChild(item);
     });
   }
+  // 長い文章の最後の行が「ん。」のように1〜2文字だけにならないよう、末尾6文字を改行しないまとまりにする（文章は変えない。Safari でも効く方法）
+  function setParagraph(id, text) {
+    var el = $(id), chars = Array.from(text || ""), tail = chars.length > 12 ? 6 : 0;
+    el.textContent = chars.slice(0, chars.length - tail).join("");
+    if (!tail) return;
+    var keep = document.createElement("span");
+    keep.className = "tarot-keep";
+    keep.textContent = chars.slice(-tail).join("");
+    el.appendChild(keep);
+  }
   function render() {
     $("tarot-date").textContent = shownDate.replace(/-/g, "/") + "（日本時間）";
     $("tarot-result").hidden = !current;
@@ -84,8 +94,12 @@
     $("tarot-art").setAttribute("data-position", current.position);
     if (isOpen()) showArtwork(card);
     renderKeywords(copy ? copy.keywords : ["無料公開用の解釈は確認中です"]);
-    $("tarot-message").textContent = copy ? copy.message : "プレビューでは、カード名と正逆位置・日付・保存の動作を確認できます。";
-    $("tarot-action").textContent = copy ? copy.action : "公開する文章と採用画像を確認してから、正式に公開します。";
+    // 画面では「今のあなたへ」「カードが伝えるメッセージ」を表示する。既存の短い message はデータに残し、追加文がないときだけ代わりに使う
+    var currentYou = copy && copy.currentYou;
+    $("tarot-current-box").hidden = !currentYou;
+    setParagraph("tarot-current", currentYou || "");
+    setParagraph("tarot-message", copy ? (copy.cardMessage || copy.message) : "プレビューでは、カード名と正逆位置・日付・保存の動作を確認できます。");
+    setParagraph("tarot-action", copy ? copy.action : "公開する文章と採用画像を確認してから、正式に公開します。");
   }
   $("tarot-open").addEventListener("click", function () {
     document.querySelectorAll(".screen").forEach(function (el) {

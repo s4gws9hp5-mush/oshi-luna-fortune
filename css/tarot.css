@@ -81,7 +81,7 @@
   border-radius: 999px;
 }
 
-/* 今日の推し活メッセージ・小さな行動ヒント：淡い背景のボックス */
+/* 今のあなたへ・カードが伝えるメッセージ・小さな行動ヒント：淡い背景のボックス */
 .tarot-box {
   margin: 0 0 16px;
   padding: 18px 20px 20px;
@@ -89,16 +89,19 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
+.tarot-box[hidden] { display: none; }
+.tarot-box-current { background: linear-gradient(160deg, #fff 0%, var(--lavender) 140%); }
 .tarot-box-message { background: linear-gradient(160deg, #fff 0%, var(--pink) 140%); }
 .tarot-box-action { background: linear-gradient(160deg, #fff 0%, var(--blue) 140%); }
 .tarot-box-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
 .tarot-box-art { flex: none; width: 48px; margin: 0; }
 .tarot-box-title { margin: 0 0 8px; font-size: 1rem; letter-spacing: 0.06em; color: var(--pink-deep); }
 .tarot-box-head .tarot-box-title { margin: 0; min-width: 0; }
-.tarot-box-title .phrase { display: inline-block; } /* 「今日の」「推し活メッセージ」の区切りでだけ改行する */
-.tarot-box-action .tarot-box-title { color: var(--lavender-deep); }
-/* 最後の行が1〜2文字だけにならないように（対応しているブラウザだけ。文章は変えない） */
-.tarot-box p { margin: 0; font-size: 1rem; line-height: 1.9; text-wrap: pretty; word-break: auto-phrase; }
+.tarot-box-title .phrase { display: inline-block; } /* 「カードが伝える」「メッセージ」の区切りでだけ改行する */
+.tarot-box-current .tarot-box-title, .tarot-box-action .tarot-box-title { color: var(--lavender-deep); }
+/* 長い文章も読みやすく：16px・広めの行間。text-wrap: pretty は対応しているブラウザだけ（文章は変えない） */
+.tarot-box .tarot-keep { white-space: nowrap; } /* 末尾6文字は同じ行に置く（最後の行が短くなりすぎない） */
+.tarot-box p { margin: 0; font-size: 1rem; line-height: 1.95; letter-spacing: 0.02em; text-wrap: pretty; }
 
 /* 保存の注意書き（下部で控えめに） */
 .tarot-notes { margin: 4px 4px 0; text-align: center; font-size: 0.8rem; line-height: 1.8; color: var(--ink-soft); }

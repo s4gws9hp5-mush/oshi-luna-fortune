@@ -12,12 +12,19 @@ for (const c of cards) {
   assert.deepEqual(Object.keys(c).sort(), ["id", "name", "readings"], "無料用フィールドのみ");
   assert.deepEqual(Object.keys(c.name).sort(), ["en", "ja"]);
   assert.deepEqual(Object.keys(c.readings).sort(), ["reversed", "upright"]);
-  for (const reading of Object.values(c.readings)) {
-    assert.deepEqual(Object.keys(reading).sort(), ["action", "keywords", "message"]);
+  for (const [position, reading] of Object.entries(c.readings)) {
+    assert.deepEqual(Object.keys(reading), ["keywords", "message", "action", "currentYou", "cardMessage"], "既存の短文を残し、追加文2項目を持つ");
     assert.equal(reading.keywords.length, 3);
-    [...reading.keywords, reading.message, reading.action].forEach(text => assert.ok(typeof text === "string" && text.trim()));
+    [...reading.keywords, reading.message, reading.action, reading.currentYou, reading.cardMessage].forEach(text => assert.ok(typeof text === "string" && text.trim() === text && text));
+    assert.ok(reading.cardMessage.startsWith(c.name.ja + (position === "reversed" ? "の逆位置" : "")), c.id + " " + position + "：メッセージ冒頭のカード名");
   }
 }
+// 採用済み追加文312項目（今のあなたへ・カードが伝えるメッセージ）が採用稿パッケージと同じ文章であること
+const added = cards.flatMap(c => ["upright", "reversed"].flatMap(p => [c.readings[p].currentYou, c.readings[p].cardMessage]));
+assert.equal(added.length, 312);
+assert.equal(new Set(added).size, 312, "全文一致の重複なし");
+assert.equal(require("node:crypto").createHash("sha256").update(added.join("\n")).digest("hex"),
+  "693a8f0c354d7cf03344ad89953f8bc3389be65021d6afe5504ff0dc1fe62dbd", "採用稿パッケージの追加文と一致");
 assert.equal(T.dateKey(new Date("2026-11-04T14:59:59Z")), "2026-11-04");
 assert.equal(T.dateKey(new Date("2026-11-04T15:00:00Z")), "2026-11-05");
 const values = new Map([["oshi-luna-type", '{"type":"solo"}'],["oshi-luna-daily", '{"history":[]}']]);
@@ -49,4 +56,4 @@ seq = [4,0];
 assert.equal(daily.draw(new Date("2026-11-06T00:00:00Z")).cardId,cards[4].id);
 const index=fs.readFileSync(require("node:path").join(__dirname,"../index.html"),"utf8");
 ["data","fortune","share-card","app"].forEach(n=>assert.ok(index.includes('src="js/'+n+'.js"')));
-console.log("Tarot: JST midnight, 78 IDs, orientations, reload, blocked/corrupt storage, rejection sampling and existing keys: PASS");
+console.log("Tarot: 312 adopted added texts, JST midnight, 78 IDs, orientations, reload, blocked/corrupt storage, rejection sampling and existing keys: PASS");
