@@ -9,8 +9,11 @@
   try { storage = window.localStorage; } catch (e) { storage = null; }
   var daily = engine.createDaily({ cards: data.cards, storage: storage, crypto: window.crypto });
   var shownDate = "", current = null, artworkSource = "";
+  // 初めて引くときの演出。抽選・保存は押した直後に一度だけ行い、結果は演出のあとに表示する
+  var LOADING_MS = 3000, REDUCED_MS = 300, LOADING_GIF = "images/tarot/luna-tarot-stable-center.gif";
+  var drawing = false;
   var image = $("tarot-image"), placeholder = $("tarot-placeholder");
-  function showArtwork(card) {
+  function showArtwork(card, position) {
     var asset = card && window.OshiLunaTarotAssets && window.OshiLunaTarotAssets[card.id];
     if (!asset) {
       artworkSource = "";
@@ -23,7 +26,7 @@
       $("tarot-image-note").hidden = !card;
       return;
     }
-    image.alt = card.name.ja + "のカード（" + (current.position === "upright" ? "正位置" : "逆位置") + "）";
+    image.alt = card.name.ja + "のカード（" + (position === "upright" ? "正位置" : "逆位置") + "）";
     if (artworkSource === asset.src) return;
     artworkSource = asset.src;
     $("tarot-image-note").hidden = true;
@@ -50,6 +53,7 @@
   $("tarot-entry").hidden = false;
   $("tarot-preview-note").hidden = !preview;
   function checkDate() {
+    if (drawing) return; // 演出中は日付の切り替えを保留し、演出の終わりに確かめる
     var now = new Date(), day = engine.dateKey(now);
     if (day === shownDate) return;
     shownDate = day;
@@ -92,7 +96,7 @@
     $("tarot-position").textContent = current.position === "upright" ? "正位置" : "逆位置";
     $("tarot-position").setAttribute("data-position", current.position);
     $("tarot-art").setAttribute("data-position", current.position);
-    if (isOpen()) showArtwork(card);
+    if (isOpen()) showArtwork(card, current.position);
     renderKeywords(copy ? copy.keywords : ["無料公開用の解釈は確認中です"]);
     // 画面では「今のあなたへ」「カードが伝えるメッセージ」を表示する。既存の短い message はデータに残し、追加文がないときだけ代わりに使う
     var currentYou = copy && copy.currentYou;
@@ -118,16 +122,66 @@
     window.scrollTo(0, 0);
     $("tarot-open").focus({ preventScroll: true });
   });
+  function showScreenById(id) {
+    document.querySelectorAll(".screen").forEach(function (el) {
+      el.classList.toggle("is-active", el.id === id);
+    });
+  }
+  function reducedMotion() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  // 演出の画面。GIF はここで初めて読み込む。動きを減らす設定・GIF の読み込み失敗では静止画（ルナ）にする
+  function showLoading(reduce) {
+    var gif = $("tarot-loading-gif"), still = $("tarot-loading-still");
+    gif.onerror = function () { gif.hidden = true; still.hidden = false; };
+    if (reduce) {
+      gif.hidden = true;
+      still.hidden = false;
+    } else {
+      still.hidden = true;
+      gif.hidden = false;
+      if (gif.getAttribute("src") !== LOADING_GIF) gif.src = LOADING_GIF;
+    }
+    showScreenById("screen-tarot-loading");
+    window.scrollTo(0, 0);
+    $("tarot-loading-text").focus({ preventScroll: true });
+  }
+  function finishDrawing() {
+    drawing = false;
+    $("tarot-draw").disabled = false;
+    // 演出のあいだに日付が変わっていたら、新しい日の「引く前」に戻す（前日の結果は出さない・自動で引き直さない）
+    var now = new Date();
+    shownDate = engine.dateKey(now);
+    current = daily.peek(now);
+    render();
+    // 演出中にほかの画面へ移っていたら、画面は切り替えない（結果は次に開いたときに表示）
+    if (!$("screen-tarot-loading").classList.contains("is-active")) return;
+    showScreenById("screen-tarot");
+    if (current) showArtwork(data.cards.find(function (c) { return c.id === current.cardId; }), current.position);
+    window.scrollTo(0, 0);
+    $("tarot-title").focus({ preventScroll: true });
+  }
   $("tarot-draw").addEventListener("click", function () {
+    if (drawing) return; // 連打しても抽選・保存・演出は一度だけ
     checkDate();
-    try { current = daily.draw(new Date()); render(); }
-    catch (e) { $("tarot-status").textContent = "カードを引けませんでした。通信環境やブラウザを確認し、もう一度お試しください。"; }
+    var now = new Date(), saved = daily.peek(now);
+    if (saved) { current = saved; render(); return; } // 別タブなどで今日の結果があれば、演出なしで見返す
+    var result;
+    try { result = daily.draw(now); }
+    catch (e) { $("tarot-status").textContent = "カードを引けませんでした。通信環境やブラウザを確認し、もう一度お試しください。"; return; }
+    drawing = true;
+    $("tarot-draw").disabled = true;
+    var reduce = reducedMotion();
+    showLoading(reduce);
+    // カード画像も演出のあいだに読み込み始める（結果画面では読み込み済みのことが多い）
+    showArtwork(data.cards.find(function (c) { return c.id === result.cardId; }), result.position);
+    window.setTimeout(finishDrawing, reduce ? REDUCED_MS : LOADING_MS);
   });
   document.addEventListener("visibilitychange", function () { if (!document.hidden) checkDate(); });
   window.addEventListener("pageshow", checkDate);
   window.addEventListener("focus", checkDate);
   window.addEventListener("storage", function (event) {
-    if (event.key !== engine.KEY) return;
+    if (event.key !== engine.KEY || drawing) return; // 演出中の別タブの更新は、演出の終わりにまとめて反映する
     current = daily.peek(new Date());
     render();
   });

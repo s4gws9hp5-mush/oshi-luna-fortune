@@ -201,6 +201,19 @@
       <button type="button" class="btn btn-ghost" id="tarot-home">トップへ戻る</button>
     </section>
 
+    <!-- 今日の一枚：初めて引くときの演出（約3秒）。GIF は演出を始めるときにだけ読み込む（src は書かない） -->
+    <section class="screen" id="screen-tarot-loading" aria-labelledby="tarot-loading-text">
+      <div class="loading tarot-loading">
+        <div class="loading-sky" aria-hidden="true"><span>✦</span><span>☾</span><span>✦</span></div>
+        <div class="tarot-loading-art">
+          <img class="tarot-loading-gif" id="tarot-loading-gif" width="384" height="384" alt="" hidden>
+          <img class="tarot-loading-still" id="tarot-loading-still" src="images/luna-cat.png" width="640" height="513" alt="" hidden>
+        </div>
+        <p class="loading-text tarot-loading-text" id="tarot-loading-text" role="status" tabindex="-1"><span class="phrase">ルナが今日のあなたへ、</span><span class="phrase">一枚を選んでいるよ</span></p>
+        <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
     <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->
     <section class="screen" id="screen-loading" aria-live="polite">
       <div class="loading">

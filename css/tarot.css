@@ -107,3 +107,25 @@
 .tarot-notes { margin: 4px 4px 0; text-align: center; font-size: 0.8rem; line-height: 1.8; color: var(--ink-soft); }
 .tarot-notes p { margin: 0 0 4px; }
 #tarot-title:focus { outline: none; }
+
+/* 初めて引くときの演出（今日の占いの読み込み画面と同じ並び。GIF は描き直さず、正方形のまま中央に置く） */
+.tarot-loading { padding-top: 12vh; }
+.tarot-loading-art {
+  width: min(240px, 64vw);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  box-sizing: border-box;
+  background: #fbfcfc; /* GIF の背景色と同じ。GIF は透過なしのため、枠の色を合わせて四角が浮かないようにする */
+  border: 3px solid var(--white);
+  border-radius: 32px;
+  box-shadow: 0 0 0 6px rgba(229, 219, 255, 0.7), 0 14px 34px rgba(166, 140, 232, 0.28);
+}
+.tarot-loading-gif { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tarot-loading-still { width: 78%; height: auto; display: block; }
+.tarot-loading-art img[hidden] { display: none; }
+.tarot-loading-text { margin: 0 12px; line-height: 1.7; }
+.tarot-loading-text:focus { outline: none; }
+.tarot-loading-text .phrase { display: inline-block; } /* 「ルナが今日のあなたへ、」「一枚を選んでいるよ」の区切りでだけ改行する */
