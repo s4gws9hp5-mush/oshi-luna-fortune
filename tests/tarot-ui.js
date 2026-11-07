@@ -42,7 +42,8 @@ function mount(record, preview, opts = {}) {
     OshiLunaTarot: { ...engine, dateKey: () => day, createDaily: () => daily },
     localStorage: {}, crypto: {}, scrollTo() {}, addEventListener(name, fn) { events[name] = fn; },
     matchMedia: (q) => ({ matches: !!opts.reduce && q.includes("reduce") }),
-    setTimeout(fn, ms) { timeouts.push({ fn, ms }); } };
+    setTimeout(fn, ms) { const t = { fn, ms }; timeouts.push(t); return t; },
+    clearTimeout(t) { const i = timeouts.indexOf(t); if (i >= 0) timeouts.splice(i, 1); } };
   const document = { getElementById: el, querySelectorAll: () => [el("screen-top"), el("screen-tarot"), el("screen-tarot-loading")], createElement: () => node(),
     addEventListener(name, fn) { events[name] = fn; }, hidden: false };
   vm.runInNewContext(ui, { window, document, location: {search: preview ? "?tarot-preview=1" : ""},
@@ -222,6 +223,36 @@ const sample = (i, position) => ({version: 1, date: engine.dateKey(new Date()), 
   assert.equal(app.el("tarot-name").textContent, data.cards[40].name.ja);
   assert.equal(app.draws, 1);
 }
+// 演出中に別アプリへ移り、裏でタイマーが止まったまま戻る：予定の3秒を過ぎていれば、戻ったときにすぐ結果へ（再抽選なし・表示は一度だけ）
+{
+  const app = mount(sample(45, "reversed"), true, { saved: null });
+  app.el("tarot-open").listeners.click();
+  const realNow = Date.now, start = realNow();
+  app.el("tarot-draw").listeners.click();
+  try {
+    Date.now = () => start + 1000;
+    app.events.visibilitychange();
+    assert.deepEqual(app.active(), ["screen-tarot-loading"], "3秒より前に戻ったときは演出を続ける");
+    Date.now = () => start + 60000;
+    app.events.visibilitychange();
+  } finally { Date.now = realNow; }
+  assert.deepEqual(app.active(), ["screen-tarot"], "タイマーが動かなくても、戻ったときに結果へ進む");
+  assert.equal(app.el("tarot-name").textContent, data.cards[45].name.ja);
+  assert.equal(app.el("tarot-draw").disabled, false);
+  app.el("tarot-home").listeners.click();
+  app.runTimeouts();
+  assert.deepEqual(app.active(), ["screen-top"], "あとから止まっていたタイマーが動いても、画面を切り替えない");
+  assert.equal(app.draws, 1, "再抽選しない");
+}
+// GIF が届くまでは枠に ☾ の仮表示（is-gif）。動きを減らす設定・GIF の失敗では付けない
+{
+  const app = mount(sample(46, "upright"), true, { saved: null });
+  app.el("tarot-open").listeners.click();
+  app.el("tarot-draw").listeners.click();
+  assert.equal(app.el("tarot-loading-art").classList.contains("is-gif"), true);
+  app.el("tarot-loading-gif").onerror();
+  assert.equal(app.el("tarot-loading-art").classList.contains("is-gif"), false);
+}
 // GIF の読み込みに失敗：静止画に切り替え、結果まで進む
 {
   const app = mount(sample(50, "reversed"), true, { saved: null });
@@ -254,4 +285,4 @@ assert.equal(empty.el("tarot-guide").hidden, false, "引く前はルナの案内
 assert.equal(empty.el("tarot-status").textContent, "心を落ち着けて、今日の一枚を引いてみよう。");
 empty.el("tarot-open").listeners.click();
 assert.equal(empty.el("tarot-image").src, undefined, "開いても、引く前は画像をダウンロードしない");
-console.log("Tarot UI: disabled entry, all 156 readings (currentYou/cardMessage/action, short message kept as fallback)/artwork mappings, image loading only while open, loading/fallback, status, pre-draw state and first-draw animation (once, 3s, deferred date/storage, GIF fallback, reduced motion): PASS");
+console.log("Tarot UI: disabled entry, all 156 readings (currentYou/cardMessage/action, short message kept as fallback)/artwork mappings, image loading only while open, loading/fallback, status, pre-draw state and first-draw animation (once, 3s, deferred date/storage, GIF fallback, resume after background, reduced motion): PASS");

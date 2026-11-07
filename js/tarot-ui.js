@@ -11,7 +11,7 @@
   var shownDate = "", current = null, artworkSource = "";
   // 初めて引くときの演出。抽選・保存は押した直後に一度だけ行い、結果は演出のあとに表示する
   var LOADING_MS = 3000, REDUCED_MS = 300, LOADING_GIF = "images/tarot/luna-tarot-stable-center.gif";
-  var drawing = false;
+  var drawing = false, drawStartedAt = 0, drawWait = 0, drawTimer = null;
   var image = $("tarot-image"), placeholder = $("tarot-placeholder");
   function showArtwork(card, position) {
     var asset = card && window.OshiLunaTarotAssets && window.OshiLunaTarotAssets[card.id];
@@ -53,7 +53,9 @@
   $("tarot-entry").hidden = false;
   $("tarot-preview-note").hidden = !preview;
   function checkDate() {
-    if (drawing) return; // 演出中は日付の切り替えを保留し、演出の終わりに確かめる
+    // 演出中は日付の切り替えを保留し、演出の終わりに確かめる。
+    // 裏にいる間にタイマーが止まっていても（iPhone など）、予定の時間を過ぎていればここで結果へ進める
+    if (drawing) { if (Date.now() - drawStartedAt >= drawWait) finishDrawing(); return; }
     var now = new Date(), day = engine.dateKey(now);
     if (day === shownDate) return;
     shownDate = day;
@@ -132,8 +134,10 @@
   }
   // 演出の画面。GIF はここで初めて読み込む。動きを減らす設定・GIF の読み込み失敗では静止画（ルナ）にする
   function showLoading(reduce) {
-    var gif = $("tarot-loading-gif"), still = $("tarot-loading-still");
-    gif.onerror = function () { gif.hidden = true; still.hidden = false; };
+    var gif = $("tarot-loading-gif"), still = $("tarot-loading-still"), art = $("tarot-loading-art");
+    // GIF が届くまでは枠に ☾ を出す（GIF は透過なしなので、届けば隠れる）
+    art.classList.toggle("is-gif", !reduce);
+    gif.onerror = function () { gif.hidden = true; still.hidden = false; art.classList.toggle("is-gif", false); };
     if (reduce) {
       gif.hidden = true;
       still.hidden = false;
@@ -147,7 +151,9 @@
     $("tarot-loading-text").focus({ preventScroll: true });
   }
   function finishDrawing() {
+    if (!drawing) return; // タイマーと「戻ったときの確認」のどちらが先でも、結果の表示は一度だけ
     drawing = false;
+    window.clearTimeout(drawTimer);
     $("tarot-draw").disabled = false;
     // 演出のあいだに日付が変わっていたら、新しい日の「引く前」に戻す（前日の結果は出さない・自動で引き直さない）
     var now = new Date();
@@ -169,13 +175,15 @@
     var result;
     try { result = daily.draw(now); }
     catch (e) { $("tarot-status").textContent = "カードを引けませんでした。通信環境やブラウザを確認し、もう一度お試しください。"; return; }
-    drawing = true;
-    $("tarot-draw").disabled = true;
     var reduce = reducedMotion();
+    drawing = true;
+    drawStartedAt = Date.now();
+    drawWait = reduce ? REDUCED_MS : LOADING_MS;
+    $("tarot-draw").disabled = true;
     showLoading(reduce);
     // カード画像も演出のあいだに読み込み始める（結果画面では読み込み済みのことが多い）
     showArtwork(data.cards.find(function (c) { return c.id === result.cardId; }), result.position);
-    window.setTimeout(finishDrawing, reduce ? REDUCED_MS : LOADING_MS);
+    drawTimer = window.setTimeout(finishDrawing, drawWait);
   });
   document.addEventListener("visibilitychange", function () { if (!document.hidden) checkDate(); });
   window.addEventListener("pageshow", checkDate);
