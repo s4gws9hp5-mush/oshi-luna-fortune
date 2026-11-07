@@ -10,7 +10,7 @@
   var daily = engine.createDaily({ cards: data.cards, storage: storage, crypto: window.crypto });
   var shownDate = "", current = null, artworkSource = "";
   // 初めて引くときの演出。抽選・保存は押した直後に一度だけ行い、結果は演出のあとに表示する
-  var LOADING_MS = 3000, REDUCED_MS = 300, LOADING_GIF = "images/tarot/luna-tarot-stable-center.gif";
+  var LOADING_MS = 3000, REDUCED_MS = 300, LOADING_GIF = "images/tarot/luna-tarot-transparent.gif";
   var drawing = false, drawStartedAt = 0, drawWait = 0, drawTimer = null;
   var image = $("tarot-image"), placeholder = $("tarot-placeholder");
   function showArtwork(card, position) {
@@ -135,8 +135,10 @@
   // 演出の画面。GIF はここで初めて読み込む。動きを減らす設定・GIF の読み込み失敗では静止画（ルナ）にする
   function showLoading(reduce) {
     var gif = $("tarot-loading-gif"), still = $("tarot-loading-still"), art = $("tarot-loading-art");
-    // GIF が届くまでは枠に ☾ を出す（GIF は透過なしなので、届けば隠れる）
-    art.classList.toggle("is-gif", !reduce);
+    // GIF が届くまでは ☾ を出す。GIF は背景透過なので、届いたら ☾ を消す（読み込み済みなら最初から出さない）
+    var loaded = gif.getAttribute("src") === LOADING_GIF && gif.complete && gif.naturalWidth > 0;
+    art.classList.toggle("is-gif", !reduce && !loaded);
+    gif.onload = function () { art.classList.toggle("is-gif", false); };
     gif.onerror = function () { gif.hidden = true; still.hidden = false; art.classList.toggle("is-gif", false); };
     if (reduce) {
       gif.hidden = true;

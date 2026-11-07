@@ -142,7 +142,7 @@ for (const card of data.cards) {
 }
 
 // 初めて引くとき：抽選・保存は一度だけ → 約3秒の演出（GIF）→ 結果。演出中は結果を出さない
-const GIF = "images/tarot/luna-tarot-stable-center.gif";
+const GIF = "images/tarot/luna-tarot-transparent.gif";
 const sample = (i, position) => ({version: 1, date: engine.dateKey(new Date()), cardId: data.cards[i].id, position});
 {
   const record = sample(12, "reversed"), card = data.cards[12];
@@ -252,6 +252,16 @@ const sample = (i, position) => ({version: 1, date: engine.dateKey(new Date()), 
   assert.equal(app.el("tarot-loading-art").classList.contains("is-gif"), true);
   app.el("tarot-loading-gif").onerror();
   assert.equal(app.el("tarot-loading-art").classList.contains("is-gif"), false);
+}
+// GIF が届いたら ☾ を消す（GIF は背景透過なので、残すと透けて見える）
+{
+  const app = mount(sample(47, "upright"), true, { saved: null });
+  app.el("tarot-open").listeners.click();
+  app.el("tarot-draw").listeners.click();
+  assert.equal(app.el("tarot-loading-art").classList.contains("is-gif"), true);
+  app.el("tarot-loading-gif").onload();
+  assert.equal(app.el("tarot-loading-art").classList.contains("is-gif"), false);
+  assert.equal(app.el("tarot-loading-gif").hidden, false);
 }
 // GIF の読み込みに失敗：静止画に切り替え、結果まで進む
 {

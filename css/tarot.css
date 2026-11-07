@@ -116,15 +116,10 @@
   margin: 0 auto 14px;
   display: grid;
   place-items: center;
-  padding: 10px;
-  box-sizing: border-box;
-  background: #fbfcfc; /* GIF の背景色と同じ。GIF は透過なしのため、枠の色を合わせて四角が浮かないようにする */
-  border: 3px solid var(--white);
-  border-radius: 32px;
-  box-shadow: 0 0 0 6px rgba(229, 219, 255, 0.7), 0 14px 34px rgba(166, 140, 232, 0.28);
+  box-sizing: border-box; /* GIF は背景透過。枠や背景は付けず、画面の背景にそのまま重ねる */
 }
 .tarot-loading-gif { grid-area: 1 / 1; position: relative; width: 100%; height: 100%; object-fit: contain; display: block; }
-/* GIF が届くまでの仮表示（通信が遅いときも枠が空にならない） */
+/* GIF が届くまでの仮表示（通信が遅いときも空にならない）。GIF は透過なので、届いたら is-gif を外して消す */
 .tarot-loading-art.is-gif::before { content: "☾"; grid-area: 1 / 1; font-size: 64px; line-height: 1; color: var(--lavender-deep); opacity: 0.55; }
 .tarot-loading-still { grid-area: 1 / 1; width: 78%; height: auto; display: block; }
 .tarot-loading-art img[hidden] { display: none; }
