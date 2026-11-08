@@ -1,5 +1,4 @@
 /* 今日の一枚：今日の推し活占い（#screen-daily）と同じ見出し・角丸・余白・ボタンにそろえる。色は style.css の変数を使う */
-.tarot-entry { margin: 24px 0; text-align: center; }
 .tarot-head .eyebrow { margin-bottom: 2px; background: var(--lavender); }
 .tarot-head .result-date { margin-top: 6px; }
 .tarot-preview-note { text-align: center; }
