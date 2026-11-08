@@ -161,9 +161,19 @@ const serve = () => new Promise((resolve) => {
     { const v = await savedPng(download, 'ios-nosupport'); check('↑ 保存したファイルが空でなく、PNG として最後まで読める（1080×1920・' + v.bytes + 'バイト）', v.ok && v.w === 1080 && v.h === 1920 && v.bytes > 10000, JSON.stringify(v)); }
     const dlStatus = await p.textContent('#share-status');
     check('ダウンロード（iPhone）→ 保存先は「ファイル」・写真は長押しと案内、成功と断定しない', dlStatus.includes('「ファイル」アプリ') && dlStatus.includes('長押し') && !/保存しました|保存できました|保存できたよ/.test(dlStatus), dlStatus);
-    // コピー：成功と失敗
+    // コピー：成功と失敗。コピーした文章は、文章・タグはそのままで、アドレスは開いているアドレスではなく本番の https://oshi-luna.com/
+    await p.evaluate(() => { window.__copied = []; window.__clip = navigator.clipboard; const orig = navigator.clipboard && navigator.clipboard.writeText && navigator.clipboard.writeText.bind(navigator.clipboard);
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: (t) => { window.__copied.push(t); return orig ? orig(t).catch(() => {}) : Promise.resolve(); } } }); });
     await p.tap('#share-copy-btn'); await p.waitForTimeout(200);
     check('コピー成功 → コピーした案内', (await p.textContent('#share-status')).includes('コピーしたよ'));
+    {
+      const t = D.TYPES.research, copied = await p.evaluate(() => window.__copied);
+      const head = '【推しルナ占い】私の推し活タイプは\n' + t.emoji + '「' + t.name + '」\n' + t.catch + '\n';
+      const ok = copied.length === 1 && copied[0].startsWith(head) && /^(サブタイプコード：[A-Z]{4}\n)?#推しルナ占い\nhttps:\/\/oshi-luna\.com\/$/.test(copied[0].slice(head.length)) &&
+        !copied[0].includes(new URL(BASE).host) && (copied[0].match(/https?:\/\//g) || []).length === 1;
+      check('コピーした文章：タイプ名・キャッチコピー・#推しルナ占い はそのまま、アドレスは本番の https://oshi-luna.com/ だけ（開いているアドレスは入れない）', ok, JSON.stringify(copied));
+    }
+    await p.evaluate(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: window.__clip }); }); // 記録用の差し替えを元に戻す
     await p.evaluate(() => { document.execCommand = () => false; });
     await p.tap('#share-copy-btn'); await p.waitForTimeout(200);
     check('コピー失敗 → 失敗の案内（成功と表示しない）', (await p.textContent('#share-status')).includes('コピーできませんでした'));

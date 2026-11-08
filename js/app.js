@@ -563,10 +563,8 @@
   }
 
   // ---- 推し活タイプのシェア画像 ----
-  var SITE_URL = "https://s4gws9hp5-mush.github.io/oshi-luna-fortune/";
-  function siteUrl() {
-    return location.protocol.indexOf("http") === 0 ? location.origin + location.pathname : SITE_URL;
-  }
+  // コピーする文章に入れるサイトのアドレス。プレビューやローカルで開いていても、いつも本番のアドレスにする
+  var SITE_URL = "https://oshi-luna.com/";
   var shareImage = null; // { typeKey, blob, file, url }
 
   function shareStatus(text) { $("share-status").textContent = text; }
@@ -980,7 +978,7 @@
   $("share-save-btn").addEventListener("click", saveOrShareImage);
   $("share-copy-btn").addEventListener("click", function () {
     if (!shownType) return;
-    copyText(typeShareText(shownType.type, shownType.axes) + "\n" + siteUrl(), function (ok) {
+    copyText(typeShareText(shownType.type, shownType.axes) + "\n" + SITE_URL, function (ok) {
       shareStatus(ok ? "タイプ名とURLをコピーしたよ♡ SNSに貼り付けて使ってね。" : "コピーできませんでした。画面をスクリーンショットしてね。");
     });
   });
