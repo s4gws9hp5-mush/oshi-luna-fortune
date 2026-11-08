@@ -92,17 +92,21 @@
 | タイプ | 画像ファイル | モチーフ |
 | --- | --- | --- |
 | 🌙 月夜のおひとりさま鑑賞家 | `images/types/solo-moon-book.png` | 三日月と本 |
-| 📣 ときめき全力応援隊長 | `images/types/cheer-penlight.png` | ペンライト |
+| 📣 ときめき全力応援隊長 | `images/types/cheer-penlight-sparkle.png` | ペンライト |
 | 📷 思い出アルバムコレクター | `images/types/memory-photos-goods.png` | 写真やグッズ |
-| 💬 推し語りコミュニケーター | `images/types/talk-heart.png` | ハート |
+| 💬 推し語りコミュニケーター | `images/types/talk-heart-bubble.png` | ハート |
 | 🌱 そっと寄りそう見守りさん | `images/types/watch-starry-cloud.png` | 星空と雲 |
 | 🎨 ときめき探究クリエイター | `images/types/create-notebook-pencil.png` | ノートと鉛筆 |
-| ☁️ マイペースな癒やし系ファン | `images/types/heal-cushion-mug.png` | クッションとマグカップ |
+| ☁️ マイペースな癒やし系ファン | `images/types/heal-cushion-mug-cozy.png` | クッションとマグカップ |
 | 🔭 情報キャッチの星読みリサーチャー | `images/types/research-telescope-book.png` | 望遠鏡と本 |
 
 タイプ別の絵は正方形の透明PNGです。差し替えるときも正方形にすると、表示がそろいます。
 
-- 絵を差し替えるときは、新しいファイル名にします。古い絵がブラウザや Service Worker のキャッシュに残らないようにするためです。あわせて `sw.js` の `CACHE` の名前（今は `oshi-luna-v7`）と `CORE` の一覧も変えます
+- 絵を差し替えるときは、新しいファイル名にします。古い絵がブラウザや Service Worker のキャッシュに残らないようにするためです。あわせて `sw.js` の `CACHE` の名前（今は `oshi-luna-v8`）と `CORE` の一覧も変えます
+- 応援隊長（`cheer-penlight-sparkle.png`：左上の余計な線を削除した版）・コミュニケーター（`talk-heart-bubble.png`：耳の青い汚れを修正した版）・癒やし系（`heal-cushion-mug-cozy.png`：左の煙を削除し、胴体とクッションを整えた版）の絵も、いただいた背景透過PNG（1254×1254・RGBA）の画素をそのまま使っています
+  - 見た目を変えないロスレス圧縮だけ行いました（応援隊長 1,658KB → 973KB、コミュニケーター 1,771KB → 884KB、癒やし系 1,254KB → 674KB）。全画素（透明な部分の色も含む RGBA）が元のPNGと同じことを `tests/check.js` で確かめています
+  - 圧縮のときに、画素と関係のない付加情報（応援隊長の来歴情報 C2PA の `caBX`、ほかの2枚の EXIF〔向きは回転なし〕など）は入らなくなりました。色の扱いを示す `sRGB` は残しています
+  - 絵の幅・中心の位置は前の絵とほぼ同じなので、表示の調整はしていません（ほかのタイプと同じ大きさ・位置）
 - 星読みリサーチャーの絵（`research-telescope-book.png`、1254×1254・RGBA）は、いただいた背景透過PNG（星座なし版。最終採用）の画素をそのまま使っています
   - 描き直し・縮小・色の変更はしていません。見た目を変えないロスレス圧縮だけ行い、899KB から 759KB にしました。全画素（透明な部分の色も含む RGBA）が元のPNGと同じことを `tests/check.js` で確かめています
   - 元のPNGに入っていた来歴情報（C2PA の `caBX` チャンク、約22KB）は、圧縮のときに入らなくなりました。画素とは関係のない付加情報です

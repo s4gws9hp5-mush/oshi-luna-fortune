@@ -86,7 +86,7 @@
       // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
       phrases: { name: ["ときめき", "全力応援隊長"], catch: ["“好き”を", "まっすぐ届ける、", "エネルギーの人。"], charm: ["全力のあなたも、", "休んでいる", "あなたも、", "どちらも", "推しを想う", "あなた。"] },
       emoji: "📣",
-      image: "images/types/cheer-penlight.png",
+      image: "images/types/cheer-penlight-sparkle.png",
       color: "#f7a1c4",
       catch: "“好き”をまっすぐ届ける、エネルギーの人。",
       personality: "推しへの気持ちを、声援や行動でまっすぐ表現できるタイプ。ライブや配信では全力で盛り上がり、新しい情報が出るとすぐに動き出します。あなたの明るい応援には、まわりのファンの気持ちまで引き上げる力があります。",
@@ -228,7 +228,7 @@
       // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
       phrases: { name: ["推し語り", "コミュニケーター"], catch: ["“好き”を", "分かち合うと、", "もっと輝く人。"], charm: ["いいねの数では、", "あなたの", "「好き」の深さは", "測れない。"] },
       emoji: "💬",
-      image: "images/types/talk-heart.png",
+      image: "images/types/talk-heart-bubble.png",
       color: "#9fd0f2",
       catch: "“好き”を分かち合うと、もっと輝く人。",
       personality: "推しの魅力を誰かと語り合うことで、好きな気持ちがどんどんふくらむタイプ。感想を伝えたり、仲間の意見を聞いたりする時間が大好きです。あなたの言葉がきっかけで、推しの新しい魅力に気づく人もいるかもしれません。",
@@ -441,7 +441,7 @@
       // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
       phrases: { name: ["マイペースな", "癒やし系ファン"], catch: ["推しが", "いるだけで、", "毎日が", "ちょっと", "やさしくなる人。"], charm: ["何もしない日も、", "推しを好きな", "あなたのままで、", "まるごと大丈夫。"] },
       emoji: "☁️",
-      image: "images/types/heal-cushion-mug.png",
+      image: "images/types/heal-cushion-mug-cozy.png",
       color: "#ffe78a",
       catch: "推しがいるだけで、毎日がちょっとやさしくなる人。",
       personality: "推しの存在が、日々の癒やしや心の支えになっているタイプ。たくさん情報を追ったり予定を詰めたりするよりも、自分のペースで心地よく楽しむことを大切にします。比べない・急がない推し活で、長く穏やかに「好き」を育てていける人です。",
