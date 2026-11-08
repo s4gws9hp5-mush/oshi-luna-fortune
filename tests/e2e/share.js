@@ -199,7 +199,9 @@ const serve = () => new Promise((resolve) => {
     const dl = p.waitForEvent('download', { timeout: 1500 }).catch(() => null);
     await p.tap('#share-save-btn'); await p.waitForTimeout(250);
     const st = await p.textContent('#share-status');
-    const sh = await p.evaluate(() => window.__shared.map(d => ({ files: d.files.map(f => f.name + ' ' + f.type + ' ' + f.size), text: d.text, title: d.title })));
+    const sh = await p.evaluate(() => window.__shared.map(d => ({ files: d.files.map(f => f.name + ' ' + f.type + ' ' + f.size), text: d.text, title: d.title, keys: Object.keys(d) })));
+    check('保存・シェア（' + mode + '）→ 共有メニューに渡すのは画像ファイルだけ（アドレスや文章は渡さない＝開いているアドレスは入らない）',
+      sh.length === 1 && sh[0].keys.join() === 'files', JSON.stringify(sh.map(x => x.keys)));
     check('保存・シェア（' + mode + '）→ 生成した画像ファイルを共有メニューへ・結果どおりの案内（成功と言わない）', sh.length === 1 && sh[0].files.length === 1 &&
       sh[0].files[0].startsWith('推しルナ占い_ときめき全力応援隊長.png image/png') && !(await dl) && st.includes(exp) && !BAD.test(st), st + ' ' + (sh[0] && sh[0].files[0]));
     if (mode === 'abort') {
@@ -330,6 +332,36 @@ const serve = () => new Promise((resolve) => {
     await p.goto(BASE + '?preview-date=nope'); await tapDaily(p); await p.clock.runFor(1200);
     check('おかしな日付の指定は無視して今日の占い', (await p.textContent('#daily-date')).includes('10月18日') && !(await p.isVisible('#daily-preview')));
     await p.context().close();
+  }
+
+  // 7) 今日の占いの「シェアする」：送るアドレスはいつも本番の https://oshi-luna.com/。文章は変えない
+  //    開いているアドレス（?preview-date= や # のつく、プレビュー・ローカルのアドレス）は入れない
+  {
+    const RECORD = () => { window.__shared = []; window.__copied = [];
+      navigator.share = (d) => { window.__shared.push(d); return Promise.resolve(); }; };
+    const NOSHARE = () => { window.__copied = []; navigator.share = undefined;
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: (t) => { window.__copied.push(t); return Promise.resolve(); } } }); };
+    const dailyText = (date, d) => { const [, m, dd] = date.split('-').map(Number);
+      return '【推しルナ占い】' + m + '月' + dd + '日の推し活占い\n今日の運勢：' + '★'.repeat(d.luck.stars) + '（' + d.luck.title + '）\nラッキーカラー：' + d.lucky.color + '\n💌 ' + d.message; };
+    const host = new URL(BASE).host;
+    for (const [label, init] of [['共有メニュー', RECORD], ['共有メニューがない→コピー', NOSHARE]]) {
+      const p = await open({ time: JST('2026-10-18T09:00:00'), init, url: BASE + '?preview-date=2026-10-19#x' });
+      await setType(p, 'watch');
+      await tapDaily(p); await p.clock.runFor(1200);
+      const exp = dailyText('2026-10-19', F.getDailyFortune(JST('2026-10-19T12:00:00'), 'watch', await idOf(p)));
+      await p.tap('#daily-share-btn'); await p.clock.runFor(300);
+      const r = await p.evaluate(() => ({ shared: (window.__shared || []).map(d => ({ title: d.title, text: d.text, url: d.url })), copied: window.__copied }));
+      const all = JSON.stringify(r);
+      if (label === '共有メニュー') {
+        check('今日の占いをシェア（' + label + '）→ アドレスは本番の https://oshi-luna.com/・タイトルと占いの文章はそのまま',
+          r.shared.length === 1 && r.shared[0].url === 'https://oshi-luna.com/' && r.shared[0].title === '推しルナ占い' && r.shared[0].text === exp, all);
+      } else {
+        check('今日の占いをシェア（' + label + '）→ 占いの文章のあとに本番の https://oshi-luna.com/ だけ',
+          r.copied.length === 1 && r.copied[0] === exp + '\nhttps://oshi-luna.com/' && (await p.textContent('#daily-toast')).includes('コピーしました'), all);
+      }
+      check('今日の占いをシェア（' + label + '）→ 開いているアドレス（' + host + '・?preview-date=）は入らない', !all.includes(host) && !all.includes('preview-date') && !all.includes('#x'), all);
+      await p.context().close();
+    }
   }
 
   await b.close();

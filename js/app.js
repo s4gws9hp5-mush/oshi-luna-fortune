@@ -563,7 +563,7 @@
   }
 
   // ---- 推し活タイプのシェア画像 ----
-  // コピーする文章に入れるサイトのアドレス。プレビューやローカルで開いていても、いつも本番のアドレスにする
+  // シェア・コピーする内容に入れるサイトのアドレス。プレビューやローカルで開いていても、いつも本番のアドレスにする
   var SITE_URL = "https://oshi-luna.com/";
   var shareImage = null; // { typeKey, blob, file, url }
 
@@ -858,13 +858,13 @@
     setTimeout(function () { el.classList.remove("is-show"); }, 2400);
   }
 
+  // 送るアドレスは、開いているページ（プレビュー・ローカル・?preview-date= など）ではなく、いつも本番のアドレス
   function share(text, toastId) {
-    var url = location.protocol.indexOf("http") === 0 ? location.href.split("#")[0] : undefined;
     if (navigator.share) {
-      navigator.share({ title: "推しルナ占い", text: text, url: url }).catch(function () {});
+      navigator.share({ title: "推しルナ占い", text: text, url: SITE_URL }).catch(function () {});
       return;
     }
-    copyText(url ? text + "\n" + url : text, function (ok) {
+    copyText(text + "\n" + SITE_URL, function (ok) {
       toast(ok ? "結果をコピーしました" : "コピーできませんでした。画面をスクリーンショットしてね", toastId);
     });
   }
