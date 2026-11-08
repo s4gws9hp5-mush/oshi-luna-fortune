@@ -12,6 +12,8 @@
   var TYPES = {
     solo: {
       name: "月夜のおひとりさま鑑賞家",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["月夜の", "おひとりさま鑑賞家"], catch: ["ひとりの時間に、", "“好き”が", "いちばん", "深く響く人。"], charm: ["ひとりで味わう", "「好き」も、", "満ちた月のように", "まるごと完全。"] },
       emoji: "🌙",
       image: "images/types/solo-moon-book.png",
       color: "#b9a5ef",
@@ -81,6 +83,8 @@
     },
     cheer: {
       name: "ときめき全力応援隊長",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["ときめき", "全力応援隊長"], catch: ["“好き”を", "まっすぐ届ける、", "エネルギーの人。"], charm: ["全力のあなたも、", "休んでいる", "あなたも、", "どちらも", "推しを想う", "あなた。"] },
       emoji: "📣",
       image: "images/types/cheer-penlight.png",
       color: "#f7a1c4",
@@ -150,6 +154,8 @@
     },
     memory: {
       name: "思い出アルバムコレクター",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["思い出アルバム", "コレクター"], catch: ["推しとの", "毎日を、", "宝物に変える人。"], charm: ["数ではなく、", "ときめきで", "選んだものが、", "あなたの宝物。"] },
       emoji: "📷",
       image: "images/types/memory-photos-goods.png",
       color: "#f6d36b",
@@ -219,6 +225,8 @@
     },
     talk: {
       name: "推し語りコミュニケーター",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["推し語り", "コミュニケーター"], catch: ["“好き”を", "分かち合うと、", "もっと輝く人。"], charm: ["いいねの数では、", "あなたの", "「好き」の深さは", "測れない。"] },
       emoji: "💬",
       image: "images/types/talk-heart.png",
       color: "#9fd0f2",
@@ -288,6 +296,8 @@
     },
     watch: {
       name: "そっと寄りそう見守りさん",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["そっと寄りそう", "見守りさん"], catch: ["推しの歩みを、", "長い目で", "大切に", "見つめる人。"], charm: ["見守る応援も、", "声に出す応援も、", "どちらも", "同じくらい", "すてき。"] },
       emoji: "🌱",
       image: "images/types/watch-starry-cloud.png",
       color: "#a8e3c8",
@@ -357,6 +367,8 @@
     },
     create: {
       name: "ときめき探究クリエイター",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["ときめき", "探究クリエイター"], catch: ["“好き”を、", "自分の手で", "形にする人。"], charm: ["完璧じゃなくていい。", "ときめいた", "気持ちが、", "もう", "作品のはじまり。"] },
       emoji: "🎨",
       image: "images/types/create-notebook-pencil.png",
       color: "#ffc6a5",
@@ -426,6 +438,8 @@
     },
     heal: {
       name: "マイペースな癒やし系ファン",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["マイペースな", "癒やし系ファン"], catch: ["推しが", "いるだけで、", "毎日が", "ちょっと", "やさしくなる人。"], charm: ["何もしない日も、", "推しを好きな", "あなたのままで、", "まるごと大丈夫。"] },
       emoji: "☁️",
       image: "images/types/heal-cushion-mug.png",
       color: "#ffe78a",
@@ -495,6 +509,8 @@
     },
     research: {
       name: "情報キャッチの星読みリサーチャー",
+      // 改行してよい言葉のまとまり（つなげると name・catch・omamori.charm と同じ）。iPhone の Safari でも言葉の途中で切れないように
+      phrases: { name: ["情報キャッチの", "星読みリサーチャー"], catch: ["推しの“今”を、", "星座のように", "つなげて", "読み解く人。"], charm: ["すべてを", "知らなくても、", "あなたの", "「好き」は", "ちゃんと", "輝いている。"] },
       emoji: "🔭",
       image: "images/types/research-telescope-book.png",
       // 絵が下と左に寄っていて（上に余白）、白猫が小さめに見えるので、表示だけ中央に寄せて少し大きくする（画像そのものは変えない）
@@ -572,6 +588,7 @@
   var QUESTIONS = [
     {
       text: "推しを「好きだなあ」と実感するのは、どんなとき？",
+      phrases: ["推しを", "「好きだなあ」と", "実感するのは、", "どんなとき？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "夜にひとり、作品や映像をじっくり味わっているとき", main: "solo", sub: "watch" },
         { label: "全力で声援を送って、会場や配信と一体になったとき", main: "cheer", sub: "talk" },
@@ -581,6 +598,7 @@
     },
     {
       text: "ライブやイベントの日、いちばんの楽しみは？",
+      phrases: ["ライブや", "イベントの日、", "いちばんの", "楽しみは？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       note: "配信やオンラインイベントを思い浮かべてもOK",
       options: [
         { label: "うちわやペンライトで、思いきり応援すること", main: "cheer", sub: "create" },
@@ -591,6 +609,7 @@
     },
     {
       text: "推しの情報、どうやって追いかけている？",
+      phrases: ["推しの情報、", "どうやって", "追いかけている？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "公式やSNSをこまめにチェックして、予定を整理する", main: "research", sub: "cheer" },
         { label: "気になったものだけ、自分のペースでゆっくり見る", main: "heal", sub: "watch" },
@@ -600,6 +619,7 @@
     },
     {
       text: "グッズや思い出、どんなふうに残している？",
+      phrases: ["グッズや思い出、", "どんなふうに", "残している？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "好きなグッズを並べて、お気に入りの空間をつくる", main: "memory", sub: "create" },
         { label: "イラストやデコ、手作りで「好き」を形にする", main: "create", sub: "memory" },
@@ -609,6 +629,7 @@
     },
     {
       text: "推し仲間との交流、いちばん心地いいのは？",
+      phrases: ["推し仲間との交流、", "いちばん", "心地いいのは？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "たくさんの人とつながって、好きを語り合いたい", main: "talk", sub: "cheer" },
         { label: "気の合う少人数で、ゆっくり話すのが好き", main: "watch", sub: "talk" },
@@ -618,6 +639,7 @@
     },
     {
       text: "推し活に少し疲れたとき、どうする？",
+      phrases: ["推し活に", "少し疲れたとき、", "どうする？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "いったん距離を置いて、自分の生活を整える", main: "heal", sub: "watch" },
         { label: "推しの作品にひたって、心を充電する", main: "solo", sub: "research" },
@@ -627,6 +649,7 @@
     },
     {
       text: "自分のペースと、まわりのペース。大事にしたいのは？",
+      phrases: ["自分のペースと、", "まわりのペース。", "大事にしたいのは？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "まわりの盛り上がりに乗るのが楽しい", main: "cheer", sub: "talk" },
         { label: "自分のペースを守るのがいちばん", main: "heal", sub: "solo" },
@@ -636,6 +659,7 @@
     },
     {
       text: "推し活で、いちばん大切にしていることは？",
+      phrases: ["推し活で、", "いちばん", "大切にしていることは？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "推しが笑顔で活動を続けられること", main: "watch", sub: "heal" },
         { label: "推しにもらった気持ちを、言葉や作品で表すこと", main: "create", sub: "research" },
@@ -645,6 +669,7 @@
     },
     {
       text: "推し活のある休日、理想の過ごし方は？",
+      phrases: ["推し活のある休日、", "理想の過ごし方は？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "イベントやゆかりの場所めぐりで、思いきり動き回る", main: "cheer", sub: "memory" },
         { label: "家で作品を見たり聴いたりして、じっくり浸る", main: "solo", sub: "research" },
@@ -654,6 +679,7 @@
     },
     {
       text: "推しが新しいことに挑戦すると知ったら？",
+      phrases: ["推しが", "新しいことに", "挑戦すると", "知ったら？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "最初の一歩から、そっと見届けたい", main: "watch", sub: "memory" },
         { label: "すぐに応援メッセージを送りたい！", main: "cheer", sub: "talk" },
@@ -710,6 +736,7 @@
     {
       axis: "love",
       text: "推しへの「好き」、どんなふうに届けたい？",
+      phrases: ["推しへの「好き」、", "どんなふうに", "届けたい？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "手紙やメッセージで、言葉にして伝えたい", pole: "E", points: 4 },
         { label: "声援やコメントで、その場で届けたい", pole: "E", points: 4 },
@@ -720,6 +747,7 @@
     {
       axis: "place",
       text: "ライブやイベントがあると知ったら？",
+      phrases: ["ライブや", "イベントがあると", "知ったら？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "できるだけ会場に足を運んで、その場の空気を感じたい", pole: "F", points: 4 },
         { label: "行ける日は現地で、ほかの日は配信で楽しみたい", pole: "F", points: 2 },
@@ -730,6 +758,7 @@
     {
       axis: "mind",
       text: "推しのことで心が動いたら、まずどうする？",
+      phrases: ["推しのことで", "心が動いたら、", "まず", "どうする？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "その気持ちのまま、すぐに動きたい", pole: "I", points: 4 },
         { label: "「好き！」という感覚を、そのまま大切にしたい", pole: "I", points: 4 },
@@ -740,6 +769,7 @@
     {
       axis: "enjoy",
       text: "推し活で、いちばん楽しい時間は？",
+      phrases: ["推し活で、", "いちばん", "楽しい時間は？"], // 改行してよい言葉のまとまり（つなげると text と同じ）
       options: [
         { label: "仲間と同じ気持ちを分かち合う時間", pole: "S", points: 4 },
         { label: "感想を伝え合って、誰かと話す時間", pole: "S", points: 4 },

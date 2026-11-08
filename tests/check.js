@@ -88,6 +88,42 @@ for (const k of TYPE_KEYS) {
   assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 1, "画像ごとの表示の調整はリサーチャーだけ");
   assert.ok(!(css.match(/img\[src\$="(?!research-telescope-book\.png")/g)), "リサーチャー以外の絵の表示の調整がある");
 }
+// 言葉のまとまり（iPhone の Safari でも言葉の途中で改行しないための区切り）：つなげると元の文と同じ（文章は変えない）
+for (const k of TYPE_KEYS) {
+  const t = D.TYPES[k], ph = t.phrases;
+  assert.deepStrictEqual(Object.keys(ph), ["name", "catch", "charm"], "phrases の項目 " + k);
+  [["name", t.name], ["catch", t.catch], ["charm", t.omamori.charm]].forEach(([f, text]) => {
+    assert.ok(Array.isArray(ph[f]) && ph[f].length >= 2 && ph[f].every((x) => typeof x === "string" && x.length > 0), "phrases." + f + " の形 " + k);
+    assert.strictEqual(ph[f].join(""), text, "phrases." + f + " をつなげると元の文と同じ " + k);
+    // 句読点・閉じかっこで始まるまとまりは作らない（行の頭に来ないように）
+    ph[f].forEach((x) => assert.ok(!/^[、。！？」』）”]/.test(x), "まとまりが句読点で始まる " + k + " " + x));
+  });
+}
+D.QUESTIONS.concat(D.AXIS_QUESTIONS).forEach((q, i) => {
+  assert.ok(Array.isArray(q.phrases) && q.phrases.length >= 2, "質問の phrases がない Q" + (i + 1));
+  assert.strictEqual(q.phrases.join(""), q.text, "質問の phrases をつなげると元の文と同じ Q" + (i + 1));
+  q.phrases.forEach((x) => assert.ok(!/^[、。！？」』）”]/.test(x), "まとまりが句読点で始まる Q" + (i + 1) + " " + x));
+});
+{
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8"), tp = fs.readFileSync(path.join(__dirname, "..", "types", "index.html"), "utf8");
+  const spans = (h) => [...h.matchAll(/<span class="phrase">(?:<span aria-hidden="true">[^<]*<\/span> )?([^<]*)<\/span>/g)].map((m) => m[1]);
+  TYPE_KEYS.forEach((k) => {
+    const t = D.TYPES[k];
+    // トップの8タイプ（採用済みの区切り）と types/ のタイプ名は、data.js の区切りと同じ
+    const li = (html.match(new RegExp('<li><a href="types/#' + k + '">.*?</li>')) || [""])[0];
+    assert.deepStrictEqual(spans(li), t.phrases.name, "トップの8タイプの区切りが data.js と同じ " + k);
+    const art = (tp.match(new RegExp('<article class="card guide-type" id="' + k + '"[\\s\\S]*?</article>')) || [""])[0];
+    assert.deepStrictEqual(spans((art.match(/<h3 class="guide-type-name"[\s\S]*?<\/h3>/) || [""])[0]), t.phrases.name, "types/ のタイプ名の区切り " + k);
+    assert.deepStrictEqual(spans((art.match(/<p class="guide-type-catch phrased">[\s\S]*?<\/p>/) || [""])[0]), t.phrases.catch, "types/ のキャッチコピーの区切り " + k);
+  });
+  // 画面では、タイプ名・キャッチコピー・お守りの言葉・質問を、区切りどおりに表示する（textContent で1つの文として入れない）
+  const app = fs.readFileSync(path.join(__dirname, "..", "js", "app.js"), "utf8");
+  ['setPhrased($("type-name"), [t.phrases.name]);', 'setPhrased($("type-catch"), [t.phrases.catch]);', 'setPhrased($("type-charm"), [t.phrases.charm]);',
+    'setPhrased($("top-type-name"), [edged(t.phrases.name, "「", "」")]);', 'setPhrased($("top-type-catch"), [t.phrases.catch]);', 'setPhrased($("q-text"), [question.phrases]);']
+    .forEach((x) => assert.ok(app.includes(x), "app.js：" + x));
+  assert.ok(!/\.(name|catch)\s*\+\s*"のあなた/.test(app) && !/textContent = t\.(name|catch)/.test(app), "app.js：タイプ名をそのまま文として入れている箇所が残っている");
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8"), /\n\.phrased \.phrase \{ display: inline-block; max-width: 100%; \}/, "style.css：言葉のまとまりの表示");
+}
 // 全8タイプの確認用の回答（tests/type-answers.js）：実際の判定の処理で、目的のタイプになる
 {
   const { SHORT, ANSWERS } = require("./type-answers.js");

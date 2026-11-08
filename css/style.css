@@ -1044,6 +1044,10 @@ img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale
 .type-grid img { width: 84px; height: auto; }
 .type-grid a > span { margin-top: 6px; font-size: 0.82rem; font-weight: 700; line-height: 1.5; }
 .type-grid .phrase { display: inline-block; }
+/* 言葉のまとまりごとに改行する表示（js/app.js の setPhrased、types/ のキャッチコピー）。
+   iPhone の Safari は word-break: auto-phrase に対応していないため、まとまりを inline-block にして、その間でだけ改行する。
+   1つのまとまりが幅より長いときだけ、その中で折り返す（横にはみ出さない） */
+.phrased .phrase { display: inline-block; max-width: 100%; }
 .about-more {
   display: flex;
   align-items: center;
