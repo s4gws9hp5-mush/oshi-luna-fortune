@@ -166,6 +166,7 @@ tests/subtype.js      サブタイプコードの判定のテスト（検討で�
 tests/tarot.js        今日の一枚（タロット）の無料データ・抽選・保存のテスト
 tests/tarot-ui.js     今日の一枚の画面のテスト
 tests/tarot-assets.js 今日の一枚のカード画像と対応表のテスト
+tests/e2e/share.js    画像の保存・シェアのブラウザテスト（Playwright + Chromium。tests/e2e/README.md）
 ```
 
 ### 保存データ（localStorage）
@@ -227,5 +228,13 @@ node tests/tarot-ui.js         # 今日の一枚の画面：156件の文章（�
 node tests/tarot-assets.js     # 今日の一枚のカード画像：対応表・ファイル・寸法・収まり
 python3 -m http.server 8000    # ブラウザで確認（今日の一枚は ?tarot-preview=1 を付けたときだけ表示）
 ```
+
+ブラウザで動かすテスト（Playwright と Chromium が必要）：
+
+```sh
+node tests/e2e/share.js        # 画像の保存・シェア：共有メニューの成功・キャンセル・失敗、ダウンロードした PNG の検証（113件）
+```
+
+必要なもの・実行方法・ブラウザを `LANG=C.UTF-8` で起動する理由・未確認のこと（実機の Safari／Android、本物の共有メニュー）は `tests/e2e/README.md` にまとめています。
 
 GitHub Pages では `main` ブランチを更新すると数分で反映されます。
