@@ -194,6 +194,7 @@
   var CARD = { x: 44, y: 44, w: W - 88, h: H - 88 };     // 白いカード
   var TEXT_W = W - 200;                                   // タイプ名などの幅
   var PX = 96, PW = W - 192, COL_GAP = 24;                // 説明のパネルの左端と幅
+  var SITE_URL = "https://oshi-luna.com/";                 // 画像に入れるサイトのアドレス（本番）
   var CTA_TOP = H - 340;                                  // 下の誘導エリア（ここより上に説明を収める）
 
   function background(ctx, theme) {
@@ -379,7 +380,7 @@
   };
 
   // 1回分の描画。step.cat で白猫の大きさ、step.gap で余白、step.font で文字の大きさを変える。描いた範囲を返す
-  function render(canvas, type, catImg, siteText, step) {
+  function render(canvas, type, catImg, step) {
     var ctx = canvas.getContext("2d");
     var theme = type.color, records = [];
     ctx.textBaseline = "top";
@@ -497,9 +498,10 @@
     });
     var sectionsBottom = y;
 
-    // 5. 診断への誘導・ハッシュタグ・サイトのアドレス（カードの下にそろえる）
+    // 5. 診断への誘導（サイトのアドレスつき）・ハッシュタグ（カードの下にそろえる）
+    // アドレスは、どこで画像を作っても本番のアドレスを入れる（プレビューのアドレスは入れない）
     ctx.textAlign = "center";
-    var boxY = CTA_TOP + 16, boxH = 136;
+    var boxY = CTA_TOP + 12, boxH = 188;
     var cta = ctx.createLinearGradient(PX, 0, PX + PW, 0);
     cta.addColorStop(0, "#ffe3f0");
     cta.addColorStop(1, "#ebe2ff");
@@ -514,31 +516,38 @@
     ctx.restore();
     heart(ctx, PX + 52, boxY + boxH / 2, 22, "#f7a1c4");
     heart(ctx, PX + PW - 52, boxY + boxH / 2, 22, "#c9b8f0");
-    ctx.font = "700 34px " + FONT;
+    ctx.font = "700 32px " + FONT;
     ctx.fillStyle = INK;
-    ctx.fillText("あなたは何タイプ？", W / 2, boxY + 20);
-    ctx.font = "700 38px " + FONT;
+    ctx.fillText("あなたは何タイプ？", W / 2, boxY + 18);
+    ctx.font = "700 40px " + FONT;
     ctx.fillStyle = "#e3649e";
-    ctx.fillText("無料の推し活タイプ診断はこちら♡", W / 2, boxY + 72);
+    ctx.fillText("無料の推し活タイプ診断", W / 2, boxY + 62);
+    // アドレスは白い角丸の上に、濃い色で読みやすく
+    ctx.font = "700 34px " + FONT;
+    var urlW = ctx.measureText(SITE_URL).width, pillW = urlW + 64, pillH = 52, pillY = boxY + 118;
+    roundRect(ctx, (W - pillW) / 2, pillY, pillW, pillH, pillH / 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = rgba(LAVENDER, 0.55);
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.fillText(SITE_URL, W / 2, pillY + 9);
     ctx.font = "700 38px " + FONT;
     ctx.fillStyle = LAVENDER;
-    ctx.fillText("#推しルナ占い", W / 2, boxY + boxH + 20);
-    var site = fitText(ctx, siteText, "700", [32, 30, 28, 24], TEXT_W, 1);
-    ctx.font = "700 " + site.size + "px " + FONT;
-    ctx.fillStyle = INK;
-    var siteY = boxY + boxH + 74;
-    ctx.fillText(site.lines.join(""), W / 2, siteY);
+    var tagY = boxY + boxH + 16;
+    ctx.fillText("#推しルナ占い", W / 2, tagY);
 
     return {
-      scale: step, sectionsBottom: sectionsBottom, ctaTop: CTA_TOP, siteBottom: siteY + site.size,
+      scale: step, sectionsBottom: sectionsBottom, ctaTop: CTA_TOP, siteBottom: tagY + 38, ctaBoxBottom: boxY + boxH, urlPill: { x: (W - pillW) / 2, y: pillY, w: pillW, h: pillH },
       cardBottom: CARD.y + CARD.h - 16, catRadius: R, nameLines: name.lines, catchLines: catchText.lines, bodyLines: records,
-      minFont: Math.min(bs, ls, site.size, cs, 30)
+      minFont: Math.min(bs, ls, cs, 30)
     };
   }
 
-  // type: data.js の TYPES の1タイプ、siteText: 画像に入れるサイトのアドレス
+  // type: data.js の TYPES の1タイプ
   // 説明が下の誘導エリアにかからない大きさになるまで、少しずつ小さくして描き直す
-  function draw(canvas, type, catImg, siteText) {
+  function draw(canvas, type, catImg) {
     canvas.width = W;
     canvas.height = H;
     // 大きい順に試す。入らなければ、まず余白、次に白猫を少し小さくし、最後に文字を小さくする（下限あり）
@@ -550,14 +559,14 @@
     for (var i = 0; i < steps.length; i++) {
       step = steps[i];
       canvas.getContext("2d").clearRect(0, 0, W, H);
-      layout = render(canvas, type, catImg, siteText, step);
+      layout = render(canvas, type, catImg, step);
       if (layout.sectionsBottom <= CTA_TOP) break;
     }
     // まだ下が空いていたら、その分を4か所の余白に分けて描き直す（下の誘導との間が空きすぎないように）
     var slack = CTA_TOP - layout.sectionsBottom;
     if (slack > 24) {
       canvas.getContext("2d").clearRect(0, 0, W, H);
-      layout = render(canvas, type, catImg, siteText, { cat: step.cat, gap: step.gap, font: step.font, extra: Math.floor(Math.min(slack - 16, 160) / 4) });
+      layout = render(canvas, type, catImg, { cat: step.cat, gap: step.gap, font: step.font, extra: Math.floor(Math.min(slack - 16, 160) / 4) });
     }
     canvas.layout = layout;
     return canvas;
@@ -577,20 +586,20 @@
   }
 
   // タイプのシェア画像を作って PNG の Blob を返す
-  function create(type, siteText) {
+  function create(type) {
     return loadImage(type.image).then(function (img) {
-      return toBlob(draw(document.createElement("canvas"), type, img, siteText));
+      return toBlob(draw(document.createElement("canvas"), type, img));
     });
   }
 
   // レイアウトの確認用（テストで、文字がはみ出していないかを調べる）
-  function layout(type, siteText) {
+  function layout(type) {
     var fake = { naturalWidth: 1, naturalHeight: 1 };
     var c = document.createElement("canvas");
     var ctx = c.getContext("2d");
     var orig = ctx.drawImage;
     ctx.drawImage = function () {};
-    draw(c, type, fake, siteText);
+    draw(c, type, fake);
     ctx.drawImage = orig;
     return c.layout;
   }

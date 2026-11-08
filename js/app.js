@@ -580,7 +580,7 @@
     shareImage = { typeKey: typeKey, pending: true };
     var current = shareImage;
     if (!window.OshiLunaShareCard || !window.Promise) { current.failed = true; return; }
-    window.OshiLunaShareCard.create(D.TYPES[typeKey], siteUrl().replace(/^https?:\/\//, "").replace(/\/$/, "")).then(function (blob) {
+    window.OshiLunaShareCard.create(D.TYPES[typeKey]).then(function (blob) {
       if (shareImage !== current) return; // 別のタイプに切り替わっていたら使わない
       current.pending = false;
       current.blob = blob;
