@@ -54,24 +54,43 @@ for (const k of TYPE_KEYS) {
   assert.strictEqual(w, h, img + " が正方形でない");
 }
 
-// 情報キャッチの星読みリサーチャーの絵：いただいた背景透過PNGをそのまま使う（描き直し・縮小・再圧縮をしない）
+// 情報キャッチの星読みリサーチャーの絵：いただいた背景透過PNG（星座なし版）の画素をそのまま使う
+// 見た目を変えないロスレス圧縮だけ行った（899KB → 759KB）。描き直し・縮小・色の変更はしない
 {
   const R = D.TYPES.research, file = path.join(__dirname, "..", R.image), buf = fs.readFileSync(file);
-  assert.strictEqual(R.image, "images/types/research-telescope-constellation.png", "リサーチャーの絵のファイル名（古い絵がキャッシュに残らないよう新しい名前）");
-  assert.strictEqual(require("crypto").createHash("sha256").update(buf).digest("hex"), "3802998b8fa3b3a432786abe2eb438decf96a87323a8effe2ab1282e781b9ec4", "リサーチャーの絵がいただいたPNGと同じ");
+  assert.strictEqual(R.image, "images/types/research-telescope-book.png", "リサーチャーの絵のファイル名（古い絵がキャッシュに残らないよう新しい名前）");
   assert.deepStrictEqual(pngSize(file), [1254, 1254], "リサーチャーの絵の大きさ");
-  assert.strictEqual(buf[25], 6, "リサーチャーの絵は透明度つき（RGBA）");
-  assert.ok(!fs.existsSync(path.join(__dirname, "..", "images/types/research-magnifier-starbook.png")), "古いリサーチャーの絵が残っている");
-  // 表示の調整（少し大きく・中央に寄せる）：シェア画像は data.js の imageFit、画面は style.css。値をそろえる。ほかの7タイプは調整しない
-  assert.deepStrictEqual(R.imageFit, { scale: 1.1, x: 0.033 }, "リサーチャーの絵の表示の調整");
+  assert.deepStrictEqual([buf[24], buf[25], buf[28]], [8, 6, 0], "リサーチャーの絵は 8bit・透明度つき（RGBA）・インターレースなし");
+  // PNG を展開して、全画素（透明な部分の色も含む RGBA）が、いただいたPNGと同じことを確かめる
+  const idat = []; let o = 8;
+  while (o < buf.length) { const n = buf.readUInt32BE(o), t = buf.toString("ascii", o + 4, o + 8); if (t === "IDAT") idat.push(buf.slice(o + 8, o + 8 + n)); o += 12 + n; }
+  const raw = require("zlib").inflateSync(Buffer.concat(idat)), W = 1254, bpp = 4, stride = W * bpp, px = Buffer.alloc(stride * W);
+  for (let y = 0; y < W; y++) {
+    const f = raw[y * (stride + 1)], src = raw.slice(y * (stride + 1) + 1, (y + 1) * (stride + 1)), row = px.slice(y * stride, (y + 1) * stride), up = y ? px.slice((y - 1) * stride, y * stride) : Buffer.alloc(stride);
+    for (let i = 0; i < stride; i++) {
+      const l = i >= bpp ? row[i - bpp] : 0, u = up[i], ul = i >= bpp ? up[i - bpp] : 0;
+      const pa = Math.abs(u - ul), pb = Math.abs(l - ul), pc = Math.abs(l + u - 2 * ul);
+      row[i] = (src[i] + [0, l, u, (l + u) >> 1, pa <= pb && pa <= pc ? l : pb <= pc ? u : ul][f]) & 255;
+    }
+  }
+  assert.strictEqual(require("crypto").createHash("sha256").update(px).digest("hex"), "c54dd57339ad91a99bd034452ef1613e38c87dce6e114a844dfa4c13039d4f4d", "リサーチャーの絵の全画素（RGBA）がいただいたPNGと同じ");
+  ["research-magnifier-starbook.png", "research-telescope-constellation.png"].forEach((f) =>
+    assert.ok(!fs.existsSync(path.join(__dirname, "..", "images/types", f)), "古いリサーチャーの絵が残っている " + f));
+  // 表示の調整（中央に寄せて少し大きく）：シェア画像は data.js の imageFit、画面は style.css。値をそろえる。ほかの7タイプは調整しない
+  assert.deepStrictEqual(R.imageFit, { scale: 1.12, x: 0.06, y: -0.133 }, "リサーチャーの絵の表示の調整");
   TYPE_KEYS.filter((k) => k !== "research").forEach((k) => assert.ok(!("imageFit" in D.TYPES[k]), "ほかのタイプに表示の調整がある " + k));
   const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
-  assert.match(css, /img\[src\$="research-telescope-constellation\.png"\] \{ transform: translateX\(3\.3%\) scale\(1\.1\); \}/, "画面のリサーチャーの絵の調整（imageFit と同じ値）");
-  assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 1, "画像ごとの表示の調整はリサーチャーだけ");
+  assert.match(css, /\nimg\[src\$="research-telescope-book\.png"\] \{ transform: translate\(6%, -13\.3%\) scale\(1\.12\); \}/, "画面のリサーチャーの絵の調整（imageFit と同じ値）");
+  // 結果画面の丸い絵だけは、右下の絵文字の丸に本がかくれないよう、別の位置
+  assert.match(css, /\n#type-emblem img\[src\$="research-telescope-book\.png"\] \{ transform: translate\(-11%, -12\.3%\) scale\(1\.04\); \}/, "結果画面のリサーチャーの絵の調整");
+  assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 2, "画像ごとの表示の調整はリサーチャーだけ");
+  assert.ok(!(css.match(/img\[src\$="(?!research-telescope-book\.png")/g)), "リサーチャー以外の絵の表示の調整がある");
 }
-// 古い絵の名前がどこにも残っていない（画面・Service Worker・データ）
-["index.html", "types/index.html", "sw.js", "js/data.js", "js/app.js", "js/share-card.js", "css/style.css"].forEach((f) =>
-  assert.ok(!fs.readFileSync(path.join(__dirname, "..", f), "utf8").includes("research-magnifier-starbook"), f + " に古いリサーチャーの絵の名前"));
+// 古い絵の名前がどこにも残っていない（画面・Service Worker・データ・スタイル）
+["index.html", "types/index.html", "sw.js", "js/data.js", "js/app.js", "js/share-card.js", "css/style.css"].forEach((f) => {
+  const src = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  ["research-magnifier-starbook", "research-telescope-constellation"].forEach((n) => assert.ok(!src.includes(n), f + " に古いリサーチャーの絵の名前 " + n));
+});
 
 // シェア画像「推し活タイプ取扱説明書」用の短い紹介：全タイプにあり、短く、使い回しがない
 for (const k of TYPE_KEYS) {
@@ -96,9 +115,9 @@ manifest.icons.forEach((i) => {
 const sw = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
 (sw.match(/"(?:\.\/|[a-z][^"]*\.(?:html|css|js|png))"/g) || []).map((x) => x.slice(1, -1)).filter((f) => f !== "./")
   .forEach((f) => assert.ok(fs.existsSync(path.join(__dirname, "..", f)), "sw.js の CORE にあるファイルがない " + f));
-// Service Worker：8タイプの絵をすべて保存する。絵を差し替えたらキャッシュの名前を変える（v6：リサーチャーの絵を差し替え）
+// Service Worker：8タイプの絵をすべて保存する。絵を差し替えたらキャッシュの名前を変える（v7：リサーチャーの絵を星座なし版に差し替え）
 TYPE_KEYS.forEach((k) => assert.ok(sw.includes('"' + D.TYPES[k].image + '"'), "sw.js の CORE にタイプの絵がない " + k));
-assert.match(sw, /var CACHE = "oshi-luna-v6";/, "sw.js のキャッシュの名前");
+assert.match(sw, /var CACHE = "oshi-luna-v7";/, "sw.js のキャッシュの名前");
 
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");
