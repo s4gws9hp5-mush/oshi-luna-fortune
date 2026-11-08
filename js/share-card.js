@@ -429,9 +429,10 @@
     ctx.stroke();
     ctx.restore();
     var size = (R - 14) * 1.8;
-    var k = Math.min(size / catImg.naturalWidth, size / catImg.naturalHeight);
+    var fit = type.imageFit || { scale: 1, x: 0 }; // 絵ごとの表示の調整（data.js）
+    var k = Math.min(size / catImg.naturalWidth, size / catImg.naturalHeight) * fit.scale;
     var iw = catImg.naturalWidth * k, ih = catImg.naturalHeight * k;
-    ctx.drawImage(catImg, W / 2 - iw / 2, cy - ih / 2, iw, ih);
+    ctx.drawImage(catImg, W / 2 - iw / 2 + size * fit.x, cy - ih / 2, iw, ih);
     bow(ctx, W / 2, cy - R + 4, 36, "#f7a1c4", "#f07fb2");
     // 白猫のまわりの飾り（文字にかからない左右の余白だけ）
     var L = W / 2 - R, Rt = W / 2 + R;

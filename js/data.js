@@ -496,7 +496,10 @@
     research: {
       name: "情報キャッチの星読みリサーチャー",
       emoji: "🔭",
-      image: "images/types/research-magnifier-starbook.png",
+      image: "images/types/research-telescope-constellation.png",
+      // 望遠鏡・星座・本が入って白猫が小さめに見えるので、表示だけ少し大きく・中央に寄せる（画像そのものは変えない）
+      // scale：大きさの倍率、x：右へずらす量（絵の幅に対する割合）。画面の表示は css/style.css の同じ値の指定
+      imageFit: { scale: 1.1, x: 0.033 },
       color: "#8fb8ec",
       catch: "推しの“今”を、星座のようにつなげて読み解く人。",
       personality: "推しの情報をすばやくキャッチし、整理したり読み解いたりするのが得意なタイプ。スケジュール管理はお手のもので、インタビューや演出の意味を考えるのも大好きです。点と点がつながって推しの新しい魅力が見えたとき、心がいちばん躍ります。",

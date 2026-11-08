@@ -789,6 +789,10 @@ button:focus-visible {
   box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--type-color);
 }
 .type-emblem .emblem-cat { width: 120px; margin: 0; }
+/* 情報キャッチの星読みリサーチャーの絵：望遠鏡・星座・本が入って白猫が小さめに見えるので、
+   表示だけ少し大きく（1.1倍）・中央に寄せる（右へ3.3%）。レイアウトの大きさは変えない。
+   シェア画像は js/data.js の imageFit（同じ値）で調整 */
+img[src$="research-telescope-constellation.png"] { transform: translateX(3.3%) scale(1.1); }
 .type-emoji {
   position: absolute;
   right: 2px;

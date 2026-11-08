@@ -98,9 +98,15 @@
 | 🌱 そっと寄りそう見守りさん | `images/types/watch-starry-cloud.png` | 星空と雲 |
 | 🎨 ときめき探究クリエイター | `images/types/create-notebook-pencil.png` | ノートと鉛筆 |
 | ☁️ マイペースな癒やし系ファン | `images/types/heal-cushion-mug.png` | クッションとマグカップ |
-| 🔭 情報キャッチの星読みリサーチャー | `images/types/research-magnifier-starbook.png` | 虫眼鏡と星の本 |
+| 🔭 情報キャッチの星読みリサーチャー | `images/types/research-telescope-constellation.png` | 望遠鏡と星座と本 |
 
 タイプ別の絵は正方形の透明PNGです。差し替えるときも正方形にすると、表示がそろいます。
+
+- 絵を差し替えるときは、新しいファイル名にします。古い絵がブラウザや Service Worker のキャッシュに残らないようにするためです。あわせて `sw.js` の `CACHE` の名前（今は `oshi-luna-v6`）と `CORE` の一覧も変えます
+- 星読みリサーチャーの絵（`research-telescope-constellation.png`、1254×1254）は、いただいた背景透過PNGをそのまま使っています（描き直し・縮小・再圧縮なし）
+  - 望遠鏡・星座・本が入るぶん白猫が小さめに見えるので、表示だけ1.1倍にして、右へ3.3%寄せています。画像のファイルは変えていません
+  - 画面の表示は `css/style.css`、シェア画像は `js/data.js` の `imageFit`（`{ scale: 1.1, x: 0.033 }`）で、同じ値を指定しています
+  - 調整したあとも、絵は円の枠の内側に収まります（中心からいちばん遠い点は、これまでの推し語りの絵より内側）
 
 ### 推し活タイプのシェア画像
 

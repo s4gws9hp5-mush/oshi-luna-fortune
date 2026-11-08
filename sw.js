@@ -5,7 +5,7 @@
  */
 "use strict";
 
-var CACHE = "oshi-luna-v5";
+var CACHE = "oshi-luna-v6";
 var CORE = [
   "./", "index.html", "types/", "css/style.css",
   "css/tarot.css", "js/tarot-public.js", "js/tarot-assets.js", "js/tarot.js", "js/tarot-ui.js",
@@ -13,7 +13,7 @@ var CORE = [
   "images/luna-cat.png", "images/apple-touch-icon.png", "images/icon-192.png",
   "images/types/solo-moon-book.png", "images/types/cheer-penlight.png", "images/types/memory-photos-goods.png",
   "images/types/talk-heart.png", "images/types/watch-starry-cloud.png", "images/types/create-notebook-pencil.png",
-  "images/types/heal-cushion-mug.png", "images/types/research-magnifier-starbook.png"
+  "images/types/heal-cushion-mug.png", "images/types/research-telescope-constellation.png"
 ];
 
 self.addEventListener("install", function (event) {

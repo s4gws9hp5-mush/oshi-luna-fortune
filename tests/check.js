@@ -54,6 +54,25 @@ for (const k of TYPE_KEYS) {
   assert.strictEqual(w, h, img + " が正方形でない");
 }
 
+// 情報キャッチの星読みリサーチャーの絵：いただいた背景透過PNGをそのまま使う（描き直し・縮小・再圧縮をしない）
+{
+  const R = D.TYPES.research, file = path.join(__dirname, "..", R.image), buf = fs.readFileSync(file);
+  assert.strictEqual(R.image, "images/types/research-telescope-constellation.png", "リサーチャーの絵のファイル名（古い絵がキャッシュに残らないよう新しい名前）");
+  assert.strictEqual(require("crypto").createHash("sha256").update(buf).digest("hex"), "3802998b8fa3b3a432786abe2eb438decf96a87323a8effe2ab1282e781b9ec4", "リサーチャーの絵がいただいたPNGと同じ");
+  assert.deepStrictEqual(pngSize(file), [1254, 1254], "リサーチャーの絵の大きさ");
+  assert.strictEqual(buf[25], 6, "リサーチャーの絵は透明度つき（RGBA）");
+  assert.ok(!fs.existsSync(path.join(__dirname, "..", "images/types/research-magnifier-starbook.png")), "古いリサーチャーの絵が残っている");
+  // 表示の調整（少し大きく・中央に寄せる）：シェア画像は data.js の imageFit、画面は style.css。値をそろえる。ほかの7タイプは調整しない
+  assert.deepStrictEqual(R.imageFit, { scale: 1.1, x: 0.033 }, "リサーチャーの絵の表示の調整");
+  TYPE_KEYS.filter((k) => k !== "research").forEach((k) => assert.ok(!("imageFit" in D.TYPES[k]), "ほかのタイプに表示の調整がある " + k));
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
+  assert.match(css, /img\[src\$="research-telescope-constellation\.png"\] \{ transform: translateX\(3\.3%\) scale\(1\.1\); \}/, "画面のリサーチャーの絵の調整（imageFit と同じ値）");
+  assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 1, "画像ごとの表示の調整はリサーチャーだけ");
+}
+// 古い絵の名前がどこにも残っていない（画面・Service Worker・データ）
+["index.html", "types/index.html", "sw.js", "js/data.js", "js/app.js", "js/share-card.js", "css/style.css"].forEach((f) =>
+  assert.ok(!fs.readFileSync(path.join(__dirname, "..", f), "utf8").includes("research-magnifier-starbook"), f + " に古いリサーチャーの絵の名前"));
+
 // シェア画像「推し活タイプ取扱説明書」用の短い紹介：全タイプにあり、短く、使い回しがない
 for (const k of TYPE_KEYS) {
   const c = D.TYPES[k].card;
@@ -77,6 +96,9 @@ manifest.icons.forEach((i) => {
 const sw = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
 (sw.match(/"(?:\.\/|[a-z][^"]*\.(?:html|css|js|png))"/g) || []).map((x) => x.slice(1, -1)).filter((f) => f !== "./")
   .forEach((f) => assert.ok(fs.existsSync(path.join(__dirname, "..", f)), "sw.js の CORE にあるファイルがない " + f));
+// Service Worker：8タイプの絵をすべて保存する。絵を差し替えたらキャッシュの名前を変える（v6：リサーチャーの絵を差し替え）
+TYPE_KEYS.forEach((k) => assert.ok(sw.includes('"' + D.TYPES[k].image + '"'), "sw.js の CORE にタイプの絵がない " + k));
+assert.match(sw, /var CACHE = "oshi-luna-v6";/, "sw.js のキャッシュの名前");
 
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");
@@ -489,6 +511,9 @@ const pageInfo = PAGES.map((f) => {
   // トップの8タイプ：名前・順番・リンク先がデータと同じ
   const grid = [...top.html.matchAll(/<li><a href="types\/#(\w+)"><img src="([^"]+)"[^>]*><span>(.*?)<\/span><\/a><\/li>/g)];
   assert.deepStrictEqual(grid.map((m) => [m[1], m[2], text(m[3])]), TYPE_KEYS.map((k) => [k, D.TYPES[k].image, D.TYPES[k].name]), "トップの8タイプ");
+  // トップの8タイプの絵：width・height は画像の本当の大きさ（縦横比が崩れない）
+  [...top.html.matchAll(/<li><a href="types\/#\w+"><img src="([^"]+)" width="(\d+)" height="(\d+)"/g)].forEach((m) =>
+    assert.deepStrictEqual(pngSize(path.join(__dirname, "..", m[1])), [+m[2], +m[3]], "トップの絵の大きさの指定 " + m[1]));
   // types/：パンくず、8タイプの名前・キャッチ・性格・輝くところ、4つの軸の説明がデータと同じ
   assert.ok(types.ld["@type"] === "BreadcrumbList" && types.ld.itemListElement.map((x) => x.item).join() === SITE + "," + SITE + "types/", "types/ のパンくずリスト");
   TYPE_KEYS.forEach((k) => {
