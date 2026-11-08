@@ -496,6 +496,7 @@
     $("a2hs-card").hidden = true;
 
     $("type-emblem").style.setProperty("--type-color", t.color);
+    $("type-emblem").setAttribute("data-type", typeKey); // タイプごとの見た目の調整用（css/style.css）
     $("type-hero").style.setProperty("--type-color", t.color);
     setCat($("type-img"), typeKey);
     setCat($("type-omamori-img"), typeKey);

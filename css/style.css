@@ -793,8 +793,6 @@ button:focus-visible {
    表示だけ中央に寄せて（右へ6%・上へ13.3%）少し大きく（1.12倍）する。レイアウトの大きさは変えない。
    シェア画像は js/data.js の imageFit（同じ値）で調整 */
 img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale(1.12); }
-/* 結果画面の丸い絵は右下に絵文字の丸があるので、本の右端がかくれないよう、少し小さく・左寄せにする */
-#type-emblem img[src$="research-telescope-book.png"] { transform: translate(-11%, -12.3%) scale(1.04); }
 .type-emoji {
   position: absolute;
   right: 2px;
@@ -808,6 +806,9 @@ img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale
   border-radius: 50%;
   box-shadow: 0 0 0 3px var(--type-color);
 }
+/* 星読みリサーチャーの結果画面：絵は丸の中央のまま（ほかの表示と同じ調整）、右下の絵文字の丸が本の右端に
+   かからないよう、丸を少し外側（右へ10px・下へ12px）に動かす。大きさはほかのタイプと同じ */
+#type-emblem[data-type="research"] .type-emoji { right: -8px; bottom: -6px; }
 .type-emblem.small { flex: none; width: 76px; height: 76px; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--type-color); }
 .type-emblem.small .emblem-cat { width: 60px; }
 .type-lead { margin: 16px 0 2px; font-size: 0.88rem; color: var(--ink-soft); }

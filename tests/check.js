@@ -81,10 +81,37 @@ for (const k of TYPE_KEYS) {
   TYPE_KEYS.filter((k) => k !== "research").forEach((k) => assert.ok(!("imageFit" in D.TYPES[k]), "ほかのタイプに表示の調整がある " + k));
   const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
   assert.match(css, /\nimg\[src\$="research-telescope-book\.png"\] \{ transform: translate\(6%, -13\.3%\) scale\(1\.12\); \}/, "画面のリサーチャーの絵の調整（imageFit と同じ値）");
-  // 結果画面の丸い絵だけは、右下の絵文字の丸に本がかくれないよう、別の位置
-  assert.match(css, /\n#type-emblem img\[src\$="research-telescope-book\.png"\] \{ transform: translate\(-11%, -12\.3%\) scale\(1\.04\); \}/, "結果画面のリサーチャーの絵の調整");
-  assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 2, "画像ごとの表示の調整はリサーチャーだけ");
+  // 結果画面の丸い絵も同じ位置（丸の中央）。本に重ならないよう、右下の絵文字の丸だけを外側へ動かす（大きさは変えない）
+  assert.match(css, /\n#type-emblem\[data-type="research"\] \.type-emoji \{ right: -8px; bottom: -6px; \}/, "結果画面のリサーチャーの絵文字の丸の位置");
+  assert.strictEqual((css.match(/\[data-type="/g) || []).length, 1, "タイプごとの絵文字の丸の調整はリサーチャーだけ");
+  assert.ok(fs.readFileSync(path.join(__dirname, "..", "js", "app.js"), "utf8").includes('$("type-emblem").setAttribute("data-type", typeKey);'), "結果画面の丸にタイプを入れる（調整用）");
+  assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 1, "画像ごとの表示の調整はリサーチャーだけ");
   assert.ok(!(css.match(/img\[src\$="(?!research-telescope-book\.png")/g)), "リサーチャー以外の絵の表示の調整がある");
+}
+// 全8タイプの確認用の回答（tests/type-answers.js）：実際の判定の処理で、目的のタイプになる
+{
+  const { SHORT, ANSWERS } = require("./type-answers.js");
+  assert.deepStrictEqual(Object.keys(ANSWERS), D.TYPE_ORDER, "確認用の回答：8タイプすべて、TYPE_ORDER の順");
+  const all = D.QUESTIONS.concat(D.AXIS_QUESTIONS);
+  assert.deepStrictEqual(SHORT.map((x) => x.length), all.map((q) => q.options.length), "確認用の回答：短い文言の数が選択肢と同じ");
+  const C = "①②③④", rows = [];
+  for (const k of D.TYPE_ORDER) {
+    const q = ANSWERS[k].q.map((n) => n - 1), main = q.slice(0, D.QUESTIONS.length), axis = q.slice(D.QUESTIONS.length);
+    assert.ok(q.length === all.length && isValidAnswers(main) && isValidAxisAnswers(axis), "確認用の回答の形 " + k);
+    const r = diagnoseType(main);
+    assert.strictEqual(r.type, k, "確認用の回答で目的のタイプにならない " + k + " → " + r.type);
+    // 同点の順位決めに頼らない：目的のタイプの合計点が、ほかのどのタイプより高い
+    D.TYPE_ORDER.filter((t) => t !== k).forEach((t) => assert.ok(r.scores[k] > r.scores[t], "確認用の回答が同点 " + k + "=" + r.scores[k] + " " + t + "=" + r.scores[t]));
+    // Q11〜Q14 はタイプを変えない（どれを選んでも同じタイプ）。サブタイプコードは記録どおり
+    assert.strictEqual(diagnoseAxes(main, axis).code, ANSWERS[k].code, "確認用の回答のサブタイプコード " + k);
+    const t = D.TYPES[k];
+    rows.push("| " + t.emoji + " " + t.name + " | " + main.map((n, i) => "Q" + (i + 1) + "＝" + C[n]).join("、") + " | " +
+      main.map((n, i) => "Q" + (i + 1) + " " + SHORT[i][n]).join(" / ") + " |");
+  }
+  // README.md の一覧が、この回答例と同じ
+  const readme = fs.readFileSync(path.join(__dirname, "..", "README.md"), "utf8");
+  assert.ok(readme.includes("| タイプ | 回答（Q1〜Q10） | 選ぶ選択肢（短い文言） |\n| --- | --- | --- |\n" + rows.join("\n") + "\n"), "README.md の確認用の回答の一覧がデータと違う");
+  assert.ok(readme.includes("ここでは4問とも ① を選びます（" + [0, 1, 2, 3].map((i) => "Q" + (i + 11) + " " + SHORT[D.QUESTIONS.length + i][0]).join(" / ") + "）"), "README.md の Q11〜Q14 の説明");
 }
 // 古い絵の名前がどこにも残っていない（画面・Service Worker・データ・スタイル）
 ["index.html", "types/index.html", "sw.js", "js/data.js", "js/app.js", "js/share-card.js", "css/style.css"].forEach((f) => {
