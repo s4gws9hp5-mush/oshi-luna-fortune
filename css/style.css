@@ -376,12 +376,93 @@ body::before {
 .daily-note { margin: 0; text-align: center; font-size: 0.78rem; color: var(--ink-soft); }
 .note { text-align: center; font-size: 0.8rem; color: var(--ink-soft); margin-top: 14px; }
 
-.daily-intro {
-  margin: 14px 4px 4px;
-  text-align: center;
-  font-size: 0.88rem;
-  line-height: 1.8;
-  color: var(--ink-soft);
+/* ---------- トップの「今日の占い」（今日の推し活占い・今日の一枚タロット）----------
+   2つの入口を同じ角丸カードでまとめ、色（ピンク／ラベンダー）・アイコン・名前・短い説明で見分けられるようにする。
+   カード全体がボタン。白い面と濃いめの縁・右端の丸い矢印で、淡い配色でも押す場所がわかるようにする */
+.today-group {
+  margin: 30px 0 8px;
+  padding: 16px 14px 12px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 32px;
+  box-shadow: 0 10px 28px rgba(166, 140, 232, 0.18);
+}
+.today-title { margin: 0 0 12px; text-align: center; font-size: 1.12rem; letter-spacing: 0.08em; color: var(--ink); }
+.today-title::before, .today-title::after { content: "✦"; margin: 0 0.5em; font-size: 0.8em; color: var(--gold); }
+.today-list { display: flex; flex-direction: column; gap: 10px; }
+.today-slot[hidden] { display: none; }
+.today-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 76px;
+  margin: 0;
+  padding: 12px 12px 12px 14px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  border: 2px solid var(--item-line);
+  border-radius: 24px;
+  background: var(--item-bg);
+  box-shadow: 0 6px 16px var(--item-shadow);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.today-item:active { transform: scale(0.98); }
+.today-item:focus-visible { outline: 3px solid var(--item-accent); outline-offset: 3px; }
+.today-daily {
+  --item-accent: #b23a78;
+  --item-line: #f0a3c6;
+  --item-tint: #ffe1ee;
+  --item-bg: linear-gradient(110deg, #ffffff 40%, #fff0f6);
+  --item-shadow: rgba(240, 130, 180, 0.22);
+}
+.today-tarot {
+  --item-accent: #7556cf;
+  --item-line: #bea9f2;
+  --item-tint: #ece4ff;
+  --item-bg: linear-gradient(110deg, #ffffff 40%, #f3eeff);
+  --item-shadow: rgba(150, 120, 230, 0.24);
+}
+.today-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--item-accent);
+  background: var(--item-tint);
+}
+.today-icon svg { display: block; }
+.today-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.today-name { font-size: 1.04rem; font-weight: 700; line-height: 1.45; letter-spacing: 0.03em; color: var(--item-accent); }
+.today-desc { font-size: 0.84rem; line-height: 1.5; color: #67588a; }
+.today-go {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  padding-bottom: 2px;
+  color: var(--white);
+  background: var(--item-accent);
+}
+.today-note { margin: 10px 0 0; text-align: center; font-size: 0.78rem; color: #6c5d8f; }
+.today-desc .phrase { display: inline-block; } /* 折り返すときは「今日の推し活運を／チェック」「ルナが選ぶ一枚から／メッセージ」の区切りで */
+@media (hover: hover) {
+  .today-item:hover { box-shadow: 0 8px 22px var(--item-shadow), 0 0 0 1px var(--item-line); }
+}
+@media (max-width: 360px) {
+  .today-group { padding-left: 10px; padding-right: 10px; }
+  .today-item { grid-template-columns: 42px minmax(0, 1fr) 30px; gap: 10px; padding-left: 10px; padding-right: 10px; }
+  .today-icon { width: 42px; height: 42px; }
+  .today-go { width: 30px; height: 30px; font-size: 1.25rem; }
+  .today-name { font-size: 0.96rem; letter-spacing: 0; } /* 「今日の一枚タロット」を1行に */
 }
 
 /* ---------- 推し活タイプ診断への案内カード ---------- */
@@ -708,6 +789,10 @@ button:focus-visible {
   box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--type-color);
 }
 .type-emblem .emblem-cat { width: 120px; margin: 0; }
+/* 情報キャッチの星読みリサーチャーの絵：絵が下と左に寄っていて（上に余白）、白猫が小さめに見えるので、
+   表示だけ中央に寄せて（右へ6%・上へ13.3%）少し大きく（1.12倍）する。レイアウトの大きさは変えない。
+   シェア画像は js/data.js の imageFit（同じ値）で調整 */
+img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale(1.12); }
 .type-emoji {
   position: absolute;
   right: 2px;
@@ -721,6 +806,9 @@ button:focus-visible {
   border-radius: 50%;
   box-shadow: 0 0 0 3px var(--type-color);
 }
+/* 星読みリサーチャーの結果画面：絵は丸の中央のまま（ほかの表示と同じ調整）、右下の絵文字の丸が本の右端に
+   かからないよう、丸を少し外側（右へ10px・下へ12px）に動かす。大きさはほかのタイプと同じ */
+#type-emblem[data-type="research"] .type-emoji { right: -8px; bottom: -6px; }
 .type-emblem.small { flex: none; width: 76px; height: 76px; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--type-color); }
 .type-emblem.small .emblem-cat { width: 60px; }
 .type-lead { margin: 16px 0 2px; font-size: 0.88rem; color: var(--ink-soft); }
@@ -956,6 +1044,10 @@ button:focus-visible {
 .type-grid img { width: 84px; height: auto; }
 .type-grid a > span { margin-top: 6px; font-size: 0.82rem; font-weight: 700; line-height: 1.5; }
 .type-grid .phrase { display: inline-block; }
+/* 言葉のまとまりごとに改行する表示（js/app.js の setPhrased、types/ のキャッチコピー）。
+   iPhone の Safari は word-break: auto-phrase に対応していないため、まとまりを inline-block にして、その間でだけ改行する。
+   1つのまとまりが幅より長いときだけ、その中で折り返す（横にはみ出さない） */
+.phrased .phrase { display: inline-block; max-width: 100%; }
 .about-more {
   display: flex;
   align-items: center;

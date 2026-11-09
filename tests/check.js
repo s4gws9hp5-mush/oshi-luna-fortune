@@ -54,6 +54,134 @@ for (const k of TYPE_KEYS) {
   assert.strictEqual(w, h, img + " が正方形でない");
 }
 
+// PNG（8bit・RGBA・インターレースなし）を展開して、全画素（透明な部分の色も含む RGBA）の SHA-256 を返す
+// いただいたPNGをロスレス圧縮しても、画素が1つも変わっていないことを確かめるため
+function rgbaSha256(file) {
+  const buf = fs.readFileSync(file), W = buf.readUInt32BE(16), H = buf.readUInt32BE(20);
+  assert.deepStrictEqual([buf[24], buf[25], buf[28]], [8, 6, 0], file + " は 8bit・透明度つき（RGBA）・インターレースなし");
+  const idat = []; let o = 8;
+  while (o < buf.length) { const n = buf.readUInt32BE(o), t = buf.toString("ascii", o + 4, o + 8); if (t === "IDAT") idat.push(buf.slice(o + 8, o + 8 + n)); o += 12 + n; }
+  const raw = require("zlib").inflateSync(Buffer.concat(idat)), bpp = 4, stride = W * bpp, px = Buffer.alloc(stride * H);
+  for (let y = 0; y < H; y++) {
+    const f = raw[y * (stride + 1)], src = raw.slice(y * (stride + 1) + 1, (y + 1) * (stride + 1)), row = px.slice(y * stride, (y + 1) * stride), up = y ? px.slice((y - 1) * stride, y * stride) : Buffer.alloc(stride);
+    for (let i = 0; i < stride; i++) {
+      const l = i >= bpp ? row[i - bpp] : 0, u = up[i], ul = i >= bpp ? up[i - bpp] : 0;
+      const pa = Math.abs(u - ul), pb = Math.abs(l - ul), pc = Math.abs(l + u - 2 * ul);
+      row[i] = (src[i] + [0, l, u, (l + u) >> 1, pa <= pb && pa <= pc ? l : pb <= pc ? u : ul][f]) & 255;
+    }
+  }
+  return require("crypto").createHash("sha256").update(px).digest("hex");
+}
+
+// 差し替えた絵（応援隊長・コミュニケーター・癒やし系）：いただいた背景透過PNGの画素をそのまま使う（ロスレス圧縮だけ）
+// 応援隊長＝左上の余計な線を削除した版、コミュニケーター＝耳の青い汚れを修正した版、癒やし系＝左の煙を削除しクッションを整えた版
+{
+  const NEW = {
+    cheer: ["images/types/cheer-penlight-sparkle.png", "cheer-penlight.png", "440123b084374663a1c0131d34472bca4b09522b37f8d118cf31090f5f598cef"],
+    talk: ["images/types/talk-heart-bubble.png", "talk-heart.png", "0f7533967caaf57508ebcc9238be045a6851994d4ddc1b4c2255b0064415ef59"],
+    heal: ["images/types/heal-cushion-mug-cozy.png", "heal-cushion-mug.png", "845e3b6d986f3ee4626391dc3222900ef77ea2ba6bae34ee98705aaea67cf6fe"]
+  };
+  for (const [k, [img, old, sha]] of Object.entries(NEW)) {
+    const file = path.join(__dirname, "..", img);
+    assert.strictEqual(D.TYPES[k].image, img, k + " の絵のファイル名（古い絵がキャッシュに残らないよう新しい名前）");
+    assert.deepStrictEqual(pngSize(file), [1254, 1254], k + " の絵の大きさ");
+    assert.strictEqual(rgbaSha256(file), sha, k + " の絵の全画素（RGBA）がいただいたPNGと同じ");
+    assert.ok(!fs.existsSync(path.join(__dirname, "..", "images/types", old)), "古い絵が残っている " + old);
+    assert.ok(!("imageFit" in D.TYPES[k]), k + " は表示の調整なし（ほかのタイプと同じ大きさ・位置）");
+    ["index.html", "types/index.html", "sw.js", "js/data.js", "css/style.css"].forEach((f) =>
+      assert.ok(!fs.readFileSync(path.join(__dirname, "..", f), "utf8").includes("/" + old), f + " に古い絵の名前 " + old));
+  }
+}
+
+// 情報キャッチの星読みリサーチャーの絵：いただいた背景透過PNG（星座なし版）の画素をそのまま使う
+// 見た目を変えないロスレス圧縮だけ行った（899KB → 759KB）。描き直し・縮小・色の変更はしない
+{
+  const R = D.TYPES.research, file = path.join(__dirname, "..", R.image), buf = fs.readFileSync(file);
+  assert.strictEqual(R.image, "images/types/research-telescope-book.png", "リサーチャーの絵のファイル名（古い絵がキャッシュに残らないよう新しい名前）");
+  assert.deepStrictEqual(pngSize(file), [1254, 1254], "リサーチャーの絵の大きさ");
+  assert.deepStrictEqual([buf[24], buf[25], buf[28]], [8, 6, 0], "リサーチャーの絵は 8bit・透明度つき（RGBA）・インターレースなし");
+  assert.strictEqual(rgbaSha256(file), "c54dd57339ad91a99bd034452ef1613e38c87dce6e114a844dfa4c13039d4f4d", "リサーチャーの絵の全画素（RGBA）がいただいたPNGと同じ");
+  ["research-magnifier-starbook.png", "research-telescope-constellation.png"].forEach((f) =>
+    assert.ok(!fs.existsSync(path.join(__dirname, "..", "images/types", f)), "古いリサーチャーの絵が残っている " + f));
+  // 表示の調整（中央に寄せて少し大きく）：シェア画像は data.js の imageFit、画面は style.css。値をそろえる。ほかの7タイプは調整しない
+  assert.deepStrictEqual(R.imageFit, { scale: 1.12, x: 0.06, y: -0.133 }, "リサーチャーの絵の表示の調整");
+  TYPE_KEYS.filter((k) => k !== "research").forEach((k) => assert.ok(!("imageFit" in D.TYPES[k]), "ほかのタイプに表示の調整がある " + k));
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
+  assert.match(css, /\nimg\[src\$="research-telescope-book\.png"\] \{ transform: translate\(6%, -13\.3%\) scale\(1\.12\); \}/, "画面のリサーチャーの絵の調整（imageFit と同じ値）");
+  // 結果画面の丸い絵も同じ位置（丸の中央）。本に重ならないよう、右下の絵文字の丸だけを外側へ動かす（大きさは変えない）
+  assert.match(css, /\n#type-emblem\[data-type="research"\] \.type-emoji \{ right: -8px; bottom: -6px; \}/, "結果画面のリサーチャーの絵文字の丸の位置");
+  assert.strictEqual((css.match(/\[data-type="/g) || []).length, 1, "タイプごとの絵文字の丸の調整はリサーチャーだけ");
+  assert.ok(fs.readFileSync(path.join(__dirname, "..", "js", "app.js"), "utf8").includes('$("type-emblem").setAttribute("data-type", typeKey);'), "結果画面の丸にタイプを入れる（調整用）");
+  assert.strictEqual((css.match(/img\[src\$="/g) || []).length, 1, "画像ごとの表示の調整はリサーチャーだけ");
+  assert.ok(!(css.match(/img\[src\$="(?!research-telescope-book\.png")/g)), "リサーチャー以外の絵の表示の調整がある");
+}
+// 言葉のまとまり（iPhone の Safari でも言葉の途中で改行しないための区切り）：つなげると元の文と同じ（文章は変えない）
+for (const k of TYPE_KEYS) {
+  const t = D.TYPES[k], ph = t.phrases;
+  assert.deepStrictEqual(Object.keys(ph), ["name", "catch", "charm"], "phrases の項目 " + k);
+  [["name", t.name], ["catch", t.catch], ["charm", t.omamori.charm]].forEach(([f, text]) => {
+    assert.ok(Array.isArray(ph[f]) && ph[f].length >= 2 && ph[f].every((x) => typeof x === "string" && x.length > 0), "phrases." + f + " の形 " + k);
+    assert.strictEqual(ph[f].join(""), text, "phrases." + f + " をつなげると元の文と同じ " + k);
+    // 句読点・閉じかっこで始まるまとまりは作らない（行の頭に来ないように）
+    ph[f].forEach((x) => assert.ok(!/^[、。！？」』）”]/.test(x), "まとまりが句読点で始まる " + k + " " + x));
+  });
+}
+D.QUESTIONS.concat(D.AXIS_QUESTIONS).forEach((q, i) => {
+  assert.ok(Array.isArray(q.phrases) && q.phrases.length >= 2, "質問の phrases がない Q" + (i + 1));
+  assert.strictEqual(q.phrases.join(""), q.text, "質問の phrases をつなげると元の文と同じ Q" + (i + 1));
+  q.phrases.forEach((x) => assert.ok(!/^[、。！？」』）”]/.test(x), "まとまりが句読点で始まる Q" + (i + 1) + " " + x));
+});
+{
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8"), tp = fs.readFileSync(path.join(__dirname, "..", "types", "index.html"), "utf8");
+  const spans = (h) => [...h.matchAll(/<span class="phrase">(?:<span aria-hidden="true">[^<]*<\/span> )?([^<]*)<\/span>/g)].map((m) => m[1]);
+  TYPE_KEYS.forEach((k) => {
+    const t = D.TYPES[k];
+    // トップの8タイプ（採用済みの区切り）と types/ のタイプ名は、data.js の区切りと同じ
+    const li = (html.match(new RegExp('<li><a href="types/#' + k + '">.*?</li>')) || [""])[0];
+    assert.deepStrictEqual(spans(li), t.phrases.name, "トップの8タイプの区切りが data.js と同じ " + k);
+    const art = (tp.match(new RegExp('<article class="card guide-type" id="' + k + '"[\\s\\S]*?</article>')) || [""])[0];
+    assert.deepStrictEqual(spans((art.match(/<h3 class="guide-type-name"[\s\S]*?<\/h3>/) || [""])[0]), t.phrases.name, "types/ のタイプ名の区切り " + k);
+    assert.deepStrictEqual(spans((art.match(/<p class="guide-type-catch phrased">[\s\S]*?<\/p>/) || [""])[0]), t.phrases.catch, "types/ のキャッチコピーの区切り " + k);
+  });
+  // 画面では、タイプ名・キャッチコピー・お守りの言葉・質問を、区切りどおりに表示する（textContent で1つの文として入れない）
+  const app = fs.readFileSync(path.join(__dirname, "..", "js", "app.js"), "utf8");
+  ['setPhrased($("type-name"), [t.phrases.name]);', 'setPhrased($("type-catch"), [t.phrases.catch]);', 'setPhrased($("type-charm"), [t.phrases.charm]);',
+    'setPhrased($("top-type-name"), [edged(t.phrases.name, "「", "」")]);', 'setPhrased($("top-type-catch"), [t.phrases.catch]);', 'setPhrased($("q-text"), [question.phrases]);']
+    .forEach((x) => assert.ok(app.includes(x), "app.js：" + x));
+  assert.ok(!/\.(name|catch)\s*\+\s*"のあなた/.test(app) && !/textContent = t\.(name|catch)/.test(app), "app.js：タイプ名をそのまま文として入れている箇所が残っている");
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8"), /\n\.phrased \.phrase \{ display: inline-block; max-width: 100%; \}/, "style.css：言葉のまとまりの表示");
+}
+// 全8タイプの確認用の回答（tests/type-answers.js）：実際の判定の処理で、目的のタイプになる
+{
+  const { SHORT, ANSWERS } = require("./type-answers.js");
+  assert.deepStrictEqual(Object.keys(ANSWERS), D.TYPE_ORDER, "確認用の回答：8タイプすべて、TYPE_ORDER の順");
+  const all = D.QUESTIONS.concat(D.AXIS_QUESTIONS);
+  assert.deepStrictEqual(SHORT.map((x) => x.length), all.map((q) => q.options.length), "確認用の回答：短い文言の数が選択肢と同じ");
+  const C = "①②③④", rows = [];
+  for (const k of D.TYPE_ORDER) {
+    const q = ANSWERS[k].q.map((n) => n - 1), main = q.slice(0, D.QUESTIONS.length), axis = q.slice(D.QUESTIONS.length);
+    assert.ok(q.length === all.length && isValidAnswers(main) && isValidAxisAnswers(axis), "確認用の回答の形 " + k);
+    const r = diagnoseType(main);
+    assert.strictEqual(r.type, k, "確認用の回答で目的のタイプにならない " + k + " → " + r.type);
+    // 同点の順位決めに頼らない：目的のタイプの合計点が、ほかのどのタイプより高い
+    D.TYPE_ORDER.filter((t) => t !== k).forEach((t) => assert.ok(r.scores[k] > r.scores[t], "確認用の回答が同点 " + k + "=" + r.scores[k] + " " + t + "=" + r.scores[t]));
+    // Q11〜Q14 はタイプを変えない（どれを選んでも同じタイプ）。サブタイプコードは記録どおり
+    assert.strictEqual(diagnoseAxes(main, axis).code, ANSWERS[k].code, "確認用の回答のサブタイプコード " + k);
+    const t = D.TYPES[k];
+    rows.push("| " + t.emoji + " " + t.name + " | " + main.map((n, i) => "Q" + (i + 1) + "＝" + C[n]).join("、") + " | " +
+      main.map((n, i) => "Q" + (i + 1) + " " + SHORT[i][n]).join(" / ") + " |");
+  }
+  // README.md の一覧が、この回答例と同じ
+  const readme = fs.readFileSync(path.join(__dirname, "..", "README.md"), "utf8");
+  assert.ok(readme.includes("| タイプ | 回答（Q1〜Q10） | 選ぶ選択肢（短い文言） |\n| --- | --- | --- |\n" + rows.join("\n") + "\n"), "README.md の確認用の回答の一覧がデータと違う");
+  assert.ok(readme.includes("ここでは4問とも ① を選びます（" + [0, 1, 2, 3].map((i) => "Q" + (i + 11) + " " + SHORT[D.QUESTIONS.length + i][0]).join(" / ") + "）"), "README.md の Q11〜Q14 の説明");
+}
+// 古い絵の名前がどこにも残っていない（画面・Service Worker・データ・スタイル）
+["index.html", "types/index.html", "sw.js", "js/data.js", "js/app.js", "js/share-card.js", "css/style.css"].forEach((f) => {
+  const src = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  ["research-magnifier-starbook", "research-telescope-constellation"].forEach((n) => assert.ok(!src.includes(n), f + " に古いリサーチャーの絵の名前 " + n));
+});
+
 // シェア画像「推し活タイプ取扱説明書」用の短い紹介：全タイプにあり、短く、使い回しがない
 for (const k of TYPE_KEYS) {
   const c = D.TYPES[k].card;
@@ -77,6 +205,9 @@ manifest.icons.forEach((i) => {
 const sw = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
 (sw.match(/"(?:\.\/|[a-z][^"]*\.(?:html|css|js|png))"/g) || []).map((x) => x.slice(1, -1)).filter((f) => f !== "./")
   .forEach((f) => assert.ok(fs.existsSync(path.join(__dirname, "..", f)), "sw.js の CORE にあるファイルがない " + f));
+// Service Worker：8タイプの絵をすべて保存する。絵を差し替えたらキャッシュの名前を変える（v8：応援隊長・コミュニケーター・癒やし系の絵を差し替え）
+TYPE_KEYS.forEach((k) => assert.ok(sw.includes('"' + D.TYPES[k].image + '"'), "sw.js の CORE にタイプの絵がない " + k));
+assert.match(sw, /var CACHE = "oshi-luna-v8";/, "sw.js のキャッシュの名前");
 
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");
@@ -489,6 +620,9 @@ const pageInfo = PAGES.map((f) => {
   // トップの8タイプ：名前・順番・リンク先がデータと同じ
   const grid = [...top.html.matchAll(/<li><a href="types\/#(\w+)"><img src="([^"]+)"[^>]*><span>(.*?)<\/span><\/a><\/li>/g)];
   assert.deepStrictEqual(grid.map((m) => [m[1], m[2], text(m[3])]), TYPE_KEYS.map((k) => [k, D.TYPES[k].image, D.TYPES[k].name]), "トップの8タイプ");
+  // トップの8タイプの絵：width・height は画像の本当の大きさ（縦横比が崩れない）
+  [...top.html.matchAll(/<li><a href="types\/#\w+"><img src="([^"]+)" width="(\d+)" height="(\d+)"/g)].forEach((m) =>
+    assert.deepStrictEqual(pngSize(path.join(__dirname, "..", m[1])), [+m[2], +m[3]], "トップの絵の大きさの指定 " + m[1]));
   // types/：パンくず、8タイプの名前・キャッチ・性格・輝くところ、4つの軸の説明がデータと同じ
   assert.ok(types.ld["@type"] === "BreadcrumbList" && types.ld.itemListElement.map((x) => x.item).join() === SITE + "," + SITE + "types/", "types/ のパンくずリスト");
   TYPE_KEYS.forEach((k) => {

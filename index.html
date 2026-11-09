@@ -47,6 +47,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tarot.css">
 </head>
 <body>
   <!-- 背景の星 -->
@@ -99,15 +100,30 @@
         </div>
       </section>
 
-      <!-- 今日の推し活占い -->
-      <div class="daily-entry" id="daily-entry">
-        <button type="button" class="btn btn-primary btn-big" id="daily-btn">🌙 今日の推し活占いを見る！</button>
-        <p class="daily-intro">
-          <span class="nowrap">毎日0時（日本時間）に、</span><span class="nowrap">新しい占いが届きます。</span><br>
-          <span class="nowrap">今日の運勢とラッキーアクション、</span><span class="nowrap">白猫からのお守りメッセージをどうぞ。</span>
-        </p>
-      </div>
-
+      <!-- 今日の占い（今日の推し活占い＋今日の一枚タロット）。#daily-entry ごと app.js の refreshTop が診断カードの前後に並べ替える。
+           タロットの入口（#tarot-entry）は enabled か ?tarot-preview=1 のときだけ tarot-ui.js が表示する。非表示のときは場所もとらない -->
+      <section class="today-group" id="daily-entry" aria-labelledby="today-title">
+        <h2 class="today-title" id="today-title">今日の占い</h2>
+        <div class="today-list">
+          <button type="button" class="today-item today-daily" id="daily-btn">
+            <span class="today-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" width="30" height="30"><path d="M19.5 5.5a10.5 10.5 0 1 0 7 17.6A12 12 0 0 1 19.5 5.5z" fill="currentColor"/><path d="M24 4.5l1.1 2.4 2.4 1.1-2.4 1.1L24 11.5l-1.1-2.4-2.4-1.1 2.4-1.1z" fill="currentColor"/></svg>
+            </span>
+            <span class="today-body"><span class="today-name">今日の推し活占い</span><span class="today-desc"><span class="phrase">今日の推し活運を</span><span class="phrase">チェック</span></span></span>
+            <span class="today-go" aria-hidden="true">›</span>
+          </button>
+          <div class="today-slot" id="tarot-entry" hidden>
+            <button type="button" class="today-item today-tarot" id="tarot-open">
+              <span class="today-icon" aria-hidden="true">
+                <svg viewBox="0 0 32 32" width="30" height="30"><rect x="8" y="3.5" width="16" height="25" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M18.2 10.2a5.6 5.6 0 1 0 3.4 9.6 6.6 6.6 0 0 1-3.4-9.6z" fill="currentColor"/></svg>
+              </span>
+              <span class="today-body"><span class="today-name">今日の一枚タロット</span><span class="today-desc"><span class="phrase">ルナが選ぶ一枚から</span><span class="phrase">メッセージ</span></span></span>
+              <span class="today-go" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
+        <p class="today-note">毎日0時（日本時間）に新しくなります</p>
+      </section>
       <!-- ホーム画面への追加（目立ちすぎない小さなリンク。ホーム画面から開いているときは出さない） -->
       <button type="button" class="btn-text a2hs-link" id="a2hs-top-btn">📱 ホーム画面に追加する方法</button>
 
@@ -117,13 +133,13 @@
         <p class="about-lead">あなたはどのタイプ？</p>
         <ul class="type-grid">
           <li><a href="types/#solo"><img src="images/types/solo-moon-book.png" width="404" height="404" alt="" loading="lazy"><span><span class="phrase">月夜の</span><span class="phrase">おひとりさま鑑賞家</span></span></a></li>
-          <li><a href="types/#cheer"><img src="images/types/cheer-penlight.png" width="370" height="370" alt="" loading="lazy"><span><span class="phrase">ときめき</span><span class="phrase">全力応援隊長</span></span></a></li>
+          <li><a href="types/#cheer"><img src="images/types/cheer-penlight-sparkle.png" width="1254" height="1254" alt="" loading="lazy"><span><span class="phrase">ときめき</span><span class="phrase">全力応援隊長</span></span></a></li>
           <li><a href="types/#memory"><img src="images/types/memory-photos-goods.png" width="364" height="364" alt="" loading="lazy"><span><span class="phrase">思い出アルバム</span><span class="phrase">コレクター</span></span></a></li>
-          <li><a href="types/#talk"><img src="images/types/talk-heart.png" width="340" height="340" alt="" loading="lazy"><span><span class="phrase">推し語り</span><span class="phrase">コミュニケーター</span></span></a></li>
+          <li><a href="types/#talk"><img src="images/types/talk-heart-bubble.png" width="1254" height="1254" alt="" loading="lazy"><span><span class="phrase">推し語り</span><span class="phrase">コミュニケーター</span></span></a></li>
           <li><a href="types/#watch"><img src="images/types/watch-starry-cloud.png" width="425" height="425" alt="" loading="lazy"><span><span class="phrase">そっと寄りそう</span><span class="phrase">見守りさん</span></span></a></li>
           <li><a href="types/#create"><img src="images/types/create-notebook-pencil.png" width="382" height="382" alt="" loading="lazy"><span><span class="phrase">ときめき</span><span class="phrase">探究クリエイター</span></span></a></li>
-          <li><a href="types/#heal"><img src="images/types/heal-cushion-mug.png" width="431" height="431" alt="" loading="lazy"><span><span class="phrase">マイペースな</span><span class="phrase">癒やし系ファン</span></span></a></li>
-          <li><a href="types/#research"><img src="images/types/research-magnifier-starbook.png" width="382" height="382" alt="" loading="lazy"><span><span class="phrase">情報キャッチの</span><span class="phrase">星読みリサーチャー</span></span></a></li>
+          <li><a href="types/#heal"><img src="images/types/heal-cushion-mug-cozy.png" width="1254" height="1254" alt="" loading="lazy"><span><span class="phrase">マイペースな</span><span class="phrase">癒やし系ファン</span></span></a></li>
+          <li><a href="types/#research"><img src="images/types/research-telescope-book.png" width="1254" height="1254" alt="" loading="lazy"><span><span class="phrase">情報キャッチの</span><span class="phrase">星読みリサーチャー</span></span></a></li>
         </ul>
         <a class="about-more" href="types/">タイプ一覧と診断のしくみを見る ›</a>
       </section>
@@ -140,6 +156,72 @@
           <dd>全14問で、約1分です。途中でやめても、続きから答えられます。</dd>
         </dl>
       </section>
+    </section>
+
+    <!-- 今日の一枚（タロット。公開前は enabled:false で入口を出さない） -->
+    <section class="screen" id="screen-tarot" aria-labelledby="tarot-title">
+      <div class="result-head tarot-head">
+        <p class="eyebrow">白猫ルナの推し活タロット</p>
+        <h2 class="daily-title" id="tarot-title" tabindex="-1">今日の一枚</h2>
+        <p class="result-date" id="tarot-date"></p>
+      </div>
+      <p class="notice tarot-preview-note" id="tarot-preview-note" hidden>公開前の動作確認用プレビューです。</p>
+
+      <!-- カード（主役）。画像はこの画面を開いたときだけ読み込む -->
+      <div class="tarot-stage">
+        <div class="tarot-card" id="tarot-art"><span id="tarot-placeholder" aria-hidden="true">☾</span><img id="tarot-image" alt="" decoding="async" hidden></div>
+        <p class="tarot-image-note" id="tarot-image-note" hidden>カード画像を読み込めませんでした。メッセージと行動ヒントはそのまま読めます。</p>
+      </div>
+
+      <!-- 引く前：ルナの案内と引くボタン -->
+      <div class="tarot-guide" id="tarot-guide">
+        <img class="mascot tarot-guide-art" src="images/luna-cat.png" width="640" height="513" alt="">
+        <p class="tarot-bubble" id="tarot-status" role="status" aria-live="polite"></p>
+      </div>
+      <button type="button" class="btn btn-primary btn-big" id="tarot-draw">🌙 今日の一枚を引く</button>
+
+      <!-- 結果 -->
+      <div class="tarot-result" id="tarot-result" hidden>
+        <div class="tarot-name-row">
+          <h3 class="tarot-name" id="tarot-name"></h3>
+          <p class="tarot-badge" id="tarot-position"></p>
+        </div>
+        <ul class="tarot-keywords" id="tarot-keywords" aria-label="キーワード"></ul>
+        <article class="tarot-box tarot-box-current" id="tarot-current-box">
+          <div class="tarot-box-head">
+            <img class="mascot tarot-box-art" src="images/luna-cat.png" width="640" height="513" alt="">
+            <h3 class="tarot-box-title">🌙 今のあなたへ</h3>
+          </div>
+          <p id="tarot-current"></p>
+        </article>
+        <article class="tarot-box tarot-box-message">
+          <h3 class="tarot-box-title"><span class="phrase">💌 カードが伝える</span><span class="phrase">メッセージ</span></h3>
+          <p id="tarot-message"></p>
+        </article>
+        <article class="tarot-box tarot-box-action">
+          <h3 class="tarot-box-title">⭐ 小さな行動ヒント</h3>
+          <p id="tarot-action"></p>
+        </article>
+      </div>
+
+      <div class="tarot-notes">
+        <p id="tarot-storage-note" hidden>このブラウザでは保存できません。ページを閉じると今日の結果を保持できない場合があります。</p>
+        <p>結果はこの端末のブラウザに保存されます。別の端末・ブラウザや、保存データの削除後には引き継がれません。</p>
+      </div>
+      <button type="button" class="btn btn-ghost" id="tarot-home">トップへ戻る</button>
+    </section>
+
+    <!-- 今日の一枚：初めて引くときの演出（約3秒）。GIF は演出を始めるときにだけ読み込む（src は書かない） -->
+    <section class="screen" id="screen-tarot-loading" aria-labelledby="tarot-loading-text">
+      <div class="loading tarot-loading">
+        <div class="loading-sky" aria-hidden="true"><span>✦</span><span>☾</span><span>✦</span></div>
+        <div class="tarot-loading-art" id="tarot-loading-art">
+          <img class="tarot-loading-gif" id="tarot-loading-gif" width="384" height="384" alt="" hidden>
+          <img class="tarot-loading-still" id="tarot-loading-still" src="images/luna-cat.png" width="640" height="513" alt="" hidden>
+        </div>
+        <p class="loading-text tarot-loading-text" id="tarot-loading-text" role="status" tabindex="-1"><span class="phrase">ルナが今日のあなたへ、</span><span class="phrase">一枚を選んでいるよ</span></p>
+        <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
     </section>
 
     <!-- 読み込み演出（今日の占い・タイプ診断の共通） -->
@@ -368,5 +450,9 @@
   <script src="js/fortune.js"></script>
   <script src="js/share-card.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/tarot-public.js"></script>
+  <script src="js/tarot-assets.js"></script>
+  <script src="js/tarot.js"></script>
+  <script src="js/tarot-ui.js"></script>
 </body>
 </html>

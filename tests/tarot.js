@@ -1,0 +1,59 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+require("../js/tarot-public.js");
+const T = require("../js/tarot.js"), D = globalThis.OshiLunaTarotPublic;
+const cards = D.cards;
+assert.equal(cards.length, 78);
+assert.equal(new Set(cards.map(c => c.id)).size, 78);
+assert.equal(D.enabled, true, "公開：通常URLでも今日の一枚の入口を表示する");
+assert.deepEqual(Object.keys(D).sort(), ["cards", "enabled", "version"]);
+for (const c of cards) {
+  assert.deepEqual(Object.keys(c).sort(), ["id", "name", "readings"], "無料用フィールドのみ");
+  assert.deepEqual(Object.keys(c.name).sort(), ["en", "ja"]);
+  assert.deepEqual(Object.keys(c.readings).sort(), ["reversed", "upright"]);
+  for (const [position, reading] of Object.entries(c.readings)) {
+    assert.deepEqual(Object.keys(reading), ["keywords", "message", "action", "currentYou", "cardMessage"], "既存の短文を残し、追加文2項目を持つ");
+    assert.equal(reading.keywords.length, 3);
+    [...reading.keywords, reading.message, reading.action, reading.currentYou, reading.cardMessage].forEach(text => assert.ok(typeof text === "string" && text.trim() === text && text));
+    assert.ok(reading.cardMessage.startsWith(c.name.ja + (position === "reversed" ? "の逆位置" : "")), c.id + " " + position + "：メッセージ冒頭のカード名");
+  }
+}
+// 採用済み追加文312項目（今のあなたへ・カードが伝えるメッセージ）が採用稿パッケージと同じ文章であること
+const added = cards.flatMap(c => ["upright", "reversed"].flatMap(p => [c.readings[p].currentYou, c.readings[p].cardMessage]));
+assert.equal(added.length, 312);
+assert.equal(new Set(added).size, 312, "全文一致の重複なし");
+assert.equal(require("node:crypto").createHash("sha256").update(added.join("\n")).digest("hex"),
+  "693a8f0c354d7cf03344ad89953f8bc3389be65021d6afe5504ff0dc1fe62dbd", "採用稿パッケージの追加文と一致");
+assert.equal(T.dateKey(new Date("2026-11-04T14:59:59Z")), "2026-11-04");
+assert.equal(T.dateKey(new Date("2026-11-04T15:00:00Z")), "2026-11-05");
+const values = new Map([["oshi-luna-type", '{"type":"solo"}'],["oshi-luna-daily", '{"history":[]}']]);
+const storage = {getItem:k => values.get(k) || null, setItem:(k,v) => values.set(k,v)};
+let seq = [0,0,77,1];
+const crypto = {getRandomValues:a => {a[0]=seq.shift();return a;}};
+const options = {cards, storage, crypto}, day = new Date("2026-11-04T00:00:00Z");
+const daily = T.createDaily(options);
+assert.equal(daily.peek(day), null);
+const first = daily.draw(day);
+assert.equal(first.cardId, cards[0].id);
+assert.equal(first.position, "upright");
+assert.deepEqual(daily.draw(day), first);
+assert.deepEqual(T.createDaily(options).draw(day), first, "再読み込み後も同じ結果");
+const tomorrow = daily.draw(new Date("2026-11-04T15:00:00Z"));
+assert.equal(tomorrow.cardId, cards[77].id);
+assert.equal(tomorrow.position, "reversed");
+assert.equal(values.get("oshi-luna-type"), '{"type":"solo"}');
+assert.equal(values.get("oshi-luna-daily"), '{"history":[]}');
+seq = [2,1];
+const blocked = {getItem:()=>{throw Error();},setItem:()=>{throw Error();}};
+const fallback = T.createDaily({cards,storage:blocked,crypto});
+assert.deepEqual(fallback.draw(day), fallback.draw(day), "保存不可でもセッション中は同じ結果");
+assert.equal(fallback.isPersisted(fallback.draw(day)), false);
+seq = [4294967295, 3];
+assert.equal(T.randomInt(78,crypto), 3, "剰余の偏りを除外");
+values.set(T.KEY, "{broken");
+seq = [4,0];
+assert.equal(daily.draw(new Date("2026-11-06T00:00:00Z")).cardId,cards[4].id);
+const index=fs.readFileSync(require("node:path").join(__dirname,"../index.html"),"utf8");
+["data","fortune","share-card","app"].forEach(n=>assert.ok(index.includes('src="js/'+n+'.js"')));
+console.log("Tarot: 312 adopted added texts, JST midnight, 78 IDs, orientations, reload, blocked/corrupt storage, rejection sampling and existing keys: PASS");

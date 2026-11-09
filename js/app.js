@@ -164,6 +164,30 @@
     return (withYear ? Number(p[0]) + "年" : "") + Number(p[1]) + "月" + Number(p[2]) + "日（" + week + "）";
   }
 
+  // 言葉のまとまりごとに改行する表示（iPhone の Safari は word-break: auto-phrase に対応していないため、区切りを自分で入れる）
+  // items：文字列はそのまま、配列は「改行してよい言葉のまとまり」として1つずつ <span class="phrase"> にする（css/style.css の .phrased）
+  // 文章そのものは変えない（textContent は元の文と同じ）
+  function setPhrased(el, items) {
+    el.textContent = "";
+    el.classList.add("phrased");
+    items.forEach(function (it) {
+      if (typeof it === "string") { el.appendChild(document.createTextNode(it)); return; }
+      it.forEach(function (part) {
+        var span = document.createElement("span");
+        span.className = "phrase";
+        span.textContent = part;
+        el.appendChild(span);
+      });
+    });
+  }
+  // まとまりの前後に文字をつなげる（「」や「のあなたへ」を、名前と離さずに改行するため）
+  function edged(parts, before, after) {
+    var a = parts.slice();
+    a[0] = (before || "") + a[0];
+    a[a.length - 1] += after || "";
+    return a;
+  }
+
   // 白猫のイラスト：タイプが決まっていればタイプ別の絵、なければ公式マスコット（元の白猫）
   // 縦横の大きさも合わせて設定し、どのブラウザでも縦横比が崩れないようにする
   var MASCOT = { src: "images/luna-cat.png", width: 640, height: 513 };
@@ -192,8 +216,8 @@
       $("top-type-emblem").style.setProperty("--type-color", t.color);
       setCat($("top-type-img"), saved.type);
       $("top-type-img").alt = t.name + "の白猫";
-      $("top-type-name").textContent = "「" + t.name + "」";
-      $("top-type-catch").textContent = t.catch;
+      setPhrased($("top-type-name"), [edged(t.phrases.name, "「", "」")]);
+      setPhrased($("top-type-catch"), [t.phrases.catch]);
     } else if (progress) {
       $("resume-btn").textContent = "続きから再開する（" + progress.length + "/" + FULL_QUESTIONS.length + "問まで回答済み）";
     }
@@ -217,7 +241,7 @@
     $("daily-preview").hidden = !PREVIEW_DATE;
     if (PREVIEW_DATE) $("daily-preview").textContent = "🧪 お試し表示：" + formatDate(PREVIEW_DATE, true) + "の占いを表示しています（保存はされません）";
     $("daily-type-chip").hidden = !type;
-    if (type) $("daily-type-chip").textContent = type.emoji + " " + type.name + "のあなたへ";
+    if (type) setPhrased($("daily-type-chip"), [edged(type.phrases.name, type.emoji + " ", "のあなたへ")]);
 
     $("daily-past").hidden = d.date === today;
     if (d.date !== today) $("daily-past-text").textContent = "これは " + formatDate(d.date) + " の占いです。今日の占いも届いています。";
@@ -231,12 +255,12 @@
     $("daily-message").textContent = d.message;
 
     $("daily-actions-note").hidden = !type;
-    if (type) $("daily-actions-note").textContent = type.name + "のあなたにおすすめ";
+    if (type) setPhrased($("daily-actions-note"), [edged(type.phrases.name, "", "のあなたに"), ["おすすめ"]]);
     renderActions($("daily-actions"), d.actions);
     renderLucky("daily", d.lucky);
     $("daily-omamori").textContent = d.omamori;
     $("daily-omamori-type").hidden = !(type && d.typeOmamori);
-    if (type && d.typeOmamori) $("daily-omamori-type").textContent = type.emoji + " " + type.name + "のあなたへ：" + d.typeOmamori;
+    if (type && d.typeOmamori) setPhrased($("daily-omamori-type"), [edged(type.phrases.name, type.emoji + " ", "のあなたへ："), d.typeOmamori]);
 
     $("daily-invite").hidden = !!saved;
     $("daily-mytype-btn").hidden = !saved;
@@ -317,7 +341,7 @@
     var note = question.note ||
       (quizMode === "axes" && q === 0 ? "サブタイプコードの質問（全" + list.length + "問）" : "");
     $("q-count").textContent = "Q" + (q + 1) + " / " + list.length;
-    $("q-text").textContent = question.text;
+    setPhrased($("q-text"), [question.phrases]);
     $("q-note").hidden = !note;
     $("q-note").textContent = note;
     $("progress").setAttribute("aria-valuemax", list.length);
@@ -395,12 +419,12 @@
         if (stored && stored.type === r.type) showA2hsCard();
       } else if (saved.type === r.type) {
         save(KEYS.type, record);
-        showTypeStatus("前回と同じ「" + D.TYPES[r.type].name + "」でした。");
+        showTypeStatus(["前回と同じ", edged(D.TYPES[r.type].phrases.name, "「", "」でした。")]);
       } else {
         // 保存済みのタイプと違うときは、確定するまで上書きしない
         pendingType = record;
-        $("type-confirm-text").textContent = "前回の診断では「" + D.TYPES[saved.type].name + "」でした。" +
-          "このタイプを保存すると、明日からの推し活占いにあなたのタイプが反映されます。毎日の運勢やラッキーアクションを、あなたの推し活スタイルに合わせてお届けします♡";
+        setPhrased($("type-confirm-text"), ["前回の診断では", edged(D.TYPES[saved.type].phrases.name, "「", "」でした。"),
+          "このタイプを保存すると、明日からの推し活占いにあなたのタイプが反映されます。毎日の運勢やラッキーアクションを、あなたの推し活スタイルに合わせてお届けします♡"]);
         $("type-confirm").hidden = false;
       }
       showScreen("result");
@@ -496,12 +520,13 @@
     $("a2hs-card").hidden = true;
 
     $("type-emblem").style.setProperty("--type-color", t.color);
+    $("type-emblem").setAttribute("data-type", typeKey); // タイプごとの見た目の調整用（css/style.css）
     $("type-hero").style.setProperty("--type-color", t.color);
     setCat($("type-img"), typeKey);
     setCat($("type-omamori-img"), typeKey);
     $("type-emoji").textContent = t.emoji;
-    $("type-name").textContent = t.name;
-    $("type-catch").textContent = t.catch;
+    setPhrased($("type-name"), [t.phrases.name]);
+    setPhrased($("type-catch"), [t.phrases.catch]);
     var sub = subKey && subKey !== typeKey && D.TYPES[subKey];
     $("type-sub").hidden = !sub;
     if (sub) {
@@ -527,7 +552,7 @@
     });
     $("type-match-text").textContent = t.match.text;
     $("type-action").textContent = t.smallAction;
-    $("type-charm").textContent = t.omamori.charm;
+    setPhrased($("type-charm"), [t.phrases.charm]);
     $("type-omamori-msg").textContent = t.omamori.message;
     renderSubtype(typeKey, axes || null);
     $("toast").textContent = "";
@@ -543,8 +568,9 @@
     });
   }
 
+  // text：文字列、または setPhrased の items（タイプ名を言葉のまとまりで改行するとき）
   function showTypeStatus(text, showSavedLink) {
-    $("type-status-text").textContent = text;
+    setPhrased($("type-status-text"), typeof text === "string" ? [text] : text);
     $("type-view-saved-btn").hidden = !showSavedLink;
     $("type-status").hidden = false;
   }
@@ -563,10 +589,8 @@
   }
 
   // ---- 推し活タイプのシェア画像 ----
-  var SITE_URL = "https://s4gws9hp5-mush.github.io/oshi-luna-fortune/";
-  function siteUrl() {
-    return location.protocol.indexOf("http") === 0 ? location.origin + location.pathname : SITE_URL;
-  }
+  // シェア・コピーする内容に入れるサイトのアドレス。プレビューやローカルで開いていても、いつも本番のアドレスにする
+  var SITE_URL = "https://oshi-luna.com/";
   var shareImage = null; // { typeKey, blob, file, url }
 
   function shareStatus(text) { $("share-status").textContent = text; }
@@ -580,7 +604,7 @@
     shareImage = { typeKey: typeKey, pending: true };
     var current = shareImage;
     if (!window.OshiLunaShareCard || !window.Promise) { current.failed = true; return; }
-    window.OshiLunaShareCard.create(D.TYPES[typeKey], siteUrl().replace(/^https?:\/\//, "").replace(/\/$/, "")).then(function (blob) {
+    window.OshiLunaShareCard.create(D.TYPES[typeKey]).then(function (blob) {
       if (shareImage !== current) return; // 別のタイプに切り替わっていたら使わない
       current.pending = false;
       current.blob = blob;
@@ -860,13 +884,13 @@
     setTimeout(function () { el.classList.remove("is-show"); }, 2400);
   }
 
+  // 送るアドレスは、開いているページ（プレビュー・ローカル・?preview-date= など）ではなく、いつも本番のアドレス
   function share(text, toastId) {
-    var url = location.protocol.indexOf("http") === 0 ? location.href.split("#")[0] : undefined;
     if (navigator.share) {
-      navigator.share({ title: "推しルナ占い", text: text, url: url }).catch(function () {});
+      navigator.share({ title: "推しルナ占い", text: text, url: SITE_URL }).catch(function () {});
       return;
     }
-    copyText(url ? text + "\n" + url : text, function (ok) {
+    copyText(text + "\n" + SITE_URL, function (ok) {
       toast(ok ? "結果をコピーしました" : "コピーできませんでした。画面をスクリーンショットしてね", toastId);
     });
   }
@@ -971,7 +995,7 @@
     var saved = loadSavedType();
     pendingType = null;
     $("type-confirm").hidden = true;
-    showTypeStatus("保存中のタイプ「" + (saved ? D.TYPES[saved.type].name : "") + "」のままにしました。", true);
+    showTypeStatus(saved ? ["保存中のタイプ", edged(D.TYPES[saved.type].phrases.name, "「", "」の"), ["ままにしました。"]] : "保存中のタイプ「」のままにしました。", true);
   });
   $("type-view-saved-btn").addEventListener("click", openSavedType);
   $("subtype-start-btn").addEventListener("click", startSubtypeQuiz);
@@ -980,7 +1004,7 @@
   $("share-save-btn").addEventListener("click", saveOrShareImage);
   $("share-copy-btn").addEventListener("click", function () {
     if (!shownType) return;
-    copyText(typeShareText(shownType.type, shownType.axes) + "\n" + siteUrl(), function (ok) {
+    copyText(typeShareText(shownType.type, shownType.axes) + "\n" + SITE_URL, function (ok) {
       shareStatus(ok ? "タイプ名とURLをコピーしたよ♡ SNSに貼り付けて使ってね。" : "コピーできませんでした。画面をスクリーンショットしてね。");
     });
   });
