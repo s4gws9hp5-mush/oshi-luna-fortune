@@ -1,10 +1,10 @@
 /* 採用済みの無料短文と追加文（currentYou：今のあなたへ／cardMessage：カードが伝えるメッセージ）のみ。message は短文として残す。詳細解釈・月詩・鑑定ルールは含めない。
- * enabled=false は公開準備中。プレビューURLはアクセス制御ではないため、公開承認前は外部配信しない。 */
+ * enabled=true で公開（通常URLのトップに「今日の一枚タロット」の入口を出す）。false に戻すと、通常URLでは入口を出さない（?tarot-preview=1 のときだけ表示）。 */
 (function (root) {
   "use strict";
   root.OshiLunaTarotPublic = {
   "version": 1,
-  "enabled": false,
+  "enabled": true,
   "cards": [
     {
       "id": "major-fool",

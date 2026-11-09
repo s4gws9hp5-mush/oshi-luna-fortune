@@ -261,7 +261,7 @@ node tests/subtype.js          # サブタイプコード（4つの軸）の判�
 node tests/tarot.js            # 今日の一枚（タロット）：無料データの項目・追加文312項目・78枚・日本時間の切り替え・抽選と保存
 node tests/tarot-ui.js         # 今日の一枚の画面：156件の文章（今のあなたへ・カードが伝えるメッセージ・行動ヒント）と画像の対応・画像を読み込むタイミング・入口の無効化
 node tests/tarot-assets.js     # 今日の一枚のカード画像：対応表・ファイル・寸法・収まり
-python3 -m http.server 8000    # ブラウザで確認（今日の一枚は ?tarot-preview=1 を付けたときだけ表示）
+python3 -m http.server 8000    # ブラウザで確認（今日の一枚は js/tarot-public.js の enabled: true で通常URLにも表示。false のときは ?tarot-preview=1 を付けたときだけ）
 ```
 
 ブラウザで動かすテスト（Playwright と Chromium が必要）：
@@ -269,6 +269,7 @@ python3 -m http.server 8000    # ブラウザで確認（今日の一枚は ?tar
 ```sh
 node tests/e2e/share.js        # 画像の保存・シェア：共有メニューの成功・キャンセル・失敗、ダウンロードした PNG の検証、共有するアドレス（138件）
 node tests/e2e/types.js        # 全8タイプの確認用の回答で、実際の画面から診断して目的のタイプになるか（下の一覧）
+node tests/e2e/sw-update.js    # 公開中の版（origin/main）から今の版へ：Service Worker の更新・保存した診断と占いが残るか・今日の一枚の入口
 ```
 
 必要なもの・実行方法・ブラウザを `LANG=C.UTF-8` で起動する理由・未確認のこと（実機の Safari／Android、本物の共有メニュー）は `tests/e2e/README.md` にまとめています。

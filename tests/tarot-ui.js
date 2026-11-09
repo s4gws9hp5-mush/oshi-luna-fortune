@@ -38,7 +38,7 @@ function mount(record, preview, opts = {}) {
   }
   let result = opts.saved === undefined ? record : opts.saved, day = engine.dateKey(new Date()), draws = 0;
   const daily = { peek: () => result, draw: () => { draws++; return (result = record); }, isPersisted: () => true };
-  const window = { OshiLunaTarotPublic: data, OshiLunaTarotAssets: assets,
+  const window = { OshiLunaTarotPublic: opts.data || data, OshiLunaTarotAssets: assets,
     OshiLunaTarot: { ...engine, dateKey: () => day, createDaily: () => daily },
     localStorage: {}, crypto: {}, scrollTo() {}, addEventListener(name, fn) { events[name] = fn; },
     matchMedia: (q) => ({ matches: !!opts.reduce && q.includes("reduce") }),
@@ -56,7 +56,16 @@ function mount(record, preview, opts = {}) {
     nextDay(d) { day = d; timers.forEach((fn) => fn()); } };
 }
 
-assert.equal(mount(null, false).elements.size, 0, "通常URLではタロットを起動しない");
+// 公開（enabled: true）：通常URLでも入口を出し、プレビュー専用の案内は出さない
+{
+  const pub = mount(null, false);
+  assert.equal(pub.el("tarot-entry").hidden, false, "公開：通常URLで今日の一枚の入口を表示する");
+  assert.equal(pub.el("tarot-preview-note").hidden, true, "公開：通常URLではプレビュー専用の案内を出さない");
+  assert.equal(mount(null, true).el("tarot-preview-note").hidden, false, "?tarot-preview=1 のときだけプレビューの案内を出す");
+}
+// 戻すとき（enabled: false）：通常URLではタロットを起動しない。?tarot-preview=1 のときだけ表示する
+assert.equal(mount(null, false, { data: { ...data, enabled: false } }).elements.size, 0, "enabled: false のときは通常URLでタロットを起動しない");
+assert.equal(mount(null, true, { data: { ...data, enabled: false } }).el("tarot-entry").hidden, false, "enabled: false でも ?tarot-preview=1 なら表示する");
 for (const card of data.cards) {
   for (const position of ["upright", "reversed"]) {
     const record = {version: 1, date: engine.dateKey(new Date()), cardId: card.id, position};

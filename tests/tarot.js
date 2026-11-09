@@ -6,7 +6,7 @@ const T = require("../js/tarot.js"), D = globalThis.OshiLunaTarotPublic;
 const cards = D.cards;
 assert.equal(cards.length, 78);
 assert.equal(new Set(cards.map(c => c.id)).size, 78);
-assert.equal(D.enabled, false, "公開準備中は通常の入口を表示しない");
+assert.equal(D.enabled, true, "公開：通常URLでも今日の一枚の入口を表示する");
 assert.deepEqual(Object.keys(D).sort(), ["cards", "enabled", "version"]);
 for (const c of cards) {
   assert.deepEqual(Object.keys(c).sort(), ["id", "name", "readings"], "無料用フィールドのみ");
