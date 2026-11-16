@@ -275,6 +275,91 @@ assert.ok(!R.validDateKey("2026-02-30") && R.validDateKey("2026-02-28"));
   console.log("OK: 保存処理（成功・失敗・読込不能・アクセス不可・削除の確認・ほかの保存データに触れない）");
 }
 
+// ---- 保存の窓口（createSession）：既存の保存内容を、本人の確認なしに上書き・削除扱いにしない（レビュー指摘の2件） ----
+{
+  const rec = (q1) => ({ schemaVersion: 1, questionVersion: 1, resultVersion: 1, phase: "question", questionId: "q2",
+    answers: Object.assign(R.emptyAnswers(), { q1 }), resultSnapshot: null, resultDate: null });
+  const OLD = JSON.stringify(rec("ticket"));
+  // getItem・setItem・removeItem を、呼んだ回数や切り替えで失敗させられる保存領域
+  const fake = (init = {}) => {
+    const m = new Map(Object.entries(init)), f = { failGet: 0, failAll: false, removeNoop: false, failGetAfterRemove: false, calls: [] };
+    f.ls = {
+      getItem: (k) => { f.calls.push("get"); if (f.failAll || f.failGet > 0) { f.failGet = Math.max(0, f.failGet - 1); throw new Error("SecurityError"); } return m.has(k) ? m.get(k) : null; },
+      setItem: (k, v) => { f.calls.push("set"); if (f.failAll) throw new Error("SecurityError"); m.set(k, String(v)); },
+      removeItem: (k) => { f.calls.push("remove"); if (f.failAll) throw new Error("SecurityError"); if (!f.removeNoop) m.delete(k); if (f.failGetAfterRemove) f.failGet = 99; }
+    };
+    f.raw = () => (m.has(S.KEY) ? m.get(S.KEY) : null);
+    return f;
+  };
+  // 1. 起動時の読取だけ失敗し、その後は読み書きできる：保存内容は書き換えない
+  {
+    const f = fake({ [S.KEY]: OLD }); f.failGet = 1;
+    const s = S.createSession(() => f.ls);
+    assert.strictEqual(s.read().status, "unavailable");
+    const w = s.write(rec("vague"));
+    assert.ok(!w.ok && w.reason === "existing" && w.status === "ok", "既存の保存内容があれば書かない");
+    assert.strictEqual(f.raw(), OLD, "起動時に読めなかった保存内容を上書きしない");
+    for (let i = 0; i < 5; i++) assert.ok(!s.write(rec("money")).ok); // 回答のたびの自動保存でも書かない
+    assert.strictEqual(f.raw(), OLD);
+    assert.ok(!f.calls.includes("set"), "setItem を呼ばない");
+  }
+  // 2. 利用の途中で保存領域が回復しても、本人の確認（続きから／削除）前に上書きしない
+  {
+    const f = fake({ [S.KEY]: OLD }); f.failGet = 3;
+    const s = S.createSession(() => f.ls);
+    assert.strictEqual(s.read().status, "unavailable");
+    assert.strictEqual(s.write(rec("vague")).reason, "unavailable", "確かめられない間は書かない");
+    assert.strictEqual(s.write(rec("vague")).reason, "unavailable");
+    assert.strictEqual(s.write(rec("vague")).reason, "existing", "回復したら保存内容に気づく");
+    assert.strictEqual(f.raw(), OLD);
+    // 本人が削除を確かめたあとは書ける
+    assert.ok(s.remove().ok); assert.strictEqual(f.raw(), null);
+    assert.ok(s.write(rec("vague")).ok); assert.strictEqual(JSON.parse(f.raw()).answers.q1, "vague");
+  }
+  // 3. 読めない（壊れた）保存内容があるときも書かない
+  {
+    const f = fake({ [S.KEY]: "{壊れた" }); f.failGet = 1;
+    const s = S.createSession(() => f.ls);
+    s.read(); const w = s.write(rec("vague"));
+    assert.ok(!w.ok && w.reason === "existing" && w.status === "invalid"); assert.strictEqual(f.raw(), "{壊れた");
+  }
+  // 4. 起動時に読めなくても、回復して「保存がない」と確かめられれば書ける。通常の環境の保存も動く
+  {
+    const f = fake(); f.failGet = 1;
+    const s = S.createSession(() => f.ls);
+    assert.strictEqual(s.read().status, "unavailable");
+    assert.ok(s.write(rec("vague")).ok, "保存がないと確かめてから書く");
+    assert.ok(s.write(rec("travel")).ok, "自分で書いた内容は更新できる");
+    assert.strictEqual(JSON.parse(f.raw()).answers.q1, "travel");
+    const g = fake(), t = S.createSession(() => g.ls);
+    assert.strictEqual(t.read().status, "empty"); assert.ok(t.write(rec("feeling")).ok); assert.ok(t.isOwned());
+  }
+  // 5. 本人が「続きから／前回の結果を見る」を選んだときだけ、既存の保存内容を更新できる
+  {
+    const f = fake({ [S.KEY]: OLD }), s = S.createSession(() => f.ls);
+    assert.strictEqual(s.read().status, "ok");
+    assert.ok(!s.write(rec("vague")).ok, "選ぶ前は書かない"); assert.strictEqual(f.raw(), OLD);
+    s.adopt(); assert.ok(s.write(rec("vague")).ok);
+  }
+  // 6. 削除：消したあと「保存がない」と確かめられたときだけ成功
+  {
+    const all = fake({ [S.KEY]: OLD }), a = S.createSession(() => all.ls); all.failAll = true;
+    assert.strictEqual(a.read().status, "unavailable");
+    assert.ok(!a.remove().ok, "保存領域に入れないときは削除成功にしない（以前の保存がないことの証明にならない）");
+    all.failAll = false; assert.strictEqual(all.raw(), OLD);
+    const noop = fake({ [S.KEY]: OLD }); noop.removeNoop = true;
+    const b = S.createSession(() => noop.ls); b.read();
+    assert.ok(!b.remove().ok, "削除が反映されないときは失敗"); assert.strictEqual(noop.raw(), OLD);
+    assert.ok(!b.write(rec("vague")).ok, "削除に失敗したあとも上書きしない");
+    const after = fake({ [S.KEY]: OLD }); after.failGetAfterRemove = true;
+    const c = S.createSession(() => after.ls); c.read();
+    assert.ok(!c.remove().ok, "削除のあと読めず確かめられないときは失敗");
+    const ok = fake({ [S.KEY]: OLD }), d = S.createSession(() => ok.ls); d.read();
+    const r = d.remove(); assert.ok(r.ok && r.after === "empty"); assert.strictEqual(ok.raw(), null);
+  }
+  console.log("OK: 保存の窓口（起動時の読取失敗・途中の回復・読めない内容・続きから・削除の失敗／確認できない場合で、既存の保存内容を上書き・削除扱いにしない）");
+}
+
 // ---- 入口（index.html）：トップと診断結果画面の採用文（2章・2.2） ----
 {
   const html = require("fs").readFileSync(require("path").join(__dirname, "..", "index.html"), "utf8");

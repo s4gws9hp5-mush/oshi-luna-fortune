@@ -310,6 +310,71 @@ const serve = () => new Promise((resolve) => {
     await p.context().close();
   }
 
+  // 10) 保存領域の読取・削除の失敗と回復（レビュー指摘の2件の再発防止）
+  {
+    const OLD = JSON.stringify({ schemaVersion: 1, questionVersion: 1, resultVersion: 1, phase: 'question', questionId: 'q2',
+      answers: Object.assign(R.emptyAnswers(), { q1: 'ticket' }), resultSnapshot: null, resultDate: null });
+    // A. 既存の保存内容があり、起動時の最初の読取だけ失敗する（その後は読み書きできる）
+    const pA = await (async () => {
+      const ctx = await b.newContext({ ...devices['iPhone 13'], timezoneId: 'Asia/Tokyo', serviceWorkers: 'block' });
+      ctx.on('request', (r) => { let from = ''; try { from = r.frame().url(); } catch (e) { from = ''; } if (from.includes('/heart/') && !r.url().startsWith(BASE)) external.push(r.url()); });
+      const p = await ctx.newPage(); p.on('pageerror', (e) => errs.push(e.message));
+      await p.addInitScript(({ key, old }) => {
+        if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem(key, old); }
+        if (sessionStorage.getItem('noThrow')) return;
+        const orig = Storage.prototype.getItem; let first = true;
+        Storage.prototype.getItem = function (k) { if (k === key && first) { first = false; throw new Error('SecurityError'); } return orig.call(this, k); };
+      }, { key: KEY, old: OLD });
+      return p;
+    })();
+    await pA.goto(H);
+    check('起動時に読めない：保存なしと決めつけず、開始前の画面（続きの案内は出さない）', await pA.isVisible('#h-intro') && !(await pA.isVisible('#h-resume')));
+    await pA.click('#h-start'); await pick(pA, ['遠征に行くかどうか']); await next(pA); await pick(pA, ['疲れた']);
+    check('起動時に読めない → 質問に答えても、既存の保存内容を上書きしない', (await stored(pA)) === OLD);
+    check('起動時に読めない → 保存できなかった案内を出し、そのまま使える', await pA.isVisible('#h-save-failed') && (await pA.textContent('#h-save-failed')) === D.ui.saveFailed && await pA.isEnabled('#h-next'));
+    await pA.evaluate(() => sessionStorage.setItem('noThrow', '1')); await pA.reload();
+    check('読めるようになったら、前回の保存内容から続きの案内が出る（元の回答のまま）', (await pA.textContent('#h-resume-text')) === D.ui.resumeProgress && JSON.parse(await stored(pA)).answers.q1 === 'ticket');
+    await pA.context().close();
+
+    // B. 以前の保存内容があり、保存領域にまったく入れない：削除は失敗として扱い、画面も保存内容もそのまま
+    const ctxB = await b.newContext({ ...devices['iPhone 13'], timezoneId: 'Asia/Tokyo', serviceWorkers: 'block' });
+    const pB = await ctxB.newPage(); pB.on('pageerror', (e) => errs.push(e.message));
+    await pB.addInitScript(({ key, old }) => {
+      if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem(key, old); }
+      const P = Storage.prototype; window.__orig = { get: P.getItem, set: P.setItem, remove: P.removeItem };
+      P.getItem = function (k) { if (k === key) throw new Error('SecurityError'); return window.__orig.get.call(this, k); };
+      P.setItem = function (k, v) { if (k === key) throw new Error('SecurityError'); return window.__orig.set.call(this, k, v); };
+      P.removeItem = function (k) { if (k === key) throw new Error('SecurityError'); return window.__orig.remove.call(this, k); };
+    }, { key: KEY, old: OLD });
+    await pB.goto(H); await pB.click('#h-start'); await answerQ1toQ6(pB); await pB.click('#h-q7-skip');
+    await pB.waitForSelector('#h-result:not([hidden])');
+    await pB.click('#h-result-delete'); await pB.click('#h-confirm-yes');
+    const rawB = await pB.evaluate((k) => window.__orig.get.call(localStorage, k), KEY);
+    check('保存領域に入れない：［消して最初から］は失敗の案内（完了扱いにしない）', await pB.isVisible('#h-confirm') && (await pB.textContent('#h-confirm-error')) === 'この端末に保存した内容を消せませんでした。');
+    check('保存領域に入れない：以前の保存内容は残り、画面の結果もそのまま', rawB === OLD && await pB.isVisible('#h-result') && !(await pB.isVisible('#h-intro')));
+    if (await pB.isVisible('#h-confirm')) await pB.click('#h-confirm-no'); // 失敗したとき（確認が閉じてしまったとき）も止まらないように
+    check('キャンセルで確認を閉じると、結果の画面に戻る', !(await pB.isVisible('#h-confirm')) && await pB.isVisible('#h-result'));
+    await ctxB.close();
+
+    // C. 削除が反映されない（removeItem が何もしない）／D. 削除のあと読めない
+    for (const [label, patch] of [
+      ['削除が反映されない', (k) => { Storage.prototype.removeItem = function () {}; }],
+      ['削除のあと読めない', (k) => { const o = { get: Storage.prototype.getItem, remove: Storage.prototype.removeItem }; let broke = false;
+        Storage.prototype.removeItem = function (key) { o.remove.call(this, key); broke = true; };
+        Storage.prototype.getItem = function (key) { if (broke && key === k) throw new Error('SecurityError'); return o.get.call(this, key); }; }]
+    ]) {
+      const p = await open();
+      await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-skip');
+      await p.waitForSelector('#h-result:not([hidden])');
+      const before = await stored(p);
+      await p.evaluate(patch, KEY);
+      await p.click('#h-again'); await p.click('#h-confirm-yes');
+      check(label + '：完了扱いにせず失敗の案内・画面の結果はそのまま', await p.isVisible('#h-confirm') && (await p.textContent('#h-confirm-error')) === 'この端末に保存した内容を消せませんでした。' && await p.isVisible('#h-result'));
+      if (label === '削除が反映されない') check(label + '：保存内容は残る', (await stored(p)) === before);
+      await p.context().close();
+    }
+  }
+
   await b.close();
   check('外部への通信なし（解析・外部サービスへ送らない）', external.length === 0, external.slice(0, 3).join(' | '));
   check('エラーなし', errs.length === 0, errs.slice(0, 5).join(' | '));

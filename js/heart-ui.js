@@ -7,7 +7,8 @@
   var D = window.OshiLunaHeartData, R = window.OshiLunaHeartRules, S = window.OshiLunaHeartStorage;
   if (!D || !R || !S) return;
   var $ = function (id) { return document.getElementById(id); };
-  var store = S.create(function () { return window.localStorage; });
+  // 保存の窓口：確かめるまでは書き込まない（既存の保存内容を本人の確認なしに上書きしない）
+  var store = S.createSession(function () { return window.localStorage; });
 
   var state = {
     screen: "intro", answers: R.emptyAnswers(), qid: "q1",
@@ -56,7 +57,11 @@
   function persist() {
     var res = store.write(record());
     if (res.ok) { state.stored = "ok"; state.saved = record(); state.saveFailed = false; }
-    else { state.saveFailed = true; $("h-save-failed").textContent = D.ui.saveFailed; }
+    else {
+      // 書けなかった・書かなかった：画面の回答はそのまま。保存内容があると分かったときは、開始前の案内に反映する（上書きしない）
+      state.saveFailed = true; $("h-save-failed").textContent = D.ui.saveFailed;
+      if (res.reason === "existing") { state.stored = res.status; state.saved = res.status === "ok" ? res.record : null; }
+    }
     $("h-save-failed").hidden = !(state.saveFailed && state.screen !== "intro");
   }
 
@@ -92,11 +97,13 @@
   }
   function resume() {
     var r = state.saved;
+    store.adopt(); // 本人が保存内容から続けることを選んだ
     state.answers = R.copyAnswers(r.answers); state.result = null; state.dateKey = null; state.qid = r.questionId;
     show("question"); renderQuestion();
   }
   function showSavedResult() {
     var r = state.saved;
+    store.adopt();
     state.answers = R.copyAnswers(r.answers); state.result = r.resultSnapshot; state.dateKey = r.resultDate; state.qid = "q7";
     show("result"); renderResult();
   }
@@ -117,17 +124,15 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
   function confirmDelete() {
-    var res = store.remove(), after = store.read();
-    // 消せた／もともと保存がない：最初に戻す。
-    // 保存領域が最初から使えず、一度も保存できていないとき：消すものがないので、画面の内容だけを最初に戻す。
-    // それ以外（保存内容が残っている・確かめられない）：成功と表示せず、保存内容もそのまま
-    var cleared = res.ok || after.status === "empty" || (after.status === "unavailable" && state.stored === "unavailable");
-    if (!cleared) {
+    // 消したあと読んで「保存がない」と確かめられたときだけ、消せたとして最初に戻す。
+    // 保存内容が残っている・保存領域に入れず確かめられないときは、成功と表示せず、画面の内容も保存内容もそのまま
+    var res = store.remove();
+    if (!res.ok) {
       $("h-confirm-error").textContent = "この端末に保存した内容を消せませんでした。";
       $("h-confirm-error").hidden = false;
       return;
     }
-    state.stored = after.status === "unavailable" ? "unavailable" : "empty";
+    state.stored = "empty";
     state.saved = null;
     state.answers = R.emptyAnswers(); state.result = null; state.dateKey = null; state.qid = "q1";
     state.saveFailed = false; state.dismissedInvalid = false;

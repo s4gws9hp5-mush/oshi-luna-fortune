@@ -40,7 +40,41 @@
     return { KEY: KEY, read: read, write: write, remove: remove };
   }
 
-  var api = { KEY: KEY, create: create };
+  // 画面から使う保存の窓口。既存の保存内容を、本人の確認なしに上書き・削除扱いにしない。
+  // 書き込んでよいのは、次のどれかを確かめたあとだけ（owned）：
+  //   ・読んで「保存がない」と確かめた（起動時・書く直前・削除の後）
+  //   ・本人が保存内容から「続きから」「前回の結果を見る」を選んだ（adopt）
+  // 保存領域に入れない・保存内容があるのに確かめていないときは書かない（画面での利用は続けられる）。
+  // 削除は、消したあと読んで「保存がない」と確かめられたときだけ成功とする。
+  function createSession(getStorage) {
+    var st = create(getStorage), owned = false;
+    function read() {
+      var r = st.read();
+      if (r.status === "empty") owned = true;
+      return r;
+    }
+    function write(record) {
+      if (!owned) {
+        var now = st.read();
+        if (now.status !== "empty") {
+          // existing：保存内容がある（読める／読めない）。unavailable：あるかどうか確かめられない
+          return { ok: false, reason: now.status === "unavailable" ? "unavailable" : "existing", status: now.status, record: now.record };
+        }
+        owned = true;
+      }
+      return st.write(record).ok ? { ok: true } : { ok: false, reason: "failed" };
+    }
+    function remove() {
+      var r = st.remove(), after = st.read();
+      var cleared = after.status === "empty";
+      if (cleared) owned = true;
+      return { ok: cleared, removed: r.ok, after: after.status };
+    }
+    function adopt() { owned = true; }
+    return { KEY: KEY, read: read, write: write, remove: remove, adopt: adopt, isOwned: function () { return owned; } };
+  }
+
+  var api = { KEY: KEY, create: create, createSession: createSession };
   root.OshiLunaHeartStorage = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);
