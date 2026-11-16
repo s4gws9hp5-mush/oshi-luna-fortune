@@ -36,6 +36,11 @@
     return p;
   }
   function fill(box, paragraphs) { box.textContent = ""; paragraphs.forEach(function (t) { box.appendChild(para(t)); }); }
+  // 「、」「。」のあとで区切ったまとまりごとに改行する（文は変えない。iPhone の Safari でも言葉の途中で切れないように）
+  function phrased(box, text) {
+    box.textContent = "";
+    (text.match(/[^、。]+[、。]?/g) || [text]).forEach(function (t) { box.appendChild(el("span", "h-phrase", t)); });
+  }
   function button(text) { return text.replace(/^［|］$/g, ""); }
 
   function show(screen) {
@@ -67,12 +72,16 @@
 
   // ---- 開始前 ----
   function renderIntro() {
-    fill($("h-intro-text"), D.ui.intro);
+    phrased($("h-intro-lead"), D.ui.introLead);
+    $("h-intro-free").textContent = D.ui.introFree;
+    phrased($("h-intro-privacy"), D.ui.introPrivacy);
+    $("h-details-summary").textContent = D.ui.introDetailsLabel;
+    fill($("h-intro-text"), D.ui.introDetails);
     var box = $("h-resume"), main = $("h-resume-main"), sub = $("h-resume-sub");
     box.hidden = true;
     if (state.stored === "ok" && state.saved) {
       var isResult = state.saved.phase === "result";
-      $("h-resume-text").textContent = isResult ? D.ui.resumeResult : D.ui.resumeProgress;
+      phrased($("h-resume-text"), isResult ? D.ui.resumeResult : D.ui.resumeProgress);
       main.textContent = isResult ? D.ui.buttons32[1][0] : D.ui.buttons32[0][0];
       sub.textContent = isResult ? D.ui.buttons32[1][1] : D.ui.buttons32[0][1];
       main.onclick = isResult ? showSavedResult : resume;
@@ -80,13 +89,15 @@
       box.hidden = false;
     } else if (state.stored === "invalid" && !state.dismissedInvalid) {
       // 読み込めない：推測で直さず、自動で消さない（3.3）
-      $("h-resume-text").textContent = D.ui.unreadable;
+      phrased($("h-resume-text"), D.ui.unreadable);
       main.textContent = "最初から";
       sub.textContent = "今はやめる";
       main.onclick = function () { openConfirm(); };
       sub.onclick = function () { state.dismissedInvalid = true; renderIntro(); $("h-intro-title").scrollIntoView(); };
       box.hidden = false;
     }
+    // 保存内容の案内を出しているときは、同じ働き（最初から・新しく整理する）の開始ボタンを重ねて出さない
+    $("h-start").hidden = !box.hidden;
     $("h-intro-delete").hidden = !(state.stored === "ok" || state.stored === "invalid");
   }
   function begin() {

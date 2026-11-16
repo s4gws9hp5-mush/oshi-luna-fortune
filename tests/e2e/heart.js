@@ -80,6 +80,15 @@ const serve = () => new Promise((resolve) => {
     const p = await open();
     await p.goto(H);
     check('開始前：採用文の説明・はじめるボタン', (await p.textContent('#h-intro-text')).includes('回答と結果は、この端末のブラウザに保存されます。運営側には送信されません') && await p.isVisible('#h-start'));
+    // 開始前の並び：画像 → 題 → ひとこと → はじめる → 無料 → 保存の要点 → 折りたたみ（詳しい説明）
+    const order = await p.evaluate(() => ['.h-intro-art', '#h-intro-title', '#h-intro-lead', '#h-start', '#h-intro-free', '#h-intro-privacy', '#h-details'].map((sel) => document.querySelector(sel).getBoundingClientRect().top));
+    check('開始前：ご指定の順に並ぶ', order.every((v, i) => i === 0 || v > order[i - 1]), JSON.stringify(order.map(Math.round)));
+    check('開始前：要点の文', (await p.textContent('#h-intro-lead')) === D.ui.introLead && (await p.textContent('#h-intro-free')) === D.ui.introFree && (await p.textContent('#h-intro-privacy')) === D.ui.introPrivacy && (await p.textContent('#h-details-summary')) === D.ui.introDetailsLabel);
+    const det = await p.textContent('#h-intro-text');
+    check('詳しい説明：折りたたみ（最初は閉じている）・コピー案内と判定しない説明を残し、送信の文は1回だけ', !(await p.getAttribute('#h-details', 'open') !== null) && !(await p.isVisible('#h-intro-text')) &&
+      det.includes('大切な結果はコピーして残してね') && det.includes('推しご本人の気持ちを判定するものではありません') && (det.match(/送信されません/g) || []).length === 1);
+    await p.click('#h-details-summary');
+    check('詳しい説明：押すと開く', await p.isVisible('#h-intro-text'));
     await p.click('#h-start');
     check('Q1：1／7・未選択では次へ進めない', (await q(p)) === '1／7' && await p.isDisabled('#h-next'));
     await pick(p, ['チケットの申込み']); await next(p);
@@ -210,8 +219,10 @@ const serve = () => new Promise((resolve) => {
     check('続きから：同じ質問（Q4）から再開', (await q(p)) === '4／7' && (await p.textContent('#h-q-text')) === D.themes.social.q4.text);
     await p.click('#h-back');
     check('続きから：前の回答も残っている', (await p.locator('#h-options .h-option.is-chosen').count()) === 2);
-    await p.goto(H); await p.click('#h-start');
-    check('保存があるときの「はじめる」も削除の確認へ（上書きしない）', await p.isVisible('#h-confirm'));
+    await p.goto(H);
+    check('保存があるときは「はじめる」を重ねて出さない（上書きしない）', !(await p.isVisible('#h-start')) && await p.isVisible('#h-resume-sub'));
+    await p.click('#h-resume-sub');
+    check('［最初から］は削除の確認へ（上書きしない）', await p.isVisible('#h-confirm'));
     await p.context().close();
   }
 
@@ -271,6 +282,24 @@ const serve = () => new Promise((resolve) => {
     await p.screenshot({ path: `${OUT}/result-${w}.png`, fullPage: true });
     check(w + 'px：開始前・質問・Q7・結果で横にはみ出さない', !bad);
     await p.context().close();
+  }
+
+  // 7b) 開始前：iPhone の最初の画面（スクロールなし）で、開始・続きから・前回の結果のボタンが見える
+  for (const dev of ['iPhone SE', 'iPhone 13', 'iPhone 15 Pro Max']) {
+    const mid = JSON.stringify({ schemaVersion: 1, questionVersion: 1, resultVersion: 1, phase: 'question', questionId: 'q3', answers: Object.assign(R.emptyAnswers(), { q1: 'ticket', q2: ['q2-01'] }), resultSnapshot: null, resultDate: null });
+    const ans = { q1: 'ticket', q2: ['q2-01'], q3: 'ticket-q3-02', q4: ['ticket-q4-07'], q5: ['q5-none'], q6: ['q6-none'], q7: null };
+    const done = JSON.stringify({ schemaVersion: 1, questionVersion: 1, resultVersion: 1, phase: 'result', questionId: 'q7', answers: ans, resultSnapshot: R.buildResult(ans), resultDate: '2026-11-17' });
+    const seen = [];
+    for (const [label, seed, ids] of [['新規', null, ['h-start']], ['回答途中', mid, ['h-resume-main', 'h-resume-sub']], ['結果あり', done, ['h-resume-main', 'h-resume-sub']]]) {
+      const p = await open({ device: dev, init: seed ? new Function('localStorage.setItem(' + JSON.stringify(KEY) + ',' + JSON.stringify(seed) + ')') : undefined });
+      await p.goto(H);
+      const r = await p.evaluate((ids) => ({ vh: innerHeight, start: !document.getElementById('h-start').hidden, b: ids.map((id) => document.getElementById(id).getBoundingClientRect().bottom) }), ids);
+      seen.push(label + ':' + r.b.map(Math.round).join('/') + '≤' + r.vh);
+      const okStart = label === '新規' ? r.start : !r.start; // 保存内容があるときは、開始ボタンを重ねて出さない
+      if (!(r.b.every((x) => x <= r.vh) && okStart)) seen.push('NG');
+      await p.context().close();
+    }
+    check(dev + '：最初の画面で主要なボタンが見える（新規＝はじめる、回答途中＝続きから／最初から、結果あり＝前回の結果を見る／新しく整理する）', !seen.includes('NG'), seen.join(' '));
   }
 
   // 8) トップと診断結果画面の入口（未診断・診断済みのどちらでも、診断カードの直後）

@@ -40,7 +40,7 @@ const pad = (n) => (n < 10 ? "0" : "") + n;
   R.DEADLINE_A.concat(R.DEADLINE_B).forEach((id) => assert.ok(D.actions[id] || D.q2Texts[id], "期限補足の対象のIDが本文にある " + id));
   // 文章の指紋：採用文がうっかり変わっていないか（文章を直したときは、仕様書と照合してからこの値も直す）
   const fp = require("crypto").createHash("sha256").update(JSON.stringify([D.q1, D.q2, D.themes, D.q5, D.q6, D.q7, D.q2Texts, D.supplementFeelingForgotten, D.deadlineSupplement, D.actions, D.ui])).digest("hex");
-  assert.strictEqual(fp, "39d1663fe6aaccf9cec104242dde6275fef5f41f06462bf7a30a8786ed591eca", "文章の指紋（仕様書 v0.1 から取り出した採用文）");
+  assert.strictEqual(fp, "d436a478e424f64dc3bb991b561b383e1c9452989170032d114cbda22e1b89e4", "文章の指紋（仕様書 v0.1 から取り出した採用文）");
   console.log("OK: データ（Q2本文47件・行動文39件・選択肢）／文章の指紋 " + fp.slice(0, 16));
 }
 
