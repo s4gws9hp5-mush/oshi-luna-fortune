@@ -100,6 +100,14 @@
         </div>
       </section>
 
+      <!-- ルナのこころ整理（heart/）の入口。推し活タイプ診断のカードの直後に置く（診断済み・未診断のどちらでも。app.js の refreshTop） -->
+      <section class="heart-entry" id="heart-entry" aria-labelledby="heart-entry-title">
+        <h2 class="heart-entry-title" id="heart-entry-title"><span aria-hidden="true">🌙</span> ルナのこころ整理</h2>
+        <p class="heart-entry-text">推し活で気になること、今の気持ち。<br>7つの質問で、ルナと少し整理してみませんか？</p>
+        <a class="btn btn-ghost heart-entry-btn" href="heart/">こころを整理してみる</a>
+        <p class="heart-entry-note">無料・名前やメールアドレスの入力不要</p>
+      </section>
+
       <!-- 今日の占い（今日の推し活占い＋今日の一枚タロット）。#daily-entry ごと app.js の refreshTop が診断カードの前後に並べ替える。
            タロットの入口（#tarot-entry）は enabled か ?tarot-preview=1 のときだけ tarot-ui.js が表示する。非表示のときは場所もとらない -->
       <section class="today-group" id="daily-entry" aria-labelledby="today-title">
@@ -381,6 +389,13 @@
         <p class="omamori-charm" id="type-charm"></p>
         <p class="omamori-body" id="type-omamori-msg"></p>
       </article>
+
+      <!-- タイプ診断の結果を読み終えたところに、ルナのこころ整理（heart/）への小さな入口 -->
+      <aside class="heart-invite" aria-labelledby="heart-invite-title">
+        <p class="heart-invite-title" id="heart-invite-title"><span aria-hidden="true">🌙</span> 推し活のことで、お悩みのあなたへ</p>
+        <p class="heart-invite-text">気になることや今の気持ちを、7つの質問でルナと少し整理してみませんか？</p>
+        <a class="heart-invite-link" href="heart/">ルナのこころ整理へ</a>
+      </aside>
 
       <button type="button" class="btn btn-primary" id="to-daily-btn">🌙 今日の占いを見る</button>
       <button type="button" class="btn btn-ghost" id="share-btn">📸 結果をシェアする</button>

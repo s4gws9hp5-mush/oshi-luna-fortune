@@ -1,0 +1,142 @@
+/* ルナのこころ整理（heart/index.html）専用。既存の色・カード・ボタン（css/style.css）を使い、名前は h- で分ける */
+.h-screen[hidden] { display: none; }
+.heart .guide-hero { margin-top: 4px; }
+.h-intro-card { font-size: 0.95rem; line-height: 1.9; }
+.h-intro-card p, .h-text p { white-space: normal; }
+.h-intro-card p + p, .h-text p + p { margin-top: 12px; }
+.h-resume { text-align: center; }
+.h-resume p { font-weight: 700; }
+.h-resume .btn { margin-top: 10px; }
+.h-save-failed { border-color: var(--pink-deep); background: #fff7fb; }
+
+/* 質問 */
+.h-q-text { margin-bottom: 18px; }
+.h-q-pick { margin: -8px 0 12px; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--lavender-deep); }
+.h-q-pick[hidden], .h-options[hidden], .h-q7[hidden] { display: none; }
+.h-option { min-height: 58px; padding: 12px 16px; }
+.h-option-label { flex: 1; min-width: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.h-mark {
+  width: 30px;
+  height: 30px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--white);
+  border: 2px solid var(--lavender);
+  border-radius: 50%;
+}
+.h-mark.is-multi { border-radius: 9px; }
+.h-option.is-chosen .h-mark { background: var(--lavender-deep); border-color: var(--lavender-deep); }
+.h-option.is-full { opacity: 0.55; }
+.h-option { animation: none; }
+
+/* Q7：疲れ具合のスライダー */
+.h-q7 { text-align: center; }
+.h-face-wrap { display: grid; place-items: center; width: 150px; height: 150px; margin: 0 auto 4px; }
+.h-face { width: 150px; height: 150px; }
+.h-face[hidden], .h-face-moon[hidden] { display: none; }
+.h-face-moon { font-size: 4.2rem; line-height: 1; }
+.h-face.is-pop { animation: h-pop 0.32s ease; }
+@keyframes h-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h-face.is-pop { animation: none; }
+}
+.h-q7-value { margin: 0 0 6px; font-size: 2.6rem; font-weight: 700; line-height: 1.2; color: var(--lavender-deep); }
+.h-q7-value.is-unset { font-size: 1.2rem; line-height: 2.6; color: var(--ink-soft); }
+.h-slider-row { display: flex; align-items: center; gap: 10px; }
+.h-step {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--lavender-deep);
+  background: var(--white);
+  border: 2px solid var(--lavender);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.h-step:active { transform: scale(0.94); }
+/* スライダー：WebKit（iPhone の Safari）と Chromium・Firefox のどちらでも、紫の横線とつまみが見えるように描く */
+.h-slider {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.h-slider:focus-visible { outline: 3px solid var(--lavender-deep); outline-offset: 4px; border-radius: 8px; }
+.h-slider::-webkit-slider-runnable-track { height: 8px; background: #b9a2f2; border-radius: 999px; }
+.h-slider::-moz-range-track { height: 8px; background: #b9a2f2; border-radius: 999px; }
+.h-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: -11px;
+  background: #7a5bd6;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(122, 91, 214, 0.45);
+}
+.h-slider::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  background: #7a5bd6;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(122, 91, 214, 0.45);
+}
+/* 未選択：つまみは表示位置（5）に薄く出す。値は「未選択」のまま */
+.h-slider.is-unset::-webkit-slider-thumb { background: var(--white); border: 3px dashed #7a5bd6; box-shadow: none; }
+.h-slider.is-unset::-moz-range-thumb { background: var(--white); border: 3px dashed #7a5bd6; box-shadow: none; }
+.h-scale { display: flex; justify-content: space-between; gap: 12px; margin: 6px 4px 0; font-size: 0.78rem; color: var(--ink-soft); text-align: left; }
+.h-scale span:last-child { text-align: right; }
+.h-q7-note { margin: 14px 0 0; }
+
+/* 結果 */
+.h-date { margin: 6px 0 0; }
+.h-result-notice { font-size: 0.86rem; }
+.h-section .card-title { margin-bottom: 12px; }
+.h-row + .h-row { margin-top: 12px; }
+.h-row-label { font-size: 0.84rem; font-weight: 700; color: var(--ink-soft); }
+.h-row-values { margin: 4px 0 0; padding: 0 0 0 1.2em; font-weight: 700; line-height: 1.7; }
+.h-row-values li + li { margin-top: 2px; }
+.h-text { font-size: 0.95rem; line-height: 1.95; }
+.h-copy-area:empty { display: none; }
+.h-copy-area { margin: 10px 0 0; }
+.h-copy-status { margin: 0; padding: 10px 14px; font-size: 0.9rem; font-weight: 700; text-align: center; color: var(--lavender-deep); background: rgba(255, 255, 255, 0.85); border-radius: 16px; }
+.h-copy-status.is-error { color: var(--pink-deep); }
+.h-copy-text {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 12px;
+  font: inherit;
+  font-size: 16px; /* iPhone で拡大されないように */
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--white);
+  border: 2px solid var(--lavender);
+  border-radius: 16px;
+  resize: vertical;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.h-soon { margin-top: 26px; text-align: center; font-size: 0.92rem; line-height: 1.9; }
+.h-soon p + p { margin-top: 10px; }
+.h-soon .h-soon-title { font-weight: 700; color: var(--lavender-deep); }
+.h-home { text-align: center; }
+.h-confirm-text { font-weight: 700; }
+.h-confirm-error { margin: 0 0 6px; font-size: 0.88rem; font-weight: 700; color: var(--pink-deep); }
+.h-confirm-error[hidden] { display: none; }

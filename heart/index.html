@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <!-- ルナのこころ整理：回答・結果はこの端末のブラウザにだけ保存し、運営側・アクセス解析・外部へは送らない。
+       そのため、このページにはアクセス解析（Google タグ）を読み込まない -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6e9f7">
+  <meta name="description" content="推し活で気になること、今の気持ち。7つの質問で、白猫ルナと少し整理してみませんか？ 名前やメールアドレスの入力は不要で、回答と結果はこの端末のブラウザに保存されます。">
+  <title>ルナのこころ整理｜推しルナ占い</title>
+  <link rel="canonical" href="https://oshi-luna.com/heart/">
+  <!-- SNS で共有されたときの表示（OGP） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="推しルナ占い">
+  <meta property="og:title" content="ルナのこころ整理｜推しルナ占い">
+  <meta property="og:description" content="推し活で気になること、今の気持ち。7つの質問で、白猫ルナと少し整理してみませんか？">
+  <meta property="og:url" content="https://oshi-luna.com/heart/">
+  <meta property="og:image" content="https://oshi-luna.com/images/luna-cat.png">
+  <meta property="og:image:width" content="640">
+  <meta property="og:image:height" content="513">
+  <meta property="og:image:alt" content="三日月の上で眠る白猫（推しルナ占いのマスコット）">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary">
+  <!-- 検索エンジン向けのページの位置（構造化データ） -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "推しルナ占い", "item": "https://oshi-luna.com/" },
+      { "@type": "ListItem", "position": 2, "name": "ルナのこころ整理", "item": "https://oshi-luna.com/heart/" }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/heart.css">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+
+  <main class="app heart" id="heart-app">
+    <nav class="guide-crumbs" aria-label="現在の場所"><a href="../">推しルナ占い</a> <span aria-hidden="true">›</span> ルナのこころ整理</nav>
+
+    <!-- 保存できなかったときの案内（失敗のたびにくり返し出さない・利用は止めない） -->
+    <p class="notice h-save-failed" id="h-save-failed" role="status" hidden></p>
+
+    <!-- 開始前 -->
+    <section class="h-screen" id="h-intro" aria-labelledby="h-intro-title">
+      <div class="hero guide-hero">
+        <img class="mascot guide-hero-art" src="../images/luna-cat.png" width="640" height="513" alt="三日月の上で眠る白猫（推しルナ占いのマスコット）">
+        <h1 class="guide-title" id="h-intro-title" tabindex="-1">ルナのこころ整理</h1>
+      </div>
+
+      <!-- 保存した内容があるとき（3.2）・読み込めないとき（3.3） -->
+      <div class="notice h-resume" id="h-resume" hidden>
+        <p id="h-resume-text"></p>
+        <button type="button" class="btn btn-primary" id="h-resume-main"></button>
+        <button type="button" class="btn btn-ghost" id="h-resume-sub"></button>
+      </div>
+
+      <div class="card card-lavender h-intro-card" id="h-intro-text"></div>
+      <button type="button" class="btn btn-primary btn-big" id="h-start">7つの質問をはじめる</button>
+      <button type="button" class="btn-text" id="h-intro-delete" hidden>保存した内容を消す</button>
+    </section>
+
+    <!-- 質問（1画面1問） -->
+    <section class="h-screen" id="h-question" aria-labelledby="h-q-text" hidden>
+      <p class="q-count" id="h-q-count"></p>
+      <div class="progress" aria-hidden="true"><span class="progress-bar" id="h-progress"></span></div>
+      <h2 class="q-text h-q-text" id="h-q-text" tabindex="-1"></h2>
+      <p class="q-note" id="h-q-note" hidden></p>
+      <p class="h-q-pick" id="h-q-pick" hidden></p>
+      <div class="options h-options" id="h-options" role="group" aria-labelledby="h-q-text"></div>
+
+      <!-- Q7：心の疲れ具合（1〜10・任意） -->
+      <div class="h-q7" id="h-q7" hidden>
+        <div class="h-face-wrap" aria-hidden="true">
+          <img class="h-face" id="h-face" width="400" height="400" alt="" hidden>
+          <span class="h-face-moon" id="h-face-moon">🌙</span>
+        </div>
+        <p class="h-q7-value" id="h-q7-value" aria-live="polite"></p>
+        <div class="h-slider-row">
+          <button type="button" class="h-step" id="h-q7-minus" aria-label="1つ小さくする">−</button>
+          <input type="range" class="h-slider" id="h-q7-range" min="1" max="10" step="1" value="5" aria-describedby="h-q7-scale h-q7-note">
+          <button type="button" class="h-step" id="h-q7-plus" aria-label="1つ大きくする">＋</button>
+        </div>
+        <div class="h-scale" id="h-q7-scale"><span id="h-q7-low"></span><span id="h-q7-high"></span></div>
+        <p class="q-note h-q7-note" id="h-q7-note"></p>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="h-next" disabled>次へ</button>
+      <button type="button" class="btn btn-ghost" id="h-q7-skip" hidden></button>
+      <button type="button" class="btn-back" id="h-back">‹ 戻る</button>
+    </section>
+
+    <!-- 結果 -->
+    <section class="h-screen" id="h-result" aria-labelledby="h-result-title" hidden>
+      <div class="hero guide-hero">
+        <h2 class="guide-title" id="h-result-title" tabindex="-1">ルナのこころ整理</h2>
+        <p class="result-date h-date" id="h-date"></p>
+      </div>
+      <p class="notice h-result-notice" id="h-result-notice"></p>
+      <article class="card card-blue h-section" aria-labelledby="h-sec-concern"><h2 class="card-title" id="h-sec-concern"></h2><div id="h-concern"></div></article>
+      <article class="card card-pink h-section" aria-labelledby="h-sec-values"><h2 class="card-title" id="h-sec-values"></h2><div id="h-values"></div></article>
+      <article class="card card-lavender h-section" aria-labelledby="h-sec-message"><h2 class="card-title" id="h-sec-message"></h2><div class="h-text" id="h-message"></div></article>
+      <article class="card card-cream h-section" aria-labelledby="h-sec-action"><h2 class="card-title" id="h-sec-action"></h2><div class="h-text" id="h-action"></div></article>
+
+      <button type="button" class="btn btn-primary h-copy" id="h-copy">整理結果をコピーする</button>
+      <div class="h-copy-area" id="h-copy-area-main"></div>
+      <button type="button" class="btn btn-ghost" id="h-again">もう一度整理する</button>
+
+      <!-- 個別鑑定 Coming Soon（申込み・料金・受付日は載せない） -->
+      <section class="card card-lavender h-soon" id="h-soon" aria-label="個別鑑定 Coming Soon"></section>
+      <div class="h-copy-area" id="h-copy-area-soon"></div>
+
+      <button type="button" class="btn-text" id="h-result-delete">保存した内容を消す</button>
+      <a class="btn-text h-home" href="../">トップへ戻る</a>
+    </section>
+  </main>
+
+  <!-- 削除の確認（開いただけでは消さない） -->
+  <div class="sheet-backdrop popup-backdrop" id="h-confirm" hidden>
+    <div class="sheet popup" role="alertdialog" aria-modal="true" aria-labelledby="h-confirm-text">
+      <p class="popup-text h-confirm-text" id="h-confirm-text" tabindex="-1"></p>
+      <p class="h-confirm-error" id="h-confirm-error" role="status" hidden></p>
+      <button type="button" class="btn btn-primary" id="h-confirm-yes"></button>
+      <button type="button" class="btn btn-ghost" id="h-confirm-no"></button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <a class="footer-link" href="https://forms.gle/ZQ5yT5bpHgaRUNC49" target="_blank" rel="noopener noreferrer">お問い合わせ</a><br>
+    推しルナ占い ｜ 占いは楽しむためのものです 🐈<br>結果はこの端末のブラウザにだけ保存されます（ほかの端末には引き継がれません）</footer>
+
+  <script src="../js/heart-data.js"></script>
+  <script src="../js/heart-rules.js"></script>
+  <script src="../js/heart-storage.js"></script>
+  <script src="../js/heart-ui.js"></script>
+</body>
+</html>

@@ -38,7 +38,7 @@ const server = http.createServer((req, res) => {
 
 (async () => {
   // 古い版を一時フォルダに取り出す
-  const tar = execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', REF]);
+  const tar = execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', REF], { maxBuffer: 1024 * 1024 * 1024 }); // 画像を含むので大きい（既定の上限 1MB では足りない）
   execFileSync('tar', ['-x', '-C', OLD], { input: tar });
   const oldSha = execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', REF]).toString().trim();
   const cacheOf = (dir) => (fs.readFileSync(path.join(dir, 'sw.js'), 'utf8').match(/var CACHE = "([^"]+)"/) || [])[1];

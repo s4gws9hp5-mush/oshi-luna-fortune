@@ -5,7 +5,7 @@
  */
 "use strict";
 
-var CACHE = "oshi-luna-v8";
+var CACHE = "oshi-luna-v9";
 var CORE = [
   "./", "index.html", "types/", "css/style.css",
   "css/tarot.css", "js/tarot-public.js", "js/tarot-assets.js", "js/tarot.js", "js/tarot-ui.js",
@@ -13,7 +13,11 @@ var CORE = [
   "images/luna-cat.png", "images/apple-touch-icon.png", "images/icon-192.png",
   "images/types/solo-moon-book.png", "images/types/cheer-penlight-sparkle.png", "images/types/memory-photos-goods.png",
   "images/types/talk-heart-bubble.png", "images/types/watch-starry-cloud.png", "images/types/create-notebook-pencil.png",
-  "images/types/heal-cushion-mug-cozy.png", "images/types/research-telescope-book.png"
+  "images/types/heal-cushion-mug-cozy.png", "images/types/research-telescope-book.png",
+  // ルナのこころ整理（heart/）。回答・結果はページの localStorage にだけ保存し、このキャッシュには入れない
+  "heart/", "css/heart.css", "js/heart-data.js", "js/heart-rules.js", "js/heart-storage.js", "js/heart-ui.js",
+  "images/heart/luna-face-01.png", "images/heart/luna-face-02.png", "images/heart/luna-face-03.png",
+  "images/heart/luna-face-04.png", "images/heart/luna-face-05.png"
 ];
 
 self.addEventListener("install", function (event) {
@@ -42,9 +46,10 @@ self.addEventListener("fetch", function (event) {
       }
       return res;
     }).catch(function () {
-      // オフラインのとき：保存しておいたファイル。ページを開くときは index.html を返す
+      // オフラインのとき：保存しておいたファイル。ページを開くときは、こころ整理（heart/）ならそのページ、ほかは index.html を返す
       return caches.match(req, { ignoreSearch: req.mode === "navigate" }).then(function (hit) {
-        return hit || (req.mode === "navigate" ? caches.match("index.html") : null);
+        if (hit || req.mode !== "navigate") return hit;
+        return /\/heart\/(index\.html)?$/.test(new URL(req.url).pathname) ? caches.match("heart/") : caches.match("index.html");
       }).then(function (res) {
         return res || Response.error();
       });
