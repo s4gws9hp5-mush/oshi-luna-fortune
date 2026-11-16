@@ -115,7 +115,14 @@ const serve = () => new Promise((resolve) => {
     await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p);
     const face = () => p.evaluate(() => { const i = document.getElementById('h-face'); return i.hidden ? 'moon' : i.getAttribute('src').split('/').pop(); });
     check('Q7：初期は未回答（🌙・結果ボタンは押せない・スキップあり）', (await q(p)) === '7／7' && (await face()) === 'moon' && await p.isDisabled('#h-next') &&
-      (await p.textContent('#h-q7-value')) === '未選択' && await p.isVisible('#h-q7-skip') && !(await p.isVisible('#h-q-pick')) && JSON.parse(await stored(p)).answers.q7 === null);
+      (await p.textContent('#h-q7-value')) === '未回答' && (await p.getAttribute('#h-q7-range', 'aria-valuetext')) === '未回答' && await p.isVisible('#h-q7-skip') && !(await p.isVisible('#h-q-pick')) && JSON.parse(await stored(p)).answers.q7 === null);
+    // 表示上の基準位置（5）は回答・保存値にしない：開き直しても未回答のまま。スキップした結果も未回答
+    await p.reload(); await p.click('#h-resume-main');
+    check('Q7：基準位置5は保存されない（開き直しても未回答）', (await q(p)) === '7／7' && (await p.textContent('#h-q7-value')) === '未回答' && JSON.parse(await stored(p)).answers.q7 === null && (await face()) === 'moon');
+    await p.click('#h-q7-minus');
+    const m4 = [await p.textContent('#h-q7-value'), JSON.parse(await stored(p)).answers.q7];
+    check('Q7：未回答で − を押すと4（押した時点で回答として保存）', m4[0] === '4' && m4[1] === 4, JSON.stringify(m4));
+    await p.click('#h-back'); await p.click('#h-next');
     check('Q7：説明・目盛りの文', (await p.textContent('#h-q7-note')) === D.q7.note && (await p.textContent('#h-q7-low')) === '1 ほとんど疲れていない' && (await p.textContent('#h-q7-high')) === '10 とても疲れている');
     const seen = [];
     for (let i = 0; i < 12; i++) { await p.click('#h-q7-minus'); }
@@ -142,6 +149,7 @@ const serve = () => new Promise((resolve) => {
     await p2.goto(H); await p2.click('#h-start'); await answerQ1toQ6(p2); await p2.click('#h-q7-plus');
     const anim2 = await p2.evaluate(() => getComputedStyle(document.getElementById('h-face')).animationName);
     check('動きを減らす設定では、表情の動きを止める', anim2 === 'none', anim2);
+    check('Q7：未回答で ＋ を押すと6（押した時点で回答として保存）', (await p2.textContent('#h-q7-value')) === '6' && JSON.parse(await p2.evaluate((k) => localStorage.getItem(k), KEY)).answers.q7 === 6);
     await p2.context().close();
   }
 

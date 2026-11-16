@@ -79,7 +79,81 @@ const pad = (n) => (n < 10 ? "0" : "") + n;
   console.log("OK: 入力（最大2件・単独の選択肢・選択順によらない本文・Q1変更でQ3/Q4だけリセット）");
 }
 
-// ---- 13.11：全回答の組合せで、小さな一歩の選択経路を確かめる ----
+// ---- 13.11：全回答の組合せで、小さな一歩を確かめる ----
+// 期待値は、実装（js/heart-rules.js）の候補表を使わず、仕様書13.11の表の文面と「表を読む前の選択順」から、このテストの中で作る。
+// 下の表は仕様書13.11の「系統｜選択｜本文ID／13.2参照名｜全文Q7｜初回の状況条件」の5列を、文面のまま写したもの
+const TABLE_13_11 = [
+  ["Q6", "1", "action-q6-concern", "1〜7・未回答", "追加制限なし"],
+  ["Q6", "2", "action-q6-emotion", "1〜7・未回答", "追加制限なし"],
+  ["Q6", "3", "action-q6-values", "1〜7・未回答", "追加制限なし"],
+  ["Q6", "4", "action-q6-calm", "1〜7・未回答", "socialのQ3に3、vagueのQ3に2、feelingのQ3に6のいずれかを含む"],
+  ["Q6", "5", "action-q6-pace", "1〜3", "追加制限なし"],
+  ["Q6", "1＋2", "action-q6-concern-emotion", "1〜3", "追加制限なし"],
+  ["Q6", "1＋3", "action-q6-concern-values", "1〜3", "追加制限なし"],
+  ["Q6", "1＋4", "action-q6-concern-calm", "1〜7・未回答", "追加制限なし。単独calmの3分岐は流用しない"],
+  ["Q6", "1＋5", "action-q6-concern-pace", "1〜3", "追加制限なし"],
+  ["Q6", "2＋3", "action-q6-emotion-values", "1〜3", "追加制限なし"],
+  ["Q6", "2＋4", "action-q6-emotion-calm", "1〜7・未回答", "追加制限なし。単独calmの3分岐は流用しない"],
+  ["Q6", "2＋5", "action-q6-emotion-pace", "1〜3", "追加制限なし"],
+  ["Q6", "3＋4", "action-q6-values-calm", "1〜7・未回答", "追加制限なし。単独calmの3分岐は流用しない"],
+  ["Q6", "3＋5", "action-q6-values-pace", "1〜3", "除外2状態以外は追加制限なし"],
+  ["Q6", "4＋5", "action-q6-calm-pace", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "1", "暮らしの安心", "1〜7・未回答", "moneyのQ3=1のみ"],
+  ["Q5", "2", "仕事・学校", "1〜3", "ticketのQ3=1・4・5、travelのQ3=1〜4、moneyのQ3=2"],
+  ["Q5", "3", "睡眠・体力", "1〜3", "travelのQ3=3・4のみ"],
+  ["Q5", "4", "家族や友達、自分のための時間", "1〜3", "追加制限なし"],
+  ["Q5", "5", "推しへの好きという気持ち", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "6", "自分に合った推し活のペース", "1〜3", "除外2状態以外は追加制限なし"],
+  ["Q5", "1＋2", "action-money-work-plan", "1〜3", "ticketのQ3=1・4・5、travelのQ3=1・2、moneyのQ3=2"],
+  ["Q5", "1＋3", "action-money-rest-plan", "1〜3", "ticketのQ3=1・4・5、travelのQ3=1〜4、moneyのQ3=1〜4"],
+  ["Q5", "1＋4", "action-money-personal-time", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "1＋5", "action-money-love-item", "1〜3", "moneyのQ3=1のみ"],
+  ["Q5", "1＋6", "action-money-own-pace", "1〜3", "追加制限なし"],
+  ["Q5", "2＋3", "action-work-rest-plan", "1〜3", "travelのQ3=3・4のみ"],
+  ["Q5", "2＋4", "action-work-personal-time", "初回対象外", "本文は保持。自動選択・他候補への置換はしない"],
+  ["Q5", "2＋5", "action-work-love", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "2＋6", "action-work-own-pace", "1〜3", "追加制限なし"],
+  ["Q5", "3＋4", "action-rest-personal-time", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "3＋5", "action-rest-love", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "3＋6", "action-rest-own-pace", "1〜7・未回答", "追加制限なし"],
+  ["Q5", "4＋5", "action-personal-time-love", "1〜3", "追加制限なし"],
+  ["Q5", "4＋6", "action-personal-time-own-pace", "1〜3", "追加制限なし"],
+  ["Q5", "5＋6", "action-love-own-pace", "1〜7・未回答", "除外2状態以外は追加制限なし"]
+];
+// 13.2 参照名（Q5単独）→ 本文ID（js/heart-data.js では action-q5-…）
+const Q5_SINGLE = { "暮らしの安心": "action-q5-money", "仕事・学校": "action-q5-work", "睡眠・体力": "action-q5-rest",
+  "家族や友達、自分のための時間": "action-q5-personal-time", "推しへの好きという気持ち": "action-q5-love", "自分に合った推し活のペース": "action-q5-own-pace" };
+const q3nums = (a) => { const def = D.themes[a.q1] && D.themes[a.q1].q3; return def && a.q3 !== null ? (Array.isArray(a.q3) ? a.q3 : [a.q3]).map((id) => R.numberOf(def, id)) : []; };
+const hasQ3 = (a, theme, list) => a.q1 === theme && q3nums(a).some((n) => list.includes(n));
+// 「全文Q7」列
+const burdenOk = (text, q7) => text === "1〜3" ? q7 !== null && q7 >= 1 && q7 <= 3 : text === "1〜7・未回答" ? q7 === null || (q7 >= 1 && q7 <= 7) : text === "初回対象外" ? false : (() => { throw new Error("全文Q7 " + text); })();
+// 「初回の状況条件」列（除外2状態＝ticket の Q3=3、travel の Q3=5。13.11の本文）
+const nums = (spec) => { const m = /^(\d+)〜(\d+)$/.exec(spec); return m ? Array.from({ length: m[2] - m[1] + 1 }, (_, i) => +m[1] + i) : spec.split("・").map(Number); };
+function condOk(text, a) {
+  if (text.startsWith("追加制限なし")) return true;
+  if (text === "除外2状態以外は追加制限なし") return !hasQ3(a, "ticket", [3]) && !hasQ3(a, "travel", [5]);
+  if (text.startsWith("本文は保持")) return false;
+  const any = text.replace(/のいずれかを含む$/, "").split("、").map((part) => {
+    const m = /^([a-z]+)のQ3(?:=|に)([\d・〜]+)(?:のみ)?$/.exec(part);
+    if (!m) throw new Error("状況条件 " + part);
+    return [m[1], nums(m[2])];
+  });
+  return any.some(([theme, list]) => hasQ3(a, theme, list));
+}
+function rowFor(kind, def, ids) {
+  const key = ids.map((x) => R.numberOf(def, x)).join("＋");
+  const row = TABLE_13_11.find((r) => r[0] === kind && r[1] === key);
+  if (!row) throw new Error("13.11 に行がない " + kind + " " + key);
+  return { id: Q5_SINGLE[row[2]] || row[2], fits: (a) => burdenOk(row[3], a.q7) && condOk(row[4], a) };
+}
+// 13.11「表を読む前の選択順」1〜4
+function expected(a) {
+  if (a.q7 !== null && a.q7 >= 8) return "action-rest-high";
+  if (!a.q6.includes("q6-none")) { const r = rowFor("Q6", D.q6, a.q6); return r.fits(a) ? r.id : "action-common-reflect"; }
+  if (!a.q5.includes("q5-none")) { const r = rowFor("Q5", D.q5, a.q5); if (r.fits(a)) return r.id; }
+  if (a.q7 !== null && a.q7 >= 1 && a.q7 <= 3 && (hasQ3(a, "ticket", [1, 4, 5]) || hasQ3(a, "money", [2]))) return "action-deadline-reminder";
+  return "action-common-reflect";
+}
 function selections(def) {
   if (def.max === 1) return def.options.map((o) => o.id);
   const out = def.options.map((o) => [o.id]);
@@ -89,36 +163,24 @@ function selections(def) {
   return out;
 }
 {
+  assert.strictEqual(TABLE_13_11.length, 36);
   const q5s = selections(D.q5), q6s = selections(D.q6), q7s = [null, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   assert.strictEqual(q5s.length, 22); assert.strictEqual(q6s.length, 16);
-  const n3 = (t, a) => (Array.isArray(a.q3) ? a.q3 : [a.q3]).map((id) => R.numberOf(D.themes[t].q3, id));
+  // テーマごとの Q3 の有効な選び方：ticket・travel・money 各6、feeling 23、social 29、vague 17（計87）
+  const q3count = Object.fromEntries(R.THEMES.map((t) => [t, selections(D.themes[t].q3).length]));
+  assert.deepStrictEqual(q3count, { ticket: 6, travel: 6, money: 6, feeling: 23, social: 29, vague: 17 });
   let total = 0; const count = {};
   for (const t of R.THEMES) for (const q3 of selections(D.themes[t].q3)) for (const q5 of q5s) for (const q6 of q6s) for (const q7 of q7s) {
+    // Q2・Q4 は小さな一歩の選択に使わないので固定（Q2本文と期限補足、Q4のテーマ補足は下で別に全件を確かめる）
     const a = { q1: t, q2: ["q2-10"], q3, q4: D.themes[t].q4.max === 1 ? D.themes[t].q4.options[0].id : [D.themes[t].q4.options[0].id], q5, q6, q7 };
     assert.ok(R.validateAnswers(a, true));
-    const { id, route } = R.selectAction(a);
-    total++; count[id] = (count[id] || 0) + 1;
-    const nums = n3(t, a), has = (theme, list) => t === theme && nums.some((x) => list.includes(x));
-    if (q7 !== null && q7 >= 8) { assert.strictEqual(id, "action-rest-high"); continue; }
-    assert.notStrictEqual(id, "action-rest-high", "8〜10以外で休息文を出さない");
-    assert.notStrictEqual(id, "action-work-personal-time", "初回対象外を選ばない");
-    if (!q6.includes("q6-none")) {
-      // Q6 通常回答：その組合せの候補か共通文だけ（Q5・期限専用文へ戻さない）
-      const c = R.Q6_CANDIDATES[q6.map((x) => R.numberOf(D.q6, x)).join("+")];
-      assert.ok(id === c[0] || id === "action-common-reflect", "Q6 " + q6 + " → " + id);
-      if (id === c[0]) assert.ok(c[1] === "normal" ? (q7 === null || q7 <= 7) : (q7 !== null && q7 <= 3), "負担区分 " + id + " q7=" + q7);
-      if (c[1] === "low" && (q7 === null || q7 >= 4)) assert.strictEqual(id, "action-common-reflect", "1〜3だけの候補は4〜7・未回答で共通文");
-    } else {
-      const c = q5.includes("q5-none") ? null : R.Q5_CANDIDATES[q5.map((x) => R.numberOf(D.q5, x)).join("+")];
-      const reminderOk = q7 !== null && q7 <= 3 && (has("ticket", [1, 4, 5]) || has("money", [2]));
-      if (route === "q5") { assert.strictEqual(id, c[0]); assert.notStrictEqual(c[1], "off"); }
-      else if (id === "action-deadline-reminder") assert.ok(reminderOk, "期限専用文の限定条件");
-      else { assert.strictEqual(id, "action-common-reflect"); assert.ok(!reminderOk, "条件を満たすのに期限専用文にならない"); }
-    }
-    // 状況の除外：落選・見送りでは、除外2状態の候補を使わない
-    if (has("ticket", [3]) || has("travel", [5])) assert.ok(!["action-q6-values-pace", "action-q5-own-pace", "action-love-own-pace"].includes(id), "除外2状態 " + id);
+    const got = R.selectAction(a).id, want = expected(a);
+    assert.strictEqual(got, want, JSON.stringify(a));
+    total++; count[got] = (count[got] || 0) + 1;
   }
-  // 13.11 の個別条件の例
+  assert.strictEqual(total, 87 * 22 * 16 * 11);
+  assert.ok(!count["action-work-personal-time"], "初回対象外は選ばれない");
+  // 個別の条件の例（読み違いがないかの目印）
   const base = (o) => Object.assign({ q1: "vague", q2: ["q2-10"], q3: ["vague-q3-06"], q4: "vague-q4-05", q5: ["q5-none"], q6: ["q6-none"], q7: null }, o);
   const pick = (o) => R.selectAction(base(o)).id;
   assert.strictEqual(pick({ q6: ["q6-calm"], q7: 3 }), "action-common-reflect", "calm：情報のQ3がないと使わない");
@@ -129,7 +191,7 @@ function selections(def) {
   assert.strictEqual(pick({ q1: "travel", q3: "travel-q3-05", q4: ["travel-q4-08"], q5: ["q5-rest", "q5-own-pace"], q7: 2 }), "action-rest-own-pace", "見送りでも追加制限のない候補は使う");
   assert.strictEqual(pick({ q1: "ticket", q3: "ticket-q3-03", q4: ["ticket-q4-07"], q5: ["q5-own-pace"], q7: 2 }), "action-common-reflect", "落選では自分に合ったペースの単独候補を使わない");
   assert.strictEqual(pick({ q5: ["q5-work", "q5-personal-time"], q7: 2 }), "action-common-reflect", "初回対象外の組合せは共通文");
-  console.log("OK: 小さな一歩（全 " + total + " 通り）：" + Object.entries(count).sort((a, b) => b[1] - a[1]).map(([k, v]) => k.replace("action-", "") + " " + v).slice(0, 6).join("・") + " ほか、選ばれた行動文 " + Object.keys(count).length + " 種");
+  console.log("OK: 小さな一歩（全 " + total + " 通り＝Q3 87通り×Q5 22×Q6 16×Q7 11。期待値は仕様書13.11の表の文面から作成）：選ばれた行動文 " + Object.keys(count).length + " 種");
 }
 
 // ---- 期限補足・テーマ補足 ----

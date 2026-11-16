@@ -212,10 +212,11 @@
   }
   function updateQ7(animate) {
     var v = state.answers.q7, range = $("h-q7-range"), face = faceFor(v), img = $("h-face");
+    // 未回答のときは、つまみを表示上の基準位置（5）に薄く置くだけ。この5は回答にも保存にも使わない（answers.q7 は null のまま）
     range.value = v === null ? 5 : v;
     range.classList.toggle("is-unset", v === null);
-    range.setAttribute("aria-valuetext", v === null ? "未選択" : v + "（" + (face ? face.alt : "") + "）");
-    $("h-q7-value").textContent = v === null ? "未選択" : String(v);
+    range.setAttribute("aria-valuetext", v === null ? "未回答" : v + "（" + (face ? face.alt : "") + "）");
+    $("h-q7-value").textContent = v === null ? "未回答" : String(v);
     $("h-q7-value").classList.toggle("is-unset", v === null);
     if (face) {
       if (shownFace !== face.src) {
@@ -325,8 +326,10 @@
     var range = $("h-q7-range");
     range.addEventListener("input", function () { setQ7(Number(range.value), true); });
     range.addEventListener("change", function () { setQ7(Number(range.value), true); });
-    // 未選択のままつまみ（表示位置5）を押しただけでも、その値を選んだことにする
+    // 未回答のときに本人がつまみに触れた（押して離した）ときは、その位置の値を選んだことにする（仕様書5章「触って選ぶ」）。
+    // 触れていないときの基準位置5は回答にしない
     range.addEventListener("pointerup", function () { if (state.answers.q7 === null) setQ7(Number(range.value), true); });
+    // 未回答のときの±：基準位置（5）から1つ動かした値（−で4、＋で6）を、押した時点で回答にする
     $("h-q7-minus").addEventListener("click", function () { setQ7((state.answers.q7 === null ? 5 : state.answers.q7) - 1, true); });
     $("h-q7-plus").addEventListener("click", function () { setQ7((state.answers.q7 === null ? 5 : state.answers.q7) + 1, true); });
     $("h-copy").addEventListener("click", function () { copyResult("h-copy-area-main"); });
