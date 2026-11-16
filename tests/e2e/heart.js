@@ -127,7 +127,7 @@ const serve = () => new Promise((resolve) => {
       (await p.textContent('#h-q7-value')) === '未回答' && (await p.getAttribute('#h-q7-range', 'aria-valuetext')) === '未回答' && await p.isVisible('#h-q7-skip') && !(await p.isVisible('#h-q-pick')) && JSON.parse(await stored(p)).answers.q7 === null);
     // 表示上の基準位置（5）は回答・保存値にしない：開き直しても未回答のまま。スキップした結果も未回答
     await p.reload(); await p.click('#h-resume-main');
-    check('Q7：基準位置5は保存されない（開き直しても未回答）', (await q(p)) === '7／7' && (await p.textContent('#h-q7-value')) === '未回答' && JSON.parse(await stored(p)).answers.q7 === null && (await face()) === 'moon');
+    check('Q7：未回答の中央表示は保存されない（開き直しても未回答）', (await q(p)) === '7／7' && (await p.textContent('#h-q7-value')) === '未回答' && JSON.parse(await stored(p)).answers.q7 === null && (await face()) === 'moon');
     await p.click('#h-q7-minus');
     const m4 = [await p.textContent('#h-q7-value'), JSON.parse(await stored(p)).answers.q7];
     check('Q7：未回答で − を押すと4（押した時点で回答として保存）', m4[0] === '4' && m4[1] === 4, JSON.stringify(m4));
@@ -202,7 +202,7 @@ const serve = () => new Promise((resolve) => {
     const after = await p.evaluate(() => ({ heart: localStorage.getItem('oshi-luna-heart-state-v1'), type: localStorage.getItem('oshi-luna-type'), tarot: localStorage.getItem('oshi-luna-tarot-daily-v1') }));
     check('消して最初から：こころ整理の保存だけ消え、開始前へ（診断・タロットの保存は残る）', after.heart === null && !!after.type && after.tarot === '{"keep":true}' && await p.isVisible('#h-intro') && !(await p.isVisible('#h-resume')));
     // 新しく整理すると日付も新しくなる
-    await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-skip');
+    await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-skip'); await p.waitForSelector('#h-result:not([hidden])');
     check('新しく整理した結果は、その日の日付', (await p.textContent('#h-date')) === '整理した日：2026年11月17日');
     await p.context().close();
   }
@@ -300,6 +300,89 @@ const serve = () => new Promise((resolve) => {
       await p.context().close();
     }
     check(dev + '：最初の画面で主要なボタンが見える（新規＝はじめる、回答途中＝続きから／最初から、結果あり＝前回の結果を見る／新しく整理する）', !seen.includes('NG'), seen.join(' '));
+  }
+
+  // 7c) Q7：未回答は見た目の中央・月／顔／数値と同じ中心線・タップした位置と回答値が合う
+  {
+    const p = await open();
+    await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p);
+    const geo = () => p.evaluate(() => {
+      const r = document.getElementById('h-q7-range'), rr = r.getBoundingClientRect(), T = 30; // つまみの幅（css/heart.css）
+      const v = Number(r.value), thumb = rr.left + T / 2 + (v - 1) / 9 * (rr.width - T);
+      const c = (id) => { const e = document.getElementById(id); if (e.hidden) return null; const b = e.getBoundingClientRect(); return b.left + b.width / 2; };
+      return { thumb, track: rr.left + rr.width / 2, row: c('h-q7') , moon: c('h-face-moon'), face: c('h-face'), value: c('h-q7-value'), raw: r.value, step: r.step };
+    });
+    const near = (a, b) => a !== null && Math.abs(a - b) <= 1;
+    const g0 = await geo();
+    check('Q7 未回答：つまみはスライダーの見た目の中央（専用表示・step=any）', near(g0.thumb, g0.track) && g0.step === 'any' && JSON.parse(await stored(p)).answers.q7 === null, JSON.stringify(g0));
+    check('Q7 未回答：月・数値表示・つまみが同じ中心線', near(g0.moon, g0.track) && near(g0.value, g0.track) && near(g0.row, g0.track), JSON.stringify(g0));
+    // つまみを動かさずに押して離しただけ → 未回答のまま
+    const rb = await p.locator('#h-q7-range').boundingBox();
+    await p.mouse.move(g0.thumb, rb.y + rb.height / 2); await p.mouse.down(); await p.mouse.up();
+    check('Q7 未回答：中央のつまみを押しただけでは回答にしない', (await p.textContent('#h-q7-value')) === '未回答' && JSON.parse(await stored(p)).answers.q7 === null);
+    // 線の上の 8 の位置をタップ → 8
+    const x8 = rb.x + 15 + (8 - 1) / 9 * (rb.width - 30);
+    await p.mouse.click(x8, rb.y + rb.height / 2);
+    const g8 = await geo();
+    check('Q7：タップした位置（8）の値になり、つまみもその位置', (await p.textContent('#h-q7-value')) === '8' && JSON.parse(await stored(p)).answers.q7 === 8 && near(g8.thumb, x8) && g8.step === '1', JSON.stringify(g8));
+    check('Q7 回答後：顔・数値も同じ中心線', near(g8.face, g8.track) && near(g8.value, g8.track), JSON.stringify(g8));
+    // ドラッグ：2 の位置まで動かす
+    await p.mouse.move(g8.thumb, rb.y + rb.height / 2); await p.mouse.down();
+    const x2 = rb.x + 15 + (2 - 1) / 9 * (rb.width - 30);
+    await p.mouse.move(x2, rb.y + rb.height / 2, { steps: 8 }); await p.mouse.up();
+    const g2 = await geo();
+    check('Q7：ドラッグした位置（2）の値になり、つまみもその位置', (await p.textContent('#h-q7-value')) === '2' && near(g2.thumb, x2), JSON.stringify(g2));
+    await p.context().close();
+    // キーボード：未回答から → で6、← で4
+    for (const [key, want] of [['ArrowRight', '6'], ['ArrowLeft', '4']]) {
+      const k = await open();
+      await k.goto(H); await k.click('#h-start'); await answerQ1toQ6(k);
+      await k.focus('#h-q7-range'); await k.keyboard.press(key);
+      check('Q7 未回答：キーボードの ' + key + ' で ' + want, (await k.textContent('#h-q7-value')) === want && String(JSON.parse(await stored(k)).answers.q7) === want);
+      await k.context().close();
+    }
+  }
+
+  // 7d) 整理中の画面：約3秒（動きを減らす設定では静止・約0.3秒）・計算と保存は1回・連打・再読み込み・保存済みの結果は演出なし
+  {
+    const countWrites = (key) => { window.__resultWrites = 0; const o = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) { if (k === key && String(v).includes('"phase":"result"')) window.__resultWrites++; return o.call(this, k, v); }; };
+    const p = await open({ time: new Date('2026-11-17T10:00:00+09:00') });
+    await p.addInitScript(countWrites, KEY); await p.goto(H);
+    await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-plus');
+    await p.locator('#h-next').dblclick(); await p.click('#h-q7-skip', { force: true }).catch(() => {});
+    const l0 = { loading: await p.isVisible('#h-loading'), text: await p.textContent('#h-loading-text'), art: await p.isVisible('.h-loading-art'), result: await p.isVisible('#h-result') };
+    check('整理中：［整理した結果を見る］で整理中の画面（文・ルナ）', l0.loading && l0.text === 'ルナが、あなたの気持ちを整理しています……' && l0.art && !l0.result, JSON.stringify(l0));
+    const st = JSON.parse(await stored(p));
+    check('整理中：結果は押した時点で1回だけ作って保存（連打・スキップを重ねても1回、Q7 は回答のまま）', (await p.evaluate(() => window.__resultWrites)) === 1 && st.phase === 'result' && st.answers.q7 === 6, String(await p.evaluate(() => window.__resultWrites)));
+    const anim = await p.evaluate(() => getComputedStyle(document.querySelector('.h-loading-art')).animationName);
+    await p.clock.runFor(2800);
+    check('整理中：約3秒のあいだは整理中のまま（ルナがふわっと動く）', await p.isVisible('#h-loading') && !(await p.isVisible('#h-result')) && anim === 'floaty', anim);
+    await p.clock.runFor(300);
+    check('整理中：約3秒で結果へ', await p.isVisible('#h-result') && !(await p.isVisible('#h-loading')) && (await p.evaluate(() => window.__resultWrites)) === 1);
+    // 保存済みの結果を見返す：演出なし
+    await p.reload();
+    await p.evaluate(() => { window.__sawLoading = false; new MutationObserver(() => { if (!document.getElementById('h-loading').hidden) window.__sawLoading = true; }).observe(document.getElementById('h-loading'), { attributes: true }); });
+    await p.click('#h-resume-main');
+    check('保存済みの結果を見返す：整理中の画面なしですぐ表示', await p.isVisible('#h-result') && !(await p.evaluate(() => window.__sawLoading)));
+    await p.context().close();
+    // 整理中に再読み込み → 整理中で止まらず、前回の結果の案内
+    const q = await open({ time: new Date('2026-11-17T10:00:00+09:00') });
+    await q.goto(H); await q.click('#h-start'); await answerQ1toQ6(q); await q.click('#h-q7-skip');
+    check('整理中：［答えずに結果を見る］からも整理中の画面', await q.isVisible('#h-loading') && JSON.parse(await stored(q)).answers.q7 === null);
+    await q.reload();
+    check('整理中に再読み込み：整理中の画面で止まらず、前回の結果の案内が出る', !(await q.isVisible('#h-loading')) && (await q.textContent('#h-resume-text')) === D.ui.resumeResult);
+    await q.context().close();
+    // 動きを減らす設定：静止・約0.3秒
+    const r = await open({ reduce: true, time: new Date('2026-11-17T10:00:00+09:00') });
+    await r.goto(H); await r.click('#h-start'); await answerQ1toQ6(r); await r.click('#h-q7-skip');
+    const ra = await r.evaluate(() => [...document.querySelectorAll('#h-loading, #h-loading *')].map((e) => getComputedStyle(e).animationName).filter((n) => n !== 'none'));
+    check('動きを減らす設定：整理中は静止', await r.isVisible('#h-loading') && ra.length === 0, ra.join(','));
+    await r.clock.runFor(250);
+    const still = await r.isVisible('#h-loading');
+    await r.clock.runFor(100);
+    check('動きを減らす設定：約0.3秒で結果へ', still && await r.isVisible('#h-result'));
+    await r.context().close();
   }
 
   // 8) トップと診断結果画面の入口（未診断・診断済みのどちらでも、診断カードの直後）

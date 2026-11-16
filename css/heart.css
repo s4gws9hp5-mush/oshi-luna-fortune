@@ -1,5 +1,9 @@
 /* ルナのこころ整理（heart/index.html）専用。既存の色・カード・ボタン（css/style.css）を使い、名前は h- で分ける */
 .h-screen[hidden] { display: none; }
+/* 整理中：既存の読み込み画面（.loading）と同じ見た目。文は狭い画面で読点の後に改行しやすいよう少し小さめ */
+.h-loading { padding-top: 14vh; }
+.h-loading-text { margin: 0 8px; font-size: 0.96rem; line-height: 1.8; letter-spacing: 0.04em; }
+.h-loading-text:focus { outline: none; }
 .heart .guide-hero { margin-top: 4px; }
 /* 開始前：スマホの最初の画面で、開始（または続きから）のボタンまで見えるように詰める */
 .h-intro { text-align: center; }
@@ -62,7 +66,7 @@
 .h-face-wrap { display: grid; place-items: center; width: 150px; height: 150px; margin: 0 auto 4px; }
 .h-face { width: 150px; height: 150px; }
 .h-face[hidden], .h-face-moon[hidden] { display: none; }
-.h-face-moon { font-size: 4.2rem; line-height: 1; }
+.h-face-moon { display: block; width: 1em; font-size: 4.2rem; line-height: 1; text-align: center; }
 .h-face.is-pop { animation: h-pop 0.32s ease; }
 @keyframes h-pop {
   0% { transform: scale(1); }
@@ -124,7 +128,7 @@
   border-radius: 50%;
   box-shadow: 0 2px 8px rgba(122, 91, 214, 0.45);
 }
-/* 未回答：つまみは表示上の基準位置（5）に薄く出す。表示は「未回答」のまま（5を回答・保存値にしない） */
+/* 未回答：つまみはスライダーの見た目の中央に点線で出す（未回答専用の表示。回答・保存値にしない） */
 .h-slider.is-unset::-webkit-slider-thumb { background: var(--white); border: 3px dashed #7a5bd6; box-shadow: none; }
 .h-slider.is-unset::-moz-range-thumb { background: var(--white); border: 3px dashed #7a5bd6; box-shadow: none; }
 .h-scale { display: flex; justify-content: space-between; gap: 12px; margin: 6px 4px 0; font-size: 0.78rem; color: var(--ink-soft); text-align: left; }

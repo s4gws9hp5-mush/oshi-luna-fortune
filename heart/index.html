@@ -99,6 +99,14 @@
       <button type="button" class="btn-back" id="h-back">‹ 戻る</button>
     </section>
 
+    <!-- 整理中（約3秒の表示だけの演出。動きを減らす設定では静止・約0.3秒） -->
+    <section class="h-screen loading h-loading" id="h-loading" aria-live="polite" hidden>
+      <div class="loading-sky" aria-hidden="true"><span>✦</span><span>☾</span><span>✦</span></div>
+      <img class="mascot loading-art h-loading-art" src="../images/luna-cat.png" width="640" height="513" alt="">
+      <p class="loading-text h-loading-text" id="h-loading-text" role="status" tabindex="-1"></p>
+      <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+    </section>
+
     <!-- 結果 -->
     <section class="h-screen" id="h-result" aria-labelledby="h-result-title" hidden>
       <div class="hero guide-hero">

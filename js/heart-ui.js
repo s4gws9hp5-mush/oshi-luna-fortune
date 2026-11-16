@@ -45,7 +45,7 @@
 
   function show(screen) {
     state.screen = screen;
-    ["intro", "question", "result"].forEach(function (s) { $("h-" + s).hidden = s !== screen; });
+    ["intro", "question", "loading", "result"].forEach(function (s) { $("h-" + s).hidden = s !== screen; });
     $("h-save-failed").hidden = !(state.saveFailed && screen !== "intro");
     window.scrollTo(0, 0);
   }
@@ -221,6 +221,7 @@
     return null;
   }
   var shownFace = null;
+  var CENTER = (D.q7.min + D.q7.max) / 2; // 5.5：スライダーの見た目の中央
   function renderQ7() {
     $("h-q7-low").textContent = D.q7.lowLabel; $("h-q7-high").textContent = D.q7.highLabel;
     $("h-q7-note").textContent = D.q7.note; $("h-q7-skip").textContent = D.q7.skip;
@@ -228,8 +229,10 @@
   }
   function updateQ7(animate) {
     var v = state.answers.q7, range = $("h-q7-range"), face = faceFor(v), img = $("h-face");
-    // 未回答のときは、つまみを表示上の基準位置（5）に薄く置くだけ。この5は回答にも保存にも使わない（answers.q7 は null のまま）
-    range.value = v === null ? 5 : v;
+    // 未回答：つまみをスライダーの見た目の中央（1〜10 の 5.5 の位置）に薄く置く、未回答専用の表示。
+    // この位置は回答にも保存にも使わない（answers.q7 は null のまま）。回答後は実際の数値の位置（step=1）に戻す
+    range.step = v === null ? "any" : "1";
+    range.value = v === null ? CENTER : v;
     range.classList.toggle("is-unset", v === null);
     range.setAttribute("aria-valuetext", v === null ? "未回答" : v + "（" + (face ? face.alt : "") + "）");
     $("h-q7-value").textContent = v === null ? "未回答" : String(v);
@@ -252,14 +255,27 @@
   }
 
   // ---- 結果 ----
+  // ［整理した結果を見る］［答えずに結果を見る］：結果は押したときに1回だけ作って保存し、そのあと約3秒の整理中の画面
+  // （表示だけの演出。文章を作ったり外へ送ったりはしない）を見せてから表示する。
+  // 先に保存するので、整理中に再読み込みしても、開き直すと「前回の結果」として出る（整理中の画面では止まらない）
+  var LOADING_MS = 3000, REDUCED_MS = 300, finishing = false;
+  function reduceMotion() { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
   function finish(skipQ7) {
+    if (finishing) return; // 連打しても1回だけ
     if (skipQ7) state.answers.q7 = null;
     var result = R.buildResult(state.answers);
     if (!result) return;
+    finishing = true;
+    $("h-next").disabled = true; $("h-q7-skip").disabled = true;
     state.result = result; state.dateKey = R.jstDateKey(new Date());
     persist();
-    show("result"); renderResult();
-    $("h-result-title").focus({ preventScroll: true });
+    show("loading");
+    $("h-loading-text").focus({ preventScroll: true });
+    window.setTimeout(function () {
+      finishing = false; $("h-q7-skip").disabled = false;
+      show("result"); renderResult();
+      $("h-result-title").focus({ preventScroll: true });
+    }, reduceMotion() ? REDUCED_MS : LOADING_MS);
   }
   function rows(box, list) {
     box.textContent = "";
@@ -333,6 +349,7 @@
     var res = store.read();
     state.stored = res.status;
     state.saved = res.status === "ok" ? res.record : null;
+    phrased($("h-loading-text"), D.ui.loading);
     renderIntro(); show("intro");
     $("h-start").addEventListener("click", begin);
     $("h-intro-delete").addEventListener("click", function () { openConfirm(); });
@@ -340,14 +357,21 @@
     $("h-back").addEventListener("click", function () { go(-1); });
     $("h-q7-skip").addEventListener("click", function () { finish(true); });
     var range = $("h-q7-range");
-    range.addEventListener("input", function () { setQ7(Number(range.value), true); });
-    range.addEventListener("change", function () { setQ7(Number(range.value), true); });
-    // 未回答のときに本人がつまみに触れた（押して離した）ときは、その位置の値を選んだことにする（仕様書5章「触って選ぶ」）。
-    // 触れていないときの基準位置5は回答にしない
-    range.addEventListener("pointerup", function () { if (state.answers.q7 === null) setQ7(Number(range.value), true); });
-    // 未回答のときの±：基準位置（5）から1つ動かした値（−で4、＋で6）を、押した時点で回答にする
-    $("h-q7-minus").addEventListener("click", function () { setQ7((state.answers.q7 === null ? 5 : state.answers.q7) - 1, true); });
-    $("h-q7-plus").addEventListener("click", function () { setQ7((state.answers.q7 === null ? 5 : state.answers.q7) + 1, true); });
+    // タップ・ドラッグした位置の値（未回答の中央表示のあいだは step=any なので、いちばん近い整数にする）
+    var rangeValue = function () { return Math.round(Number(range.value)); };
+    range.addEventListener("input", function () { if (Number(range.value) !== CENTER || state.answers.q7 !== null) setQ7(rangeValue(), true); });
+    range.addEventListener("change", function () { if (Number(range.value) !== CENTER || state.answers.q7 !== null) setQ7(rangeValue(), true); });
+    // 未回答の中央（5.5）のつまみを動かさずに押して離しただけのときは、4と5のどちらとも決められないので未回答のまま
+    // （位置と回答値が食い違わないように。少しでも動かすか、線の上をタップすると、その位置の値になる）
+    // キーボード：未回答のときは ±ボタンと同じく ←↓ で4、→↑ で6
+    range.addEventListener("keydown", function (e) {
+      if (state.answers.q7 !== null) return;
+      var d = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key];
+      if (d) { e.preventDefault(); setQ7(d < 0 ? 4 : 6, true); }
+    });
+    // 未回答のときの±：−で4、＋で6 を、押した時点で回答にする
+    $("h-q7-minus").addEventListener("click", function () { setQ7(state.answers.q7 === null ? 4 : state.answers.q7 - 1, true); });
+    $("h-q7-plus").addEventListener("click", function () { setQ7(state.answers.q7 === null ? 6 : state.answers.q7 + 1, true); });
     $("h-copy").addEventListener("click", function () { copyResult("h-copy-area-main"); });
     $("h-again").addEventListener("click", function () { openConfirm(); });
     $("h-result-delete").addEventListener("click", function () { openConfirm(); });
