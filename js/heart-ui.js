@@ -361,8 +361,18 @@
     var rangeValue = function () { return Math.round(Number(range.value)); };
     range.addEventListener("input", function () { if (Number(range.value) !== CENTER || state.answers.q7 !== null) setQ7(rangeValue(), true); });
     range.addEventListener("change", function () { if (Number(range.value) !== CENTER || state.answers.q7 !== null) setQ7(rangeValue(), true); });
-    // 未回答の中央（5.5）のつまみを動かさずに押して離しただけのときは、4と5のどちらとも決められないので未回答のまま
-    // （位置と回答値が食い違わないように。少しでも動かすか、線の上をタップすると、その位置の値になる）
+    // 未回答のとき、中央（5.5）の点線のつまみの上（5・6 の位置を含む）をタップしても、ブラウザはつまみをつかんだだけと扱い、
+    // 値が変わらない。そこで、指を離した位置から値を求める（つまみの中心が動く範囲に対する位置 → 1〜10 のいちばん近い値）。
+    // 中央（5.5）のごく近く（5と6のちょうど間）を押しただけのときは、どちらとも決められないので未回答のまま
+    var THUMB = 30; // つまみの幅（css/heart.css の .h-slider のつまみ）
+    range.addEventListener("pointerup", function (e) {
+      if (state.answers.q7 !== null) return;
+      var r = range.getBoundingClientRect(), span = r.width - THUMB;
+      if (span <= 0) return;
+      var raw = D.q7.min + Math.max(0, Math.min(1, (e.clientX - r.left - THUMB / 2) / span)) * (D.q7.max - D.q7.min);
+      if (Math.abs(raw - CENTER) < 0.25) return;
+      setQ7(Math.round(raw), true);
+    });
     // キーボード：未回答のときは ±ボタンと同じく ←↓ で4、→↑ で6
     range.addEventListener("keydown", function (e) {
       if (state.answers.q7 !== null) return;

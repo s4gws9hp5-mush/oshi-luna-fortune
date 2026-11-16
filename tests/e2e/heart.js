@@ -326,6 +326,32 @@ const serve = () => new Promise((resolve) => {
     const g8 = await geo();
     check('Q7：タップした位置（8）の値になり、つまみもその位置', (await p.textContent('#h-q7-value')) === '8' && JSON.parse(await stored(p)).answers.q7 === 8 && near(g8.thumb, x8) && g8.step === '1', JSON.stringify(g8));
     check('Q7 回答後：顔・数値も同じ中心線', near(g8.face, g8.track) && near(g8.value, g8.track), JSON.stringify(g8));
+    // 1〜10 のすべての位置：未回答からタップしても、回答済みからタップしても、その値になり、つまみもその位置
+    const mismatch = [];
+    for (const from of ['unset', 'answered']) for (let v = 1; v <= 10; v++) {
+      const t = await open();
+      await t.goto(H); await t.click('#h-start'); await answerQ1toQ6(t);
+      if (from === 'answered') await t.click(v <= 5 ? '#h-q7-plus' : '#h-q7-minus'); // 6 か 4 にしてから
+      const b = await t.locator('#h-q7-range').boundingBox(), x = b.x + 15 + (v - 1) / 9 * (b.width - 30);
+      await t.mouse.click(x, b.y + b.height / 2);
+      const got = await t.evaluate(() => { const r = document.getElementById('h-q7-range'), rr = r.getBoundingClientRect();
+        return { text: document.getElementById('h-q7-value').textContent, raw: r.value, thumb: rr.left + 15 + (Number(r.value) - 1) / 9 * (rr.width - 30) }; });
+      const saved = JSON.parse(await stored(t)).answers.q7;
+      if (got.text !== String(v) || saved !== v || Math.abs(got.thumb - x) > 1) mismatch.push(from + ':' + v + '→' + got.text + '/' + saved);
+      await t.context().close();
+    }
+    check('Q7：1〜10 のどの位置をタップしても、その値になり、つまみもその位置（未回答から・回答済みから）', mismatch.length === 0, mismatch.join(' '));
+    // 中央（5.5）のすぐ近く（5と6のちょうど間）を押しただけ → 未回答のまま。5・6 寄りなら 5・6
+    {
+      const t = await open();
+      await t.goto(H); await t.click('#h-start'); await answerQ1toQ6(t);
+      const b = await t.locator('#h-q7-range').boundingBox(), at = (v) => b.x + 15 + (v - 1) / 9 * (b.width - 30), y = b.y + b.height / 2;
+      await t.mouse.click(at(5.6), y);
+      const c = [await t.textContent('#h-q7-value')];
+      await t.mouse.click(at(5.2), y); c.push(await t.textContent('#h-q7-value'));
+      check('Q7：未回答で 5と6の間（5.6）を押しても未回答のまま、5寄り（5.2）を押すと5', c[0] === '未回答' && c[1] === '5', c.join(','));
+      await t.context().close();
+    }
     // ドラッグ：2 の位置まで動かす
     await p.mouse.move(g8.thumb, rb.y + rb.height / 2); await p.mouse.down();
     const x2 = rb.x + 15 + (2 - 1) / 9 * (rb.width - 30);
