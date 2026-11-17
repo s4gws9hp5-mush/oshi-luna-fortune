@@ -152,15 +152,15 @@
   letter-spacing: 0.04em;
   color: #5b3fb0;
 }
-/* 見出しの文字に、蛍光ペンで線を引いたようなマーカー（文字の下半分・文字の長さだけ・折り返しても行ごと）。絵文字には付けない */
+/* 見出しの文字に、蛍光ペンで線を引いたようなマーカー（文字の下半分に重なる太さ 38〜92%・文字の長さだけ・折り返しても行ごと）。絵文字には付けない */
 .h-hl {
   padding: 0 0.12em;
-  background: linear-gradient(transparent 56%, var(--h-marker) 56%, var(--h-marker) 92%, transparent 92%);
+  background: linear-gradient(transparent 38%, var(--h-marker) 38%, var(--h-marker) 92%, transparent 92%);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.card-blue .h-hl { --h-marker: #ffd3e7; }     /* 水色のカードには淡いピンク */
-.card-pink .h-hl { --h-marker: #dcd0ff; }     /* ピンクのカードには淡いラベンダー */
+.card-blue .h-hl { --h-marker: #dcd0ff; }     /* 今、気になっていること：淡いラベンダー */
+.card-pink .h-hl { --h-marker: #ffd3e7; }     /* 大切にしたいこと：淡いピンク */
 .card-lavender .h-hl { --h-marker: #fff0a6; } /* ラベンダーのカードには淡いレモン */
 .card-cream .h-hl { --h-marker: #cde6ff; }    /* クリームのカードには淡い水色 */
 /* 余白（文字の端から）：質問→回答 8px、回答の最後の行→点線 16px、点線→次の質問 16px。回答が複数行でも同じ */

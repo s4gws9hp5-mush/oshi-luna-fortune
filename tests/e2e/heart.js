@@ -398,11 +398,14 @@ const serve = () => new Promise((resolve) => {
       const c = getComputedStyle(h), m = h.querySelector('.h-hl'), e = h.querySelector('.h-sec-emoji'), mc = getComputedStyle(m), ec = getComputedStyle(e);
       const hr = h.getBoundingClientRect(), mr = m.getBoundingClientRect();
       return { text: h.textContent, band: c.backgroundColor === 'rgba(0, 0, 0, 0)' && c.backgroundImage === 'none' && parseFloat(c.borderBottomWidth) === 0,
-        marker: /linear-gradient/.test(mc.backgroundImage) && /transparent|rgba\(0, 0, 0, 0\)/.test(mc.backgroundImage), lowerHalf: /56%/.test(mc.backgroundImage),
+        marker: /linear-gradient/.test(mc.backgroundImage) && /transparent|rgba\(0, 0, 0, 0\)/.test(mc.backgroundImage), lowerHalf: /38%/.test(mc.backgroundImage) && /92%/.test(mc.backgroundImage), markerColor: (mc.backgroundImage.match(/rgb\([^)]*\)/) || [''])[0],
         clone: (mc.boxDecorationBreak || mc.webkitBoxDecorationBreak) === 'clone', emojiPlain: ec.backgroundImage === 'none' && e.getAttribute('aria-hidden') === 'true',
         fitsText: mr.width < hr.width - 20, color: mc.color };
     }));
     const sections = Object.values(R.SECTIONS);
+    // マーカーの色：気になっていること＝ラベンダー、大切にしたいこと＝ピンク、ひとこと＝レモン、小さな一歩＝水色
+    const COLORS = ['rgb(220, 208, 255)', 'rgb(255, 211, 231)', 'rgb(255, 240, 166)', 'rgb(205, 230, 255)'];
+    check('結果：マーカーの色（ラベンダー・ピンク・レモン・水色）', mk.length === 4 && mk.every((x, i) => x.markerColor === COLORS[i]), mk.map((x) => x.markerColor).join(' / '));
     check('結果：見出しの帯と下線を外し、文字の下半分にだけ文字の長さのマーカー（絵文字には付けない・文字は濃い紫・文は同じ）',
       mk.length === 4 && mk.every((x, i) => x.text === sections[i] && x.band && x.marker && x.lowerHalf && x.clone && x.emojiPlain && x.fitsText && x.color === 'rgb(91, 63, 176)'), JSON.stringify(mk));
     // 見出しが折り返すとき：行ごとに文字に沿ってマーカーが付く（狭い幅で折り返させて確かめる）
