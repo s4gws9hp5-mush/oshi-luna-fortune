@@ -156,7 +156,9 @@ URL の最後に `?preview-date=2026-10-19` のように日付を付けると、
 - 文章（Q2の「ルナからのひとこと」47件・テーマ補足・今できる小さな一歩39件・案内文）は `js/heart-data.js`。仕様書の採用文をそのまま収録しています（言い換え・短縮なし）
 - 選び方は `js/heart-rules.js`：Q2本文は選んだ番号の昇順（クリック順は使わない）。小さな一歩は仕様書13.11の選択順（Q7が8〜10なら休息文 → Q6 の候補 → Q6 が「まだ分からない」なら Q5 の候補 → 限定条件の期限専用文 → 共通文）。期限の共通補足は13.9・13.12（小さな一歩の直後に最大1回）
 - 回答と結果は、この端末の localStorage の `oshi-luna-heart-state-v1` にだけ保存します（`js/heart-storage.js`）。保存がない／読み込めた／読み込めない／保存領域にアクセスできない、を区別し、書込・削除は読み直して確かめます。既存の保存内容を本人の確認なしに上書きしないよう、書き込むのは「保存がない」と読んで確かめたとき・本人が［続きから］［前回の結果を見る］を選んだとき・削除を確かめたあとだけです（保存領域に入れない間は書かず、画面での利用は続けられます）。削除は、消したあと読んで保存がないと確かめられたときだけ成功とします。読み込めない内容は自動で消さず、本人が［消して最初から］を選んだときだけ消します。ほかの保存データには触れません
-- URL・アクセス解析・運営側へは回答も結果も送りません。このページには Google タグを入れていません（下の「アクセス解析」）
+- **回答・結果を送信しないこと**：回答と結果は、この端末のブラウザ（localStorage）にだけ保存します。URL に含めず、運営側のサーバー・アクセス解析・外部のサービスへ送る処理はありません（ページが読み込むのは、このサイトの HTML・CSS・JS・画像だけです）
+- **アクセス解析を行わないこと**：このページでは、Google Analytics 4 も Cloudflare Web Analytics も使いません。Google タグは入れていません。Cloudflare Web Analytics は、2026-11-17 に `oshi-luna.com` の設定を無効にしたため、計測スクリプトの自動挿入はありません（下の「アクセス解析」）
+  - これは「解析ツールでページの閲覧を計測しない」という意味です。ページの配信のしくみ上、Cloudflare などの配信・セキュリティのための通常の記録（アクセスの記録など）は、解析とは別にあり得ます
 - Q7 のルナの表情は `images/heart/luna-face-01.png`〜`05.png`（原本 `images/heart/source/luna-faces-original.png` から、仕様書19.1の範囲 400×400px で切り出したもの。描き直し・縮小なし）
 - 開始前の画面は、スマホの最初の画面で開始（保存内容があるときは［続きから］［前回の結果を見る］）のボタンまで見えるよう、要点だけを上に置き、仕様書3章の説明は［詳しい説明・保存について］の折りたたみの中に入れています（重複していた「運営側へ送信されません」の行は1つにまとめました）。上の要点の文は `ui.introLead`・`introFree`・`introPrivacy`
 - Q7 は任意で、操作するまでは「未回答」（`null`）。未回答のあいだは、つまみをスライダーの見た目の中央（1〜10 の 5.5 の位置）に点線で置く未回答専用の表示で、回答・保存値にはしません。未回答から −／＋（キーボードの ←↓／→↑）で 4／6。線の上をタップ・ドラッグしたときはその位置のいちばん近い数値にし、つまみは回答した数値の位置に表示します。未回答のときに点線のつまみの上（5・6 の位置を含む）を押したときも、指を離した位置から値を決めます。中央（5.5。5と6のちょうど間）のごく近くを押しただけのときは、未回答のままです。月・顔・数値はスライダーと同じ中心線にそろえています
@@ -221,7 +223,7 @@ tests/tarot.js        今日の一枚（タロット）の無料データ・抽�
 tests/tarot-ui.js     今日の一枚の画面のテスト
 tests/tarot-assets.js 今日の一枚のカード画像と対応表のテスト
 tests/e2e/share.js    画像の保存・シェアのブラウザテスト（Playwright + Chromium。tests/e2e/README.md）
-heart/index.html      ルナのこころ整理（7問・結果・端末内保存。アクセス解析なし）
+heart/index.html      ルナのこころ整理（7問・結果・端末内保存。Google／Cloudflare のアクセス解析なし）
 css/heart.css         ルナのこころ整理のデザイン
 js/heart-data.js      ルナのこころ整理の文章・選択肢（仕様書の採用文）
 js/heart-rules.js     ルナのこころ整理の回答の検証と結果の選び方（ブラウザと Node.js の両方で動く）
@@ -274,14 +276,30 @@ tests/e2e/heart.js    ルナのこころ整理のブラウザテスト
 - `types/index.html` のタイプの文章（名前・キャッチ・性格・輝くところ）と4つの傾向の説明は `js/data.js` と同じ文章です。データを直したときは、このページも同じように直してください（`node tests/check.js` が、文章のずれ・問題数・リンク切れ・各ページの title／description／canonical／OGP を確認します）
 - 「無料」は、案内・ボタン周り・よくある質問・シェア画像などで強調しません（2026-11-17。料金・機能は変えていません）。title・description・OGP にも入れません
 
-## アクセス解析（Google Analytics 4）
+## アクセス解析（Google Analytics 4・Cloudflare Web Analytics）
+
+### Google Analytics 4
+
 
 - `index.html` の `<head>` のいちばん上に、GA4 の公式タグ（gtag.js、測定ID `G-GW3MQNMW58`）を1回だけ入れています
 - 計測するのはページを開いたとき（ページビュー）だけです。診断・今日の占い・結果は同じページの中で切り替わるので、切り替えのたびには計測しません。診断の答えや結果、占いの記録は送っていません
 - ページを増やしたときは、同じタグを新しいページの `<head>` にも1回だけ入れてください（`node tests/check.js` で、すべての HTML に1回だけあるかを確認します）
-- 例外：ルナのこころ整理（`heart/index.html`）には入れていません。回答・結果を運営側・解析へ送らない機能のため、ページを開いた記録も取りません（`tests/check.js` の `NO_ANALYTICS`）
+- 例外：ルナのこころ整理（`heart/index.html`）には入れていません。こころ整理ではアクセス解析を行わない方針のためです（`tests/check.js` の `NO_ANALYTICS` で、タグがないことを確認します）
 - 広告ブロックなどで gtag.js が読み込めなくても、サイトはそのまま動きます。Service Worker は外部のファイルを扱わないので、gtag.js はキャッシュされません
 - プレビュー（`pages.dev`）・GitHub Pages のアドレスやローカルで開いたときも、同じ測定IDで計測されます
+
+### Cloudflare Web Analytics（使っていません）
+
+- Cloudflare Web Analytics は、有効にすると Cloudflare が配信のときに全ページの HTML へ計測スクリプト（`static.cloudflareinsights.com/beacon.min.js`）を自動で入れます。リポジトリのファイルには現れません
+- 2026-11-17 に、こころ整理を計測しないため、Cloudflare の管理画面で `oshi-luna.com` の Web Analytics を無効にしました。Pages プロジェクト（`oshi-luna-fortune`）側の Web Analytics も無効です。サイト全体で Cloudflare Web Analytics を使っていません（閲覧の計測はトップと `types/` の Google Analytics 4 だけ）
+- 設定は管理画面にあり、このリポジトリのテストでは確かめられません。設定を変えたとき・公開したあとは、次で確かめてください
+  - `curl -s -H 'Accept: text/html' https://oshi-luna.com/heart/ | grep -c cloudflareinsights` が `0`（トップ・`types/` も同じ）。`Accept: text/html` を付けないと、挿入の有無が分からないことがあります
+  - ブラウザの開発者ツールのネットワークで、`/heart/` を開いて操作しても `cloudflareinsights.com`・`googletagmanager.com`・`google-analytics.com` への通信がない
+- 再び有効にする場合は、こころ整理（`/heart/`）を対象から外す設定（Web Analytics のルール）が必要です
+- 確認の記録（2026-11-17・無効にしたあと）
+  - 本番の HTML：トップ・`types/`・`/heart/` とも Cloudflare の計測スクリプトなし。Google タグはトップと `types/` に1つずつ、`/heart/` にはなし
+  - テスト用のブラウザで本番の `/heart/` を開き、開始・1問目の回答・再読み込みまで操作：通信 53件はすべて `oshi-luna.com` で、Cloudflare・Google の解析への通信は 0件
+  - トップ：Google タグ（`googletagmanager.com`）の読み込みが行われることを確認。その先の Google Analytics への送信は、確認した環境から Google に接続できないため、未確認
 
 ## 確認方法
 
