@@ -304,22 +304,17 @@
     var act = r.action.paragraphs.slice();
     if (r.action.deadlineSupplement) act.push(r.action.deadlineSupplement);
     fill($("h-action"), act);
-    // Coming Soon（採用文。ボタンは整理結果のコピー）
+    // Coming Soon（採用文）。コピーボタンは結果直後のメインのボタンだけにする（案内の中の［整理結果をコピーする］は表示しない）
     var soon = $("h-soon"); soon.textContent = "";
     D.ui.comingSoon.forEach(function (t, i) {
-      if (/^［.+］$/.test(t)) {
-        var b = el("button", "btn btn-ghost h-copy", button(t)); b.type = "button";
-        b.addEventListener("click", function () { copyResult("h-copy-area-soon"); });
-        soon.appendChild(b);
-      } else {
-        var p = para(t); if (i === 2) p.className = "h-soon-title"; soon.appendChild(p);
-      }
+      if (/^［.+］$/.test(t)) return;
+      var p = para(t); if (i === 2) p.className = "h-soon-title"; soon.appendChild(p);
     });
     clearCopyAreas();
   }
 
   // ---- コピー（6.4） ----
-  function clearCopyAreas() { $("h-copy-area-main").textContent = ""; $("h-copy-area-soon").textContent = ""; }
+  function clearCopyAreas() { $("h-copy-area-main").textContent = ""; }
   function legacyCopy(text) {
     var ta = document.createElement("textarea");
     ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "0"; ta.style.opacity = "0";

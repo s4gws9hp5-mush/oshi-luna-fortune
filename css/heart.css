@@ -199,7 +199,7 @@
   -webkit-user-select: text;
   user-select: text;
 }
-.h-soon { margin-top: 26px; text-align: center; font-size: 0.92rem; line-height: 1.9; }
+.h-soon { margin-top: 26px; padding-bottom: 20px; text-align: center; font-size: 0.92rem; line-height: 1.9; } /* コピーボタンを外したので、上下の余白を同じに */
 .h-soon p + p { margin-top: 10px; }
 .h-soon .h-soon-title { font-weight: 700; color: var(--lavender-deep); }
 .h-home { text-align: center; }

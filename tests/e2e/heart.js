@@ -181,6 +181,12 @@ const serve = () => new Promise((resolve) => {
     check('結果：4区分の順番', sections.join('|') === Object.values(R.SECTIONS).join('|'), sections.join('|'));
     check('結果：注意文・Coming Soon（料金・受付日・申込みリンクなし）', (await p.textContent('#h-result-notice')) === D.ui.resultNotice &&
       (await p.textContent('#h-soon')).includes('✨ 個別鑑定 Coming Soon') && (await p.locator('#h-soon a').count()) === 0 && !/円|￥|受付開始|申し込む/.test(await p.textContent('#h-soon')));
+    // コピーボタンは結果直後の1つだけ（Coming Soon の案内の中には置かない）。案内文は採用文のまま・「もう一度整理する」は残す
+    const soonInfo = await p.evaluate(() => ({ buttons: document.querySelectorAll('#h-soon button').length, copyButtons: [...document.querySelectorAll('#h-result button')].filter((b) => b.textContent.includes('整理結果をコピーする')).length,
+      paras: [...document.querySelectorAll('#h-soon p')].map((x) => x.textContent), soonArea: !!document.getElementById('h-copy-area-soon'), again: !!document.getElementById('h-again') && getComputedStyle(document.getElementById('h-again')).display !== 'none' }));
+    const soonText = D.ui.comingSoon.filter((t) => !/^［.+］$/.test(t)).map((t) => t.replace(/\n/g, ''));
+    check('結果：コピーボタンは結果直後の1つだけ・Coming Soon の中にはない・案内文はそのまま・もう一度整理するは残る',
+      soonInfo.buttons === 0 && soonInfo.copyButtons === 1 && !soonInfo.soonArea && soonInfo.again && JSON.stringify(soonInfo.paras) === JSON.stringify(soonText), JSON.stringify(soonInfo));
     // コピー成功：コピーした文章 = 表示と同じ内容
     await p.click('#h-copy'); await p.waitForTimeout(200);
     const clip = await p.evaluate(() => navigator.clipboard.readText());
@@ -260,8 +266,8 @@ const serve = () => new Promise((resolve) => {
       document.execCommand = () => false;
     } });
     await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-skip');
-    await p.click('#h-soon button');
-    const area = await p.evaluate(() => { const a = document.getElementById('h-copy-area-soon'); const t = a.querySelector('textarea'); return { msg: a.querySelector('.h-copy-status').textContent, text: t && t.value, ro: t && t.readOnly }; });
+    await p.click('#h-copy');
+    const area = await p.evaluate(() => { const a = document.getElementById('h-copy-area-main'); const t = a.querySelector('textarea'); return { msg: a.querySelector('.h-copy-status').textContent, text: t && t.value, ro: t && t.readOnly }; });
     const st = JSON.parse(await stored(p));
     check('コピー失敗：案内と、コピーする予定だった全文（成功表示なし）', area.msg === D.ui.copyFailed && area.text === R.copyText(st.resultSnapshot, st.resultDate) && area.ro && !(await p.textContent('#h-result')).includes(D.ui.copySuccess));
     check('コピー失敗でも回答・結果は消えない', st.phase === 'result');
