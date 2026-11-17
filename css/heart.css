@@ -140,11 +140,11 @@
 /* 結果 */
 .h-date { margin: 6px 0 0; }
 .h-result-notice { font-size: 0.86rem; }
-/* 結果の4区分：見出しは大きく・太く・濃い紫で、淡い帯と区切り線で本文と分ける。
+/* 結果の4区分：見出しは大きく・太く・濃い紫で、文字に蛍光ペン風のマーカー。
    質問ラベルは小さく補助的に、回答と本文は濃さと行間を保って太字にしすぎない */
 .h-section { padding-top: 0; overflow: hidden; }
 .h-section .card-title {
-  margin: 0 -20px 16px;
+  margin: 0 -20px 7px; /* 大見出し→最初の文章（文字の端から）を4カードとも 24px にそろえる */
   padding: 13px 20px 12px;
   font-size: 1.14rem;
   font-weight: 800;
@@ -163,12 +163,22 @@
 .card-pink .h-hl { --h-marker: #ffd3e7; }     /* 大切にしたいこと：淡いピンク */
 .card-lavender .h-hl { --h-marker: #fff0a6; } /* ラベンダーのカードには淡いレモン */
 .card-cream .h-hl { --h-marker: #cde6ff; }    /* クリームのカードには淡い水色 */
-/* 余白（文字の端から）：質問→回答 8px、回答の最後の行→点線 16px、点線→次の質問 16px。回答が複数行でも同じ */
-.h-row + .h-row { margin-top: 16px; padding-top: 13px; border-top: 1px dashed rgba(166, 140, 232, 0.45); }
-.h-row-label { font-size: 0.78rem; font-weight: 500; line-height: 1.6; color: #716391; } /* 本文（--ink）より薄く、前より少し濃く */
+/* 余白（文字の端から）：質問→回答 8px。項目同士は点線を使わず、余白だけで区切る */
+.h-row + .h-row { margin-top: 22px; }
+/* 質問ラベル：本文（--ink）より薄い文字に、文字の長さだけの細いラベンダーの実線（折り返しても各行）。大見出しのマーカーより控えめ */
+.h-row-label {
+  font-size: 0.78rem; font-weight: 500; line-height: 1.6; color: #716391;
+  -webkit-text-decoration-line: underline; text-decoration-line: underline;
+  -webkit-text-decoration-style: solid; text-decoration-style: solid;
+  -webkit-text-decoration-color: #c5b4f0; text-decoration-color: #c5b4f0;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  -webkit-text-decoration-skip: none; text-decoration-skip-ink: none;
+}
 .h-row-values { margin: 5px 0 0; padding: 0 0 0 1.2em; font-size: 0.98rem; font-weight: 500; line-height: 1.75; color: var(--ink); }
 .h-row-values li + li { margin-top: 4px; }
 .h-text { font-size: 0.95rem; line-height: 1.95; color: var(--ink); }
+.h-section .h-text { margin-top: -3px; } /* 本文は行間が広いぶん、大見出しからの余白を質問ラベルのカードとそろえる */
 .h-copy-area:empty { display: none; }
 .h-copy-area { margin: 10px 0 0; }
 .h-copy-status { margin: 0; padding: 10px 14px; font-size: 0.9rem; font-weight: 700; text-align: center; color: var(--lavender-deep); background: rgba(255, 255, 255, 0.85); border-radius: 16px; }

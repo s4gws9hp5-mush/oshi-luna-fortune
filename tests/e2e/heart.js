@@ -413,11 +413,16 @@ const serve = () => new Promise((resolve) => {
     const lines = await p.evaluate(() => document.querySelector('#h-sec-concern .h-hl').getClientRects().length);
     await p.locator('#h-sec-concern').screenshot({ path: OUT + '/heading-wrapped.png' });
     check('結果：見出しが折り返しても、各行の文字にマーカー（box-decoration-break: clone）', lines >= 2 && mk[0].clone, 'lines=' + lines);
+    // 質問ラベルが折り返すとき：下線は text-decoration なので各行の文字に付く（狭い幅で折り返させて撮る）
+    const labLines = await p.evaluate(() => { const l = document.querySelector('#h-concern .h-row-label'); l.style.width = '120px'; const r = document.createRange(); r.selectNodeContents(l); return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size; });
+    await p.locator('#h-concern .h-row').first().screenshot({ path: OUT + '/label-wrapped.png' });
+    check('結果：質問ラベルが折り返しても、各行の文字に下線', labLines >= 2 && (await p.evaluate(() => getComputedStyle(document.querySelector('#h-concern .h-row-label')).textDecorationLine)) === 'underline', 'lines=' + labLines);
     await p.context().close();
   }
 
   // 7g) トップのカード間隔 24px（未診断・診断済み）・今日の占いの中の2つのボタンの間隔は 10px のまま
-  //     結果：質問→回答・回答→点線・点線→次の質問の余白（文字の端から）がそろう。320・375・390px、回答が複数行でも
+  //     結果：質問→回答・回答→次の質問の余白（文字の端から）がそろう・項目の間に点線はない・質問ラベルに文字の長さの細い下線・
+//     大見出し→最初の文章が4カードとも同じ。320・375・390px、回答が複数行でも
   for (const w of [320, 375, 390]) {
     const p = await open({ viewport: { width: w, height: 760 } });
     const gaps = () => p.evaluate(() => { const ids = [...document.querySelectorAll('#screen-top > section')].map((e) => e.id).filter((id) => ['type-card', 'daily-entry', 'heart-entry'].includes(id));
@@ -436,17 +441,23 @@ const serve = () => new Promise((resolve) => {
     await p.click('#h-q7-skip'); await p.waitForSelector('#h-result:not([hidden])');
     const m = await p.evaluate(() => {
       const tb = (el) => { const r = document.createRange(); r.selectNodeContents(el); const rs = [...r.getClientRects()].filter((x) => x.height > 0); return { top: Math.min(...rs.map((x) => x.top)), bottom: Math.max(...rs.map((x) => x.bottom)), lines: new Set(rs.map((x) => Math.round(x.top))).size }; };
-      const out = { la: [], ad: [], dl: [], multi: 0 };
+      const out = { la: [], next: [], dashed: 0, multi: 0, ul: [], head: [] };
       document.querySelectorAll('#h-concern, #h-values').forEach((box) => { const rows = [...box.querySelectorAll('.h-row')];
-        rows.forEach((row, i) => { const lab = tb(row.querySelector('.h-row-label')), ans = tb(row.querySelector('.h-row-values'));
+        rows.forEach((row, i) => { const labEl = row.querySelector('.h-row-label'), lab = tb(labEl), ans = tb(row.querySelector('.h-row-values'));
           if (row.querySelectorAll('.h-row-values li').length < ans.lines) out.multi++;
+          const rc = getComputedStyle(row); if (rc.borderTopStyle !== 'none' && parseFloat(rc.borderTopWidth) > 0) out.dashed++;
+          const lc = getComputedStyle(labEl); out.ul.push([lc.textDecorationLine, lc.textDecorationStyle, lc.textDecorationColor, lc.textDecorationThickness].join(' '));
           out.la.push(Math.round(ans.top - lab.bottom));
-          if (i < rows.length - 1) { const line = rows[i + 1].getBoundingClientRect().top; out.ad.push(Math.round(line - ans.bottom)); out.dl.push(Math.round(tb(rows[i + 1].querySelector('.h-row-label')).top - line)); } }); });
+          if (i < rows.length - 1) out.next.push(Math.round(tb(rows[i + 1].querySelector('.h-row-label')).top - ans.bottom)); }); });
+      const first = (box) => { const t = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, { acceptNode: (n) => n.data.trim() ? 1 : 3 }); return t.nextNode().parentElement; };
+      ['concern', 'values', 'message', 'action'].forEach((k) => out.head.push(Math.round(tb(first(document.getElementById('h-' + k))).top - tb(document.querySelector('#h-sec-' + k + ' .h-hl')).bottom)));
       const lum = (c) => { const [r, g, b] = c.match(/\d+/g).map(Number); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
       return { ...out, label: lum(getComputedStyle(document.querySelector('.h-row-label')).color), value: lum(getComputedStyle(document.querySelector('.h-row-values li')).color), soft: lum(getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim().replace(/^#(..)(..)(..)$/, (m, a, b, c) => 'rgb(' + parseInt(a, 16) + ',' + parseInt(b, 16) + ',' + parseInt(c, 16) + ')')) };
     });
     const same = (a) => a.length > 0 && a.every((x) => x === a[0]);
-    check(w + 'px：結果の余白がそろう（質問→回答・回答→点線・点線→次の質問、複数行の回答を含む）', same(m.la) && same(m.ad) && same(m.dl) && m.ad[0] === m.dl[0] && (w > 320 || m.multi > 0), JSON.stringify({ la: m.la, ad: m.ad, dl: m.dl, multi: m.multi }));
+    check(w + 'px：結果の余白がそろう（質問→回答・回答→次の質問、複数行の回答を含む）・項目の間に点線はない', same(m.la) && same(m.next) && m.next[0] > m.la[0] + 8 && m.dashed === 0 && (w > 320 || m.multi > 0), JSON.stringify({ la: m.la, next: m.next, dashed: m.dashed, multi: m.multi }));
+    check(w + 'px：質問ラベルに細いラベンダーの実線（1px）', m.ul.length > 0 && m.ul.every((x) => x === 'underline solid rgb(197, 180, 240) 1px'), m.ul[0]);
+    check(w + 'px：大見出し→最初の文章の余白が4カードとも 24px', m.head.length === 4 && m.head.every((x) => x === 24), JSON.stringify(m.head));
     check(w + 'px：質問ラベルは前（--ink-soft）より濃く、回答より薄い', m.label < m.soft && m.label > m.value, JSON.stringify(m));
     await p.context().close();
   }
