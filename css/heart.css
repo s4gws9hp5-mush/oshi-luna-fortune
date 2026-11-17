@@ -94,6 +94,8 @@
   cursor: pointer;
 }
 .h-step:active { transform: scale(0.94); }
+/* ±ボタンを素早く続けて押しても、ダブルタップの拡大にしない（ピンチでの拡大はそのまま使える） */
+.h-step { touch-action: manipulation; }
 /* スライダー：WebKit（iPhone の Safari）と Chromium・Firefox のどちらでも、紫の横線とつまみが見えるように描く */
 .h-slider {
   flex: 1;
@@ -138,12 +140,25 @@
 /* 結果 */
 .h-date { margin: 6px 0 0; }
 .h-result-notice { font-size: 0.86rem; }
-.h-section .card-title { margin-bottom: 12px; }
-.h-row + .h-row { margin-top: 12px; }
-.h-row-label { font-size: 0.84rem; font-weight: 700; color: var(--ink-soft); }
-.h-row-values { margin: 4px 0 0; padding: 0 0 0 1.2em; font-weight: 700; line-height: 1.7; }
-.h-row-values li + li { margin-top: 2px; }
-.h-text { font-size: 0.95rem; line-height: 1.95; }
+/* 結果の4区分：見出しは大きく・太く・濃い紫で、淡い帯と区切り線で本文と分ける。
+   質問ラベルは小さく補助的に、回答と本文は濃さと行間を保って太字にしすぎない */
+.h-section { padding-top: 0; overflow: hidden; }
+.h-section .card-title {
+  margin: 0 -20px 16px;
+  padding: 13px 20px 12px;
+  font-size: 1.14rem;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: #5b3fb0;
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 2px solid rgba(166, 140, 232, 0.4);
+}
+.h-row + .h-row { margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(166, 140, 232, 0.45); }
+.h-row-label { font-size: 0.78rem; font-weight: 500; line-height: 1.6; color: var(--ink-soft); }
+.h-row-values { margin: 6px 0 0; padding: 0 0 0 1.2em; font-size: 0.98rem; font-weight: 500; line-height: 1.75; color: var(--ink); }
+.h-row-values li + li { margin-top: 4px; }
+.h-text { font-size: 0.95rem; line-height: 1.95; color: var(--ink); }
 .h-copy-area:empty { display: none; }
 .h-copy-area { margin: 10px 0 0; }
 .h-copy-status { margin: 0; padding: 10px 14px; font-size: 0.9rem; font-weight: 700; text-align: center; color: var(--lavender-deep); background: rgba(255, 255, 255, 0.85); border-radius: 16px; }

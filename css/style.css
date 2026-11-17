@@ -1057,6 +1057,7 @@ img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale
 }
 .heart-entry-title { margin: 0; font-size: 1.12rem; letter-spacing: 0.06em; color: var(--lavender-deep); }
 .heart-entry-text { margin: 8px 0 0; font-size: 0.92rem; line-height: 1.85; }
+.heart-entry-text .phrase { display: inline-block; } /* 言葉の途中で改行しない（文は変えない） */
 .heart-entry-btn { margin-top: 14px; }
 .heart-entry-note { margin: 8px 0 0; font-size: 0.78rem; color: var(--ink-soft); }
 .heart-invite {

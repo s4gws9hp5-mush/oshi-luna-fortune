@@ -40,7 +40,7 @@ const pad = (n) => (n < 10 ? "0" : "") + n;
   R.DEADLINE_A.concat(R.DEADLINE_B).forEach((id) => assert.ok(D.actions[id] || D.q2Texts[id], "期限補足の対象のIDが本文にある " + id));
   // 文章の指紋：採用文がうっかり変わっていないか（文章を直したときは、仕様書と照合してからこの値も直す）
   const fp = require("crypto").createHash("sha256").update(JSON.stringify([D.q1, D.q2, D.themes, D.q5, D.q6, D.q7, D.q2Texts, D.supplementFeelingForgotten, D.deadlineSupplement, D.actions, D.ui])).digest("hex");
-  assert.strictEqual(fp, "7b3e6cf9e6e4b8ea017145c0fec45807d8decba53a21a6a8393699219b740080", "文章の指紋（仕様書 v0.1 から取り出した採用文）");
+  assert.strictEqual(fp, "dc976502d4a3462b259f789fa3433f231bfe4dde7d6d825ee40c2dd3d1d07c6d", "文章の指紋（仕様書 v0.1 から取り出した採用文）");
   console.log("OK: データ（Q2本文47件・行動文39件・選択肢）／文章の指紋 " + fp.slice(0, 16));
 }
 
@@ -368,8 +368,14 @@ assert.ok(!R.validDateKey("2026-02-30") && R.validDateKey("2026-02-28"));
   D.ui.topEntry.forEach((t) => assert.ok(strip(top).includes(t.replace(/^［|］$/g, "")), "トップの入口の文 " + t));
   D.ui.resultEntry.forEach((t) => assert.ok(strip(inv).includes(t.replace(/^［|］$/g, "")), "結果画面の入口の文 " + t));
   assert.ok(/href="heart\/"/.test(top) && /href="heart\/"/.test(inv), "入口は heart/ へ");
-  // トップ：診断カードの直後（8タイプ一覧の上）。結果画面：お守りの後
-  assert.ok(html.indexOf('id="type-card"') < html.indexOf('id="heart-entry"') && html.indexOf('id="heart-entry"') < html.indexOf('id="daily-entry"') && html.indexOf('id="heart-entry"') < html.indexOf('class="type-grid"'));
+  // トップ：「今日の占い」ブロック全体の直後（8タイプ一覧の上。2026-11-17 の指定）。結果画面：お守りの後
+  const dailyEnd = html.indexOf('</section>', html.indexOf('id="daily-entry"'));
+  assert.ok(dailyEnd < html.indexOf('id="heart-entry"') && html.indexOf('id="heart-entry"') < html.indexOf('class="type-grid"'), "トップの入口は今日の占いの後");
+  assert.ok(!/id="heart-entry"/.test(html.slice(html.indexOf('id="daily-entry"'), dailyEnd)), "今日の占いの中には入れない");
+  // 「無料」を案内・ボタンのまわりで強調しない（2026-11-17）
+  assert.ok(!/無料/.test(top) && !/無料/.test(inv) && !/無料・約1分/.test(html), "入口・診断カードの案内に「無料」を入れない");
+  ["introFree", "introPrivacy", "introLead"].forEach((k) => assert.ok(!/無料/.test(D.ui[k]), "開始前の案内に「無料」を入れない " + k));
+  D.ui.topEntry.forEach((t) => assert.ok(!/無料/.test(t), "トップの入口の文に「無料」を入れない"));
   assert.ok(html.indexOf('id="type-omamori-title"') < html.indexOf('class="heart-invite"') && html.indexOf('class="heart-invite"') < html.indexOf('id="to-daily-btn"'));
   console.log("OK: 入口（トップ・診断結果画面の採用文と位置）");
 }

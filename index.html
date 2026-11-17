@@ -84,7 +84,7 @@
           <p class="type-card-renewal" id="type-card-renewal" hidden>診断がリニューアルしました。新しい診断で、あなたのタイプを見つけてね。</p>
           <button type="button" class="btn btn-type" id="start-btn">🎀 推し活タイプ診断をはじめる</button>
           <button type="button" class="btn-text" id="resume-btn" hidden></button>
-          <p class="type-card-note"><span class="nowrap">無料・約1分。</span><span class="nowrap">結果はいつでも見返せるよ♡</span></p>
+          <p class="type-card-note"><span class="nowrap">約1分。</span><span class="nowrap">結果はいつでも見返せるよ♡</span></p>
         </div>
 
         <!-- B. 診断結果が保存されている人向け -->
@@ -98,14 +98,6 @@
           <button type="button" class="btn btn-type" id="mytype-btn">わたしのタイプを詳しく見る</button>
           <button type="button" class="btn-text" id="retake-btn">もう一度診断する</button>
         </div>
-      </section>
-
-      <!-- ルナのこころ整理（heart/）の入口。推し活タイプ診断のカードの直後に置く（診断済み・未診断のどちらでも。app.js の refreshTop） -->
-      <section class="heart-entry" id="heart-entry" aria-labelledby="heart-entry-title">
-        <h2 class="heart-entry-title" id="heart-entry-title"><span aria-hidden="true">🌙</span> ルナのこころ整理</h2>
-        <p class="heart-entry-text">推し活で気になること、今の気持ち。<br>7つの質問で、ルナと少し整理してみませんか？</p>
-        <a class="btn btn-ghost heart-entry-btn" href="heart/">こころを整理してみる</a>
-        <p class="heart-entry-note">無料・名前やメールアドレスの入力不要</p>
       </section>
 
       <!-- 今日の占い（今日の推し活占い＋今日の一枚タロット）。#daily-entry ごと app.js の refreshTop が診断カードの前後に並べ替える。
@@ -131,6 +123,13 @@
           </div>
         </div>
         <p class="today-note">毎日0時（日本時間）に新しくなります</p>
+      </section>
+      <!-- ルナのこころ整理（heart/）の入口。「今日の占い」ブロック（#daily-entry）全体の直後に置く（診断済み・未診断のどちらでも。app.js の refreshTop） -->
+      <section class="heart-entry" id="heart-entry" aria-labelledby="heart-entry-title">
+        <h2 class="heart-entry-title" id="heart-entry-title"><span aria-hidden="true">🌙</span> ルナのこころ整理</h2>
+        <p class="heart-entry-text"><span class="phrase">推し活で気になること、</span><span class="phrase">今の気持ち。</span><br><span class="phrase">7つの質問で、</span><span class="phrase">ルナと少し整理してみませんか？</span></p>
+        <a class="btn btn-ghost heart-entry-btn" href="heart/">こころを整理してみる</a>
+        <p class="heart-entry-note">名前やメールアドレスの入力不要</p>
       </section>
       <!-- ホーム画面への追加（目立ちすぎない小さなリンク。ホーム画面から開いているときは出さない） -->
       <button type="button" class="btn-text a2hs-link" id="a2hs-top-btn">📱 ホーム画面に追加する方法</button>

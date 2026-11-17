@@ -80,7 +80,7 @@ const serve = () => new Promise((resolve) => {
     const p = await open();
     await p.goto(H);
     check('開始前：採用文の説明・はじめるボタン', (await p.textContent('#h-intro-text')).includes('回答と結果は、この端末のブラウザに保存されます。運営側には送信されません') && await p.isVisible('#h-start'));
-    // 開始前の並び：画像 → 題 → ひとこと → はじめる → 無料 → 保存の要点 → 折りたたみ（詳しい説明）
+    // 開始前の並び：画像 → 題 → ひとこと → はじめる → 入力不要 → 保存の要点 → 折りたたみ（詳しい説明）
     const order = await p.evaluate(() => ['.h-intro-art', '#h-intro-title', '#h-intro-lead', '#h-start', '#h-intro-free', '#h-intro-privacy', '#h-details'].map((sel) => document.querySelector(sel).getBoundingClientRect().top));
     check('開始前：ご指定の順に並ぶ', order.every((v, i) => i === 0 || v > order[i - 1]), JSON.stringify(order.map(Math.round)));
     check('開始前：要点の文', (await p.textContent('#h-intro-lead')) === D.ui.introLead && (await p.textContent('#h-intro-free')) === D.ui.introFree && (await p.textContent('#h-intro-privacy')) === D.ui.introPrivacy && (await p.textContent('#h-details-summary')) === D.ui.introDetailsLabel);
@@ -369,6 +369,34 @@ const serve = () => new Promise((resolve) => {
     }
   }
 
+  // 7e) ±ボタン：素早く続けて押しても押した回数どおり・ダブルタップの拡大にしない設定（ピンチは禁止しない）
+  {
+    const p = await open();
+    await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p);
+    for (let i = 0; i < 3; i++) await p.click('#h-q7-plus', { delay: 0 });
+    const a = await p.textContent('#h-q7-value');
+    await p.dblclick('#h-q7-minus');
+    const b = await p.textContent('#h-q7-value');
+    const ta = await p.evaluate(() => [getComputedStyle(document.getElementById('h-q7-plus')).touchAction, getComputedStyle(document.getElementById('h-q7-minus')).touchAction]);
+    const vp = await p.getAttribute('meta[name=viewport]', 'content');
+    check('±ボタン：素早く3回＋で 6→7→8、続けて2回−で 6（押した回数どおり）', a === '8' && b === '6' && JSON.parse(await stored(p)).answers.q7 === 6, a + ',' + b);
+    check('±ボタン：ダブルタップの拡大をしない（touch-action: manipulation）・ページのズーム禁止はしない', ta.every((x) => x === 'manipulation') && !/user-scalable\s*=\s*(no|0)|maximum-scale/.test(vp), ta.join(',') + ' | ' + vp);
+    await p.context().close();
+  }
+  // 7f) 結果：見出しと本文の強弱（大きさ・太さ・色・帯）
+  {
+    const p = await open();
+    await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-skip'); await p.waitForSelector('#h-result:not([hidden])');
+    const st = await p.evaluate(() => {
+      const cs = (sel) => { const e = document.querySelector(sel), c = getComputedStyle(e); return { size: parseFloat(c.fontSize), weight: Number(c.fontWeight), color: c.color, bg: c.backgroundColor, border: c.borderBottomWidth }; };
+      return { h: cs('.h-section .card-title'), label: cs('.h-row-label'), value: cs('.h-row-values li'), text: cs('.h-text p') };
+    });
+    const ok = st.h.size >= st.value.size * 1.12 && st.h.weight >= 700 && st.h.color === 'rgb(91, 63, 176)' && st.h.bg !== 'rgba(0, 0, 0, 0)' && parseFloat(st.h.border) >= 2 &&
+      st.label.size < st.value.size && st.label.weight < 700 && st.value.weight < 700 && st.text.weight < 700;
+    check('結果：大見出しは本文より大きく太く濃い紫・帯と区切り線／質問ラベルは回答より小さく／回答・本文は太字にしすぎない', ok, JSON.stringify(st));
+    await p.context().close();
+  }
+
   // 7d) 整理中の画面：約3秒（動きを減らす設定では静止・約0.3秒）・計算と保存は1回・連打・再読み込み・保存済みの結果は演出なし
   {
     const countWrites = (key) => { window.__resultWrites = 0; const o = Storage.prototype.setItem;
@@ -417,11 +445,15 @@ const serve = () => new Promise((resolve) => {
     const p = await open();
     await p.goto(BASE);
     const o1 = await order(p);
-    check('トップ（未診断）：診断カード → こころ整理 → 今日の占い', o1.indexOf('heart-entry') === o1.indexOf('type-card') + 1 && o1.indexOf('daily-entry') === o1.indexOf('heart-entry') + 1, o1.join(','));
+    check('トップ（未診断）：診断カード → 今日の占い → こころ整理', o1.indexOf('daily-entry') === o1.indexOf('type-card') + 1 && o1.indexOf('heart-entry') === o1.indexOf('daily-entry') + 1, o1.join(','));
+    check('トップ：こころ整理は「今日の推し活占い」と「今日の一枚タロット」の間に入らない', await p.evaluate(() => !document.getElementById('daily-entry').contains(document.getElementById('heart-entry')) &&
+      document.getElementById('tarot-entry').getBoundingClientRect().bottom < document.getElementById('heart-entry').getBoundingClientRect().top));
+    await p.locator('#screen-top').screenshot({ path: OUT + '/top-order-new.png' });
     await p.evaluate(() => localStorage.setItem('oshi-luna-type', JSON.stringify({ version: 2, type: 'research', sub: null, answers: [], date: '2026-11-16' })));
     await p.reload();
     const o2 = await order(p);
-    check('トップ（診断済み）：今日の占い → 診断カード → こころ整理', o2.indexOf('daily-entry') + 1 === o2.indexOf('type-card') && o2.indexOf('heart-entry') === o2.indexOf('type-card') + 1, o2.join(','));
+    check('トップ（診断済み）：今日の占い → こころ整理 → 診断カード', o2.indexOf('heart-entry') === o2.indexOf('daily-entry') + 1 && o2.indexOf('type-card') === o2.indexOf('heart-entry') + 1, o2.join(','));
+    await p.locator('#screen-top').screenshot({ path: OUT + '/top-order-done.png' });
     await p.locator('#heart-entry').screenshot({ path: OUT + '/top-entry.png' });
     await p.click('#mytype-btn'); await p.waitForTimeout(600);
     check('診断結果画面：お守りの後に小さな入口', await p.isVisible('.heart-invite') && (await p.textContent('.heart-invite-link')) === 'ルナのこころ整理へ');
