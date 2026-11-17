@@ -5,7 +5,7 @@
 推し活をしている人が、毎日の占いを楽しみながら、自分らしい推し活スタイルを知れるスマートフォン向けサイトです。
 
 - 外部API・外部フォント・サーバー・有料サービスを使わない静的サイト（HTML / CSS / JavaScript のみ）
-- ビルド不要。GitHub Pages にこのフォルダをそのまま置けば公開できます
+- ビルド不要。このフォルダをそのまま配信します。本番（`https://oshi-luna.com/`）は Cloudflare Pages で、`main` ブランチが本番です（下の「公開と戻し方」）
 - 結果はこの端末のブラウザ（localStorage）にだけ保存されます。ブラウザのデータを消すと保存した結果も消えます
 
 ## 2つの体験
@@ -147,7 +147,7 @@
 ### 翌日の占いを試すとき（日付のお試し表示）
 
 URL の最後に `?preview-date=2026-10-19` のように日付を付けると、このブラウザ（ID）のその日の「今日の推し活占い」を表示できます（保存中のタイプも反映）。
-お試し表示の結果は保存されず、IDも変わりません。ふつうに開けば、いつもどおり日本時間の今日の占いです。例：`https://s4gws9hp5-mush.github.io/oshi-luna-fortune/?preview-date=2026-10-19`
+お試し表示の結果は保存されず、IDも変わりません。ふつうに開けば、いつもどおり日本時間の今日の占いです。例：`https://oshi-luna.com/?preview-date=2026-10-19`
 
 ### ルナのこころ整理（heart/）
 
@@ -209,7 +209,7 @@ js/share-card.js      推し活タイプのシェア画像を作る
 manifest.webmanifest  ホーム画面に追加したときの名前・アイコン・色（PWA）
 sw.js                 Service Worker（ネットワーク優先。つながらないときだけ保存したファイルで表示）
 robots.txt            検索エンジン向け：サイト全体のクロールを許可し、サイトマップの場所を書く
-sitemap.xml           検索エンジン向け：公開しているページの一覧（トップと types/ の2ページ）
+sitemap.xml           検索エンジン向け：公開しているページの一覧（トップ・types/・heart/ の3ページ）
 js/app.js             画面遷移・保存・共有
 images/luna-cat.png   公式マスコット（三日月の上で眠る白猫）。トップ・読み込み・質問・案内カードなど
 images/types/         推し活タイプごとの白猫（下の表。どのタイプの絵かは js/data.js の TYPES の image で指定）
@@ -265,10 +265,10 @@ tests/e2e/heart.js    ルナのこころ整理のブラウザテスト
 
 ## 検索エンジン向けのファイル
 
-- 公開URLは `https://oshi-luna.com/` として、`robots.txt` と `sitemap.xml` に書いています（このリポジトリには独自ドメインの設定ファイル `CNAME` はありません。Cloudflare などの管理画面で設定している場合も、そのドメインのいちばん上（`https://oshi-luna.com/robots.txt`）で開けることを確認してください）
-- `sitemap.xml` には公開しているページだけを入れます。診断・今日の占い・結果は同じページの中で切り替わるので、URL はトップと、タイプ一覧（`types/`）の2つです。お試し表示（`?preview-date=`）や診断結果のような、人ごと・一時的な表示は入れません
+- 公開URLは `https://oshi-luna.com/` として、`robots.txt` と `sitemap.xml` に書いています（独自ドメインは Cloudflare Pages の管理画面で設定しているため、このリポジトリに `CNAME` はありません。そのドメインのいちばん上（`https://oshi-luna.com/robots.txt`）で開けることを確認してください）
+- `sitemap.xml` には公開しているページだけを入れます。診断・今日の占い・結果は同じページの中で切り替わるので、URL はトップと、タイプ一覧（`types/`）、ルナのこころ整理（`heart/`）の3つです。お試し表示（`?preview-date=`）や診断結果のような、人ごと・一時的な表示は入れません
 - ページを増やしたときは `sitemap.xml` に足し、`<lastmod>` を更新してください（`node tests/check.js` で、すべての HTML が入っているか、存在しないページや ? のつくURLが入っていないかを確認します）
-- `index.html` の `<head>` に、title・description・canonical（`https://oshi-luna.com/`）・OGP・構造化データ（WebSite）を入れています。お試し表示（`?preview-date=`）や GitHub Pages のアドレスで開いたときも、正式なURLは canonical の1つです
+- `index.html` の `<head>` に、title・description・canonical（`https://oshi-luna.com/`）・OGP・構造化データ（WebSite）を入れています。お試し表示（`?preview-date=`）や、プレビュー（`*.oshi-luna-fortune.pages.dev`）・GitHub Pages のアドレスで開いたときも、正式なURLは canonical の1つです
 - トップは短く：ルナとキャッチコピー → 推し活タイプ診断のカード → 今日の推し活占い → ルナのこころ整理の入口 → 8つのタイプ（絵とタイプ名）→ よくある質問（2つ）。診断済みの人には、今日の占いのボタンを診断カードより先に出します（`app.js` の `refreshTop`）
 - くわしい説明は `types/index.html`（8つのタイプの特徴・サブタイプコードの4つの傾向・診断のしくみ・よくある質問）。トップの8タイプの絵から、そのタイプの説明へ移動できます
 - `types/index.html` のタイプの文章（名前・キャッチ・性格・輝くところ）と4つの傾向の説明は `js/data.js` と同じ文章です。データを直したときは、このページも同じように直してください（`node tests/check.js` が、文章のずれ・問題数・リンク切れ・各ページの title／description／canonical／OGP を確認します）
@@ -281,7 +281,7 @@ tests/e2e/heart.js    ルナのこころ整理のブラウザテスト
 - ページを増やしたときは、同じタグを新しいページの `<head>` にも1回だけ入れてください（`node tests/check.js` で、すべての HTML に1回だけあるかを確認します）
 - 例外：ルナのこころ整理（`heart/index.html`）には入れていません。回答・結果を運営側・解析へ送らない機能のため、ページを開いた記録も取りません（`tests/check.js` の `NO_ANALYTICS`）
 - 広告ブロックなどで gtag.js が読み込めなくても、サイトはそのまま動きます。Service Worker は外部のファイルを扱わないので、gtag.js はキャッシュされません
-- GitHub Pages のアドレスやローカルで開いたときも、同じ測定IDで計測されます
+- プレビュー（`pages.dev`）・GitHub Pages のアドレスやローカルで開いたときも、同じ測定IDで計測されます
 
 ## 確認方法
 
@@ -325,4 +325,36 @@ node tests/e2e/heart.js        # ルナのこころ整理：質問の操作・Q7
 | ☁️ マイペースな癒やし系ファン | Q1＝④、Q2＝①、Q3＝②、Q4＝①、Q5＝①、Q6＝①、Q7＝②、Q8＝①、Q9＝③、Q10＝① | Q1 存在に心が軽くなる / Q2 うちわやペンライトで応援 / Q3 気になるものだけゆっくり / Q4 グッズを並べて空間づくり / Q5 たくさんの人と語り合う / Q6 距離を置いて生活を整える / Q7 自分のペースを守る / Q8 推しが笑顔で続けられること / Q9 曲をBGMにのんびり / Q10 最初の一歩から見届ける |
 | 🔭 情報キャッチの星読みリサーチャー | Q1＝①、Q2＝④、Q3＝①、Q4＝③、Q5＝④、Q6＝②、Q7＝③、Q8＝②、Q9＝②、Q10＝③ | Q1 夜にひとりでじっくり味わう / Q2 セトリや演出を読み解く / Q3 公式やSNSをこまめにチェック / Q4 日付や出来事をメモ / Q5 基本はひとりで / Q6 作品にひたって充電 / Q7 情報を見てペースを考える / Q8 言葉や作品で表すこと / Q9 家で作品にじっくり浸る / Q10 背景や意味をくわしく知る |
 
-GitHub Pages では `main` ブランチを更新すると数分で反映されます。
+## 公開と戻し方
+
+### 公開の構成
+
+- 本番 `https://oshi-luna.com/` は **Cloudflare Pages**（プロジェクト `oshi-luna-fortune`）から配信しています。本番ブランチは `main` で、`main` が更新されると Cloudflare Pages が本番をビルド・公開します（GitHub のコミットに「Cloudflare Pages」のチェックが付きます）
+  - 2026-11-17 の確認：`oshi-luna.com` の応答は `server: cloudflare` で、Cloudflare Pages の既定のヘッダー（`cache-control: public, max-age=0, must-revalidate` など）が付き、存在しないパスでもトップ（`index.html`）が 200 で返ります（Cloudflare Pages で `404.html` がないときの動き）。独自ドメインの割り当ては Cloudflare の管理画面の設定で、このリポジトリからは見えません
+- `main` 以外のブランチを push すると、Cloudflare Pages のプレビューだけに反映されます（ブランチ用 `https://<ブランチ名>.oshi-luna-fortune.pages.dev/`、コミット専用 `https://<8桁>.oshi-luna-fortune.pages.dev/`）。本番には出ません
+- `main` は GitHub Actions でも GitHub Pages（`github-pages` 環境）へ配信されていますが、本番の独自ドメインではありません。確認には本番（`oshi-luna.com`）とプレビュー（`pages.dev`）を使います
+- 本番の HTML・`sw.js` は `max-age=0, must-revalidate` なので、ブラウザは開くたびに新しい版があるか確かめます。ただし、Service Worker が新しい版に替わるのは、ブラウザが `sw.js` の更新を確かめた後（次に開いたとき・再読み込みしたときなど）で、時間はブラウザや端末によって違います。即時の反映は保証できません
+
+### 公開の手順
+
+1. 作業ブランチから `main` への Pull Request を作る。テスト（下の「確認方法」）がすべて合格し、プレビューで確認が済んでいること
+2. GitHub の **「Create a merge commit」** でマージする（PR #1 と同じ方法。`main` にマージコミットが1つでき、親の1つめが公開前の `main`）
+3. GitHub のマージコミットに付く「Cloudflare Pages」のチェックが success で、表示されるコミットがマージコミットと同じことを確かめる
+4. 本番で確かめる（テスト用のブラウザで。利用者の保存データは消さない）
+   - `curl -s https://oshi-luna.com/sw.js | grep "var CACHE"` が新しいキャッシュの名前になっている
+   - 新しいページは `<title>` で確かめる（存在しないパスでもトップが 200 で返るので、状態コードだけでは確かめられない）
+   - ブラウザで一度開いて再読み込みし、開発者ツールの Application → Service Workers／Cache Storage で、新しいキャッシュだけになっている（すぐに替わらないときは、もう一度開き直す）
+
+### 問題があったときの戻し方
+
+マージコミットで公開しているので、そのマージコミットを打ち消すコミットを `main` に入れて戻します。force push や履歴の書き換えはしません。
+
+1. GitHub の、マージした PR の画面の **［Revert］** ボタンで、打ち消しの PR を作る（または手元で `git switch -c revert-<名前> origin/main` → `git revert -m 1 <マージコミット>` → push して PR を作る。`-m 1` は「マージ前の `main` 側に戻す」の意味）
+2. 打ち消しの PR のテストを確かめてから、同じく「Create a merge commit」でマージする。Cloudflare Pages が `main` を本番として再ビルドします
+3. 急ぐときは、Cloudflare Pages の管理画面の Deployments から、1つ前の本番のデプロイを「Rollback」で本番に戻せます。ただし `main` は変わらないので、次に `main` が更新されると問題の版がまた公開されます。必ず 1・2 の打ち消しも行ってください
+4. 戻した後の確認（テスト用のブラウザで）
+   - Cloudflare Pages のチェックが success で、表示されるコミットが打ち消しのマージコミットと同じ
+   - `curl -s https://oshi-luna.com/sw.js | grep "var CACHE"` が戻した版のキャッシュの名前（例：こころ整理を戻すなら `oshi-luna-v8`）
+   - 戻したページは `<title>` で確かめる（例：`https://oshi-luna.com/heart/` がトップのタイトルになる。存在しないパスはトップが 200 で返るため）
+   - 新しい版を一度開いたブラウザは、新しい版の Service Worker とキャッシュが残っています。キャッシュの名前が変わったので、ブラウザが `sw.js` の更新を確かめた後に戻した版へ替わり、古いキャッシュは消えます。いつ替わるかはブラウザ次第なので、開き直し・再読み込みをしたうえで、開発者ツールの Application → Service Workers／Cache Storage が戻した版のキャッシュの名前だけになったことを確かめてください
+   - 利用者の端末に残った保存データ（localStorage）は、戻しても消えません（例：こころ整理の `oshi-luna-heart-state-v1` は残りますが、ほかの機能からは読みません）

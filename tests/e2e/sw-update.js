@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
   if (p.endsWith('/')) p += 'index.html';
   const file = path.join(docRoot, path.normalize(p));
   if (!file.startsWith(docRoot + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end('not found'); return; }
-  // GitHub Pages と同じく、ブラウザが毎回確かめに来る（max-age=0 相当）
+  // 本番（Cloudflare Pages）と同じく、ブラウザが毎回確かめに来る（max-age=0 相当）
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
   fs.createReadStream(file).pipe(res);
 });
