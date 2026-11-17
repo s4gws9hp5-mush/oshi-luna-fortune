@@ -520,9 +520,9 @@
     ctx.font = "700 32px " + FONT;
     ctx.fillStyle = INK;
     ctx.fillText("あなたは何タイプ？", W / 2, boxY + 18);
-    ctx.font = "700 40px " + FONT;
+    ctx.font = "700 44px " + FONT; // 「推し活タイプ診断」は短くなったので、少し大きくして枠の中の釣り合いをとる
     ctx.fillStyle = "#e3649e";
-    ctx.fillText("無料の推し活タイプ診断", W / 2, boxY + 62);
+    ctx.fillText("推し活タイプ診断", W / 2, boxY + 60);
     // アドレスは白い角丸の上に、濃い色で読みやすく
     ctx.font = "700 34px " + FONT;
     var urlW = ctx.measureText(SITE_URL).width, pillW = urlW + 64, pillH = 52, pillY = boxY + 118;

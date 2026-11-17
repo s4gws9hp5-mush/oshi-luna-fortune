@@ -205,9 +205,9 @@ manifest.icons.forEach((i) => {
 const sw = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
 (sw.match(/"(?:\.\/|[a-z][^"]*\.(?:html|css|js|png))"/g) || []).map((x) => x.slice(1, -1)).filter((f) => f !== "./")
   .forEach((f) => assert.ok(fs.existsSync(path.join(__dirname, "..", f)), "sw.js の CORE にあるファイルがない " + f));
-// Service Worker：8タイプの絵をすべて保存する。絵を差し替えたらキャッシュの名前を変える（v8：応援隊長・コミュニケーター・癒やし系の絵を差し替え）
+// Service Worker：8タイプの絵をすべて保存する。絵を差し替えたらキャッシュの名前を変える（v9：ルナのこころ整理〔heart/〕のページ・CSS・JS・表情画像を追加）
 TYPE_KEYS.forEach((k) => assert.ok(sw.includes('"' + D.TYPES[k].image + '"'), "sw.js の CORE にタイプの絵がない " + k));
-assert.match(sw, /var CACHE = "oshi-luna-v8";/, "sw.js のキャッシュの名前");
+assert.match(sw, /var CACHE = "oshi-luna-v9";/, "sw.js のキャッシュの名前");
 
 // ---- 質問：10問×4択、各タイプが main・sub ともに同じ回数だけ登場する（偏りのない配点） ----
 assert.ok(D.QUESTIONS.length >= 8 && D.QUESTIONS.length <= 12, "質問は8〜12問");
@@ -559,7 +559,10 @@ assert.match(robots, new RegExp("^Sitemap: " + SITE.replace(/[.]/g, "\\.") + "si
 
 // ---- アクセス解析：Google Analytics 4 の公式タグ（gtag.js）が、公開ページの <head> に1回だけある ----
 const GA_ID = "G-GW3MQNMW58";
-const PAGES = ["index.html", "types/index.html"]; // 公開しているページ（sitemap.xml と同じ）
+const PAGES = ["index.html", "types/index.html", "heart/index.html"]; // 公開しているページ（sitemap.xml と同じ）
+// アクセス解析（Google タグ）を読み込まないページ：ルナのこころ整理は回答・結果を端末内にだけ保存し、
+// 運営側・解析へ送らない機能なので、ページにも解析のスクリプトを入れない（仕様書 8章・18.1）
+const NO_ANALYTICS = ["heart/index.html"];
 const htmlFiles = (dir) => fs.readdirSync(path.join(__dirname, "..", dir), { withFileTypes: true }).flatMap((e) =>
   e.isDirectory() ? (/^(\.|tests$|node_modules$)/.test(e.name) ? [] : htmlFiles(path.join(dir, e.name))) : e.name.endsWith(".html") ? [path.join(dir, e.name)] : []);
 assert.deepStrictEqual(htmlFiles("").sort(), PAGES.slice().sort(), "HTML ファイルの一覧（ページを増やしたら PAGES と sitemap.xml に足す）");
@@ -568,6 +571,11 @@ PAGES.forEach((f) => {
   const html = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
   const head = html.slice(0, html.indexOf("</head>"));
   const count = (re) => (html.match(re) || []).length;
+  if (NO_ANALYTICS.includes(f)) {
+    assert.ok(!/googletagmanager|gtag\(|google-analytics|dataLayer/.test(html), f + "：アクセス解析を読み込まない");
+    assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset="utf-8">'))) < 1024, f + "：文字コードの指定は先頭1024バイト以内");
+    return;
+  }
   assert.strictEqual(count(/googletagmanager\.com\/gtag\/js/g), 1, f + "：gtag.js の読み込みは1回だけ（二重計測しない）");
   assert.ok(head.includes('<script async src="https://www.googletagmanager.com/gtag/js?id=' + GA_ID + '"></script>'), f + "：gtag.js は <head> で非同期に読み込む");
   assert.strictEqual(count(/gtag\('config',/g), 1, f + "：gtag('config') は1回だけ");
@@ -617,6 +625,13 @@ const pageInfo = PAGES.map((f) => {
   assert.ok(top.desc.includes(TOTAL_Q + "の質問") && top.desc.includes("8つ") && top.desc.includes("サブタイプコード") && top.desc.includes("今日の推し活占い"), "トップの description");
   // 「無料」は前面に出しすぎない：title・description・OGP・構造化データには入れない
   pageInfo.forEach((p) => assert.ok(!/無料/.test(p.html.slice(0, p.html.indexOf("</head>"))), p.f + "：head に「無料」"));
+  // 2026-11-17：本文（案内・ボタン・よくある質問）でも「無料」を強調しない。よくある質問は残す
+  pageInfo.forEach((p) => {
+    assert.ok(!/無料/.test(text(p.html)), p.f + "：本文に「無料」");
+    const faq = p.html.match(/<dl class="card card-cream about-faq">[\s\S]*?<\/dl>/);
+    if (faq) assert.ok((faq[0].match(/<dt>/g) || []).length >= 2 && !/無料で使えますか/.test(faq[0]), p.f + "：よくある質問（無料の質問は外し、ほかは残す）");
+  });
+  assert.ok(!/無料/.test(fs.readFileSync(path.join(__dirname, "..", "js", "share-card.js"), "utf8").replace(/\/\/.*$/gm, "")), "シェア画像に「無料」を入れない");
   // トップの8タイプ：名前・順番・リンク先がデータと同じ
   const grid = [...top.html.matchAll(/<li><a href="types\/#(\w+)"><img src="([^"]+)"[^>]*><span>(.*?)<\/span><\/a><\/li>/g)];
   assert.deepStrictEqual(grid.map((m) => [m[1], m[2], text(m[3])]), TYPE_KEYS.map((k) => [k, D.TYPES[k].image, D.TYPES[k].name]), "トップの8タイプ");

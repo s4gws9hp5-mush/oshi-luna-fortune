@@ -84,7 +84,7 @@
           <p class="type-card-renewal" id="type-card-renewal" hidden>診断がリニューアルしました。新しい診断で、あなたのタイプを見つけてね。</p>
           <button type="button" class="btn btn-type" id="start-btn">🎀 推し活タイプ診断をはじめる</button>
           <button type="button" class="btn-text" id="resume-btn" hidden></button>
-          <p class="type-card-note"><span class="nowrap">無料・約1分。</span><span class="nowrap">結果はいつでも見返せるよ♡</span></p>
+          <p class="type-card-note"><span class="nowrap">約1分。</span><span class="nowrap">結果はいつでも見返せるよ♡</span></p>
         </div>
 
         <!-- B. 診断結果が保存されている人向け -->
@@ -124,6 +124,13 @@
         </div>
         <p class="today-note">毎日0時（日本時間）に新しくなります</p>
       </section>
+      <!-- ルナのこころ整理（heart/）の入口。「今日の占い」ブロック（#daily-entry）全体の直後に置く（診断済み・未診断のどちらでも。app.js の refreshTop） -->
+      <section class="heart-entry" id="heart-entry" aria-labelledby="heart-entry-title">
+        <h2 class="heart-entry-title" id="heart-entry-title"><span aria-hidden="true">🌙</span> ルナのこころ整理</h2>
+        <p class="heart-entry-text"><span class="phrase">推し活で気になること、</span><span class="phrase">今の気持ち。</span><br><span class="phrase">7つの質問で、</span><span class="phrase">ルナと少し整理してみませんか？</span></p>
+        <a class="btn btn-ghost heart-entry-btn" href="heart/">こころを整理してみる</a>
+        <p class="heart-entry-note">名前やメールアドレスの入力不要</p>
+      </section>
       <!-- ホーム画面への追加（目立ちすぎない小さなリンク。ホーム画面から開いているときは出さない） -->
       <button type="button" class="btn-text a2hs-link" id="a2hs-top-btn">📱 ホーム画面に追加する方法</button>
 
@@ -148,8 +155,6 @@
       <section class="about" aria-labelledby="faq-title">
         <h2 class="about-title" id="faq-title">よくある質問</h2>
         <dl class="card card-cream about-faq">
-          <dt>無料で使えますか？</dt>
-          <dd>推し活タイプ診断と今日の推し活占いは、無料で楽しめます。</dd>
           <dt>会員登録は必要ですか？</dt>
           <dd>いりません。結果はこの端末のブラウザに保存され、いつでも見返せます。</dd>
           <dt>診断にはどのくらいかかりますか？</dt>
@@ -381,6 +386,13 @@
         <p class="omamori-charm" id="type-charm"></p>
         <p class="omamori-body" id="type-omamori-msg"></p>
       </article>
+
+      <!-- タイプ診断の結果を読み終えたところに、ルナのこころ整理（heart/）への小さな入口 -->
+      <aside class="heart-invite" aria-labelledby="heart-invite-title">
+        <p class="heart-invite-title" id="heart-invite-title"><span aria-hidden="true">🌙</span> 推し活のことで、お悩みのあなたへ</p>
+        <p class="heart-invite-text">気になることや今の気持ちを、7つの質問でルナと少し整理してみませんか？</p>
+        <a class="heart-invite-link" href="heart/">ルナのこころ整理へ</a>
+      </aside>
 
       <button type="button" class="btn btn-primary" id="to-daily-btn">🌙 今日の占いを見る</button>
       <button type="button" class="btn btn-ghost" id="share-btn">📸 結果をシェアする</button>

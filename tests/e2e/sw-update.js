@@ -31,14 +31,14 @@ const server = http.createServer((req, res) => {
   if (p.endsWith('/')) p += 'index.html';
   const file = path.join(docRoot, path.normalize(p));
   if (!file.startsWith(docRoot + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end('not found'); return; }
-  // GitHub Pages と同じく、ブラウザが毎回確かめに来る（max-age=0 相当）
+  // 本番（Cloudflare Pages）と同じく、ブラウザが毎回確かめに来る（max-age=0 相当）
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
   fs.createReadStream(file).pipe(res);
 });
 
 (async () => {
   // 古い版を一時フォルダに取り出す
-  const tar = execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', REF]);
+  const tar = execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', REF], { maxBuffer: 1024 * 1024 * 1024 }); // 画像を含むので大きい（既定の上限 1MB では足りない）
   execFileSync('tar', ['-x', '-C', OLD], { input: tar });
   const oldSha = execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', REF]).toString().trim();
   const cacheOf = (dir) => (fs.readFileSync(path.join(dir, 'sw.js'), 'utf8').match(/var CACHE = "([^"]+)"/) || [])[1];

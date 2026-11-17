@@ -1,0 +1,208 @@
+/* ルナのこころ整理（heart/index.html）専用。既存の色・カード・ボタン（css/style.css）を使い、名前は h- で分ける */
+.h-screen[hidden] { display: none; }
+/* 整理中：既存の読み込み画面（.loading）と同じ見た目。文は狭い画面で読点の後に改行しやすいよう少し小さめ */
+.h-loading { padding-top: 14vh; }
+.h-loading-text { margin: 0 8px; font-size: 0.96rem; line-height: 1.8; letter-spacing: 0.04em; }
+.h-loading-text:focus { outline: none; }
+.heart .guide-hero { margin-top: 4px; }
+/* 開始前：スマホの最初の画面で、開始（または続きから）のボタンまで見えるように詰める */
+.h-intro { text-align: center; }
+.h-intro-art { width: min(96px, 26vw); margin: 0 auto 2px; }
+.h-intro-title { font-size: clamp(1.35rem, 6.4vw, 1.6rem); }
+.h-intro-lead { margin: 6px 0 0; font-size: 0.95rem; line-height: 1.75; }
+.h-intro .h-resume { margin: 14px 0 0; }
+.h-intro .h-start { margin-top: 14px; }
+.h-start[hidden] { display: none; }
+.h-phrase { display: inline-block; max-width: 100%; }
+.h-intro-free { margin: 8px 0 0; font-size: 0.82rem; font-weight: 700; color: var(--lavender-deep); }
+.h-intro-privacy { margin: 4px 0 0; font-size: 0.8rem; line-height: 1.7; color: var(--ink-soft); }
+.h-details { margin: 14px 0 0; text-align: left; background: rgba(255, 255, 255, 0.75); border: 2px solid var(--white); border-radius: 18px; }
+.h-details-summary {
+  display: block;
+  min-height: 44px;
+  padding: 11px 40px 11px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--lavender-deep);
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+}
+.h-details-summary::-webkit-details-marker { display: none; }
+.h-details-summary::after { content: "＋"; position: absolute; right: 16px; top: 10px; }
+.h-details[open] .h-details-summary::after { content: "−"; }
+.h-details .h-intro-card { padding: 0 16px 14px; }
+.h-intro-card { font-size: 0.92rem; line-height: 1.85; }
+.h-intro-card p, .h-text p { white-space: normal; }
+.h-intro-card p + p, .h-text p + p { margin-top: 12px; }
+.h-resume { text-align: center; }
+.h-resume p { font-weight: 700; }
+.h-resume .btn { margin-top: 10px; }
+.h-save-failed { border-color: var(--pink-deep); background: #fff7fb; }
+
+/* 質問 */
+.h-q-text { margin-bottom: 18px; }
+.h-q-pick { margin: -8px 0 12px; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--lavender-deep); }
+.h-q-pick[hidden], .h-options[hidden], .h-q7[hidden] { display: none; }
+.h-option { min-height: 58px; padding: 12px 16px; }
+.h-option-label { flex: 1; min-width: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.h-mark {
+  width: 30px;
+  height: 30px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--white);
+  border: 2px solid var(--lavender);
+  border-radius: 50%;
+}
+.h-mark.is-multi { border-radius: 9px; }
+.h-option.is-chosen .h-mark { background: var(--lavender-deep); border-color: var(--lavender-deep); }
+.h-option.is-full { opacity: 0.55; }
+.h-option { animation: none; }
+
+/* Q7：疲れ具合のスライダー */
+.h-q7 { text-align: center; }
+.h-face-wrap { display: grid; place-items: center; width: 150px; height: 150px; margin: 0 auto 4px; }
+.h-face { width: 150px; height: 150px; }
+.h-face[hidden], .h-face-moon[hidden] { display: none; }
+.h-face-moon { display: block; width: 1em; font-size: 4.2rem; line-height: 1; text-align: center; }
+.h-face.is-pop { animation: h-pop 0.32s ease; }
+@keyframes h-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h-face.is-pop { animation: none; }
+}
+.h-q7-value { margin: 0 0 6px; font-size: 2.6rem; font-weight: 700; line-height: 1.2; color: var(--lavender-deep); }
+.h-q7-value.is-unset { font-size: 1.2rem; line-height: 2.6; color: var(--ink-soft); }
+.h-slider-row { display: flex; align-items: center; gap: 10px; }
+.h-step {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--lavender-deep);
+  background: var(--white);
+  border: 2px solid var(--lavender);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.h-step:active { transform: scale(0.94); }
+/* ±ボタンを素早く続けて押しても、ダブルタップの拡大にしない（ピンチでの拡大はそのまま使える） */
+.h-step { touch-action: manipulation; }
+/* スライダー：WebKit（iPhone の Safari）と Chromium・Firefox のどちらでも、紫の横線とつまみが見えるように描く */
+.h-slider {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.h-slider:focus-visible { outline: 3px solid var(--lavender-deep); outline-offset: 4px; border-radius: 8px; }
+.h-slider::-webkit-slider-runnable-track { height: 8px; background: #b9a2f2; border-radius: 999px; }
+.h-slider::-moz-range-track { height: 8px; background: #b9a2f2; border-radius: 999px; }
+.h-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: -11px;
+  background: #7a5bd6;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(122, 91, 214, 0.45);
+}
+.h-slider::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  background: #7a5bd6;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(122, 91, 214, 0.45);
+}
+/* 未回答：つまみはスライダーの見た目の中央に点線で出す（未回答専用の表示。回答・保存値にしない） */
+.h-slider.is-unset::-webkit-slider-thumb { background: var(--white); border: 3px dashed #7a5bd6; box-shadow: none; }
+.h-slider.is-unset::-moz-range-thumb { background: var(--white); border: 3px dashed #7a5bd6; box-shadow: none; }
+.h-scale { display: flex; justify-content: space-between; gap: 12px; margin: 6px 4px 0; font-size: 0.78rem; color: var(--ink-soft); text-align: left; }
+.h-scale span:last-child { text-align: right; }
+.h-q7-note { margin: 14px 0 0; }
+
+/* 結果 */
+.h-date { margin: 6px 0 0; }
+.h-result-notice { font-size: 0.86rem; }
+/* 結果の4区分：見出しは大きく・太く・濃い紫で、文字に蛍光ペン風のマーカー。
+   質問ラベルは小さく補助的に、回答と本文は濃さと行間を保って太字にしすぎない */
+.h-section { padding-top: 0; overflow: hidden; }
+.h-section .card-title {
+  margin: 0 -20px 7px; /* 大見出し→最初の文章（文字の端から）を4カードとも 24px にそろえる */
+  padding: 13px 20px 12px;
+  font-size: 1.14rem;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: #5b3fb0;
+}
+/* 見出しの文字に、蛍光ペンで線を引いたようなマーカー（文字の下半分に重なる太さ 38〜92%・文字の長さだけ・折り返しても行ごと）。絵文字には付けない */
+.h-hl {
+  padding: 0 0.12em;
+  background: linear-gradient(transparent 38%, var(--h-marker) 38%, var(--h-marker) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.card-blue .h-hl { --h-marker: #dcd0ff; }     /* 今、気になっていること：淡いラベンダー */
+.card-pink .h-hl { --h-marker: #ffd3e7; }     /* 大切にしたいこと：淡いピンク */
+.card-lavender .h-hl { --h-marker: #fff0a6; } /* ラベンダーのカードには淡いレモン */
+.card-cream .h-hl { --h-marker: #cde6ff; }    /* クリームのカードには淡い水色 */
+/* 余白（文字の端から）：質問→回答 8px。項目同士は点線を使わず、余白だけで区切る */
+.h-row + .h-row { margin-top: 22px; }
+/* 質問ラベル：本文（--ink）より薄い文字に、文字の長さだけの細いラベンダーの実線（折り返しても各行）。大見出しのマーカーより控えめ */
+.h-row-label {
+  font-size: 0.78rem; font-weight: 500; line-height: 1.6; color: #716391;
+  -webkit-text-decoration-line: underline; text-decoration-line: underline;
+  -webkit-text-decoration-style: solid; text-decoration-style: solid;
+  -webkit-text-decoration-color: #c5b4f0; text-decoration-color: #c5b4f0;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  -webkit-text-decoration-skip: none; text-decoration-skip-ink: none;
+}
+.h-row-values { margin: 5px 0 0; padding: 0 0 0 1.2em; font-size: 0.98rem; font-weight: 500; line-height: 1.75; color: var(--ink); }
+.h-row-values li + li { margin-top: 4px; }
+.h-text { font-size: 0.95rem; line-height: 1.95; color: var(--ink); }
+.h-section .h-text { margin-top: -3px; } /* 本文は行間が広いぶん、大見出しからの余白を質問ラベルのカードとそろえる */
+.h-copy-area:empty { display: none; }
+.h-copy-area { margin: 10px 0 0; }
+.h-copy-status { margin: 0; padding: 10px 14px; font-size: 0.9rem; font-weight: 700; text-align: center; color: var(--lavender-deep); background: rgba(255, 255, 255, 0.85); border-radius: 16px; }
+.h-copy-status.is-error { color: var(--pink-deep); }
+.h-copy-text {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 12px;
+  font: inherit;
+  font-size: 16px; /* iPhone で拡大されないように */
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--white);
+  border: 2px solid var(--lavender);
+  border-radius: 16px;
+  resize: vertical;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.h-soon { margin-top: 26px; padding-bottom: 20px; text-align: center; font-size: 0.92rem; line-height: 1.9; } /* コピーボタンを外したので、上下の余白を同じに */
+.h-soon p + p { margin-top: 10px; }
+.h-soon .h-soon-title { font-weight: 700; color: var(--lavender-deep); }
+.h-home { text-align: center; }
+.h-confirm-text { font-weight: 700; }
+.h-confirm-error { margin: 0 0 6px; font-size: 0.88rem; font-weight: 700; color: var(--pink-deep); }
+.h-confirm-error[hidden] { display: none; }

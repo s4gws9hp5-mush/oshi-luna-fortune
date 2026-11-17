@@ -210,7 +210,9 @@
     $("type-card-renewal").hidden = !!saved || !load(KEYS.legacy);
     $("resume-btn").hidden = !!saved || !progress;
     // 初めての人には診断の案内を先に、診断済みの人には毎日の占いを先に
+    // ルナのこころ整理の入口（#heart-entry）は、どちらの場合も「今日の占い」ブロックの直後
     $("screen-top").insertBefore($("daily-entry"), saved ? $("type-card") : $("type-card").nextSibling);
+    $("screen-top").insertBefore($("heart-entry"), $("daily-entry").nextSibling);
     if (saved) {
       var t = D.TYPES[saved.type];
       $("top-type-emblem").style.setProperty("--type-color", t.color);
