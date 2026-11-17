@@ -1045,7 +1045,7 @@ img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale
 .type-grid a > span { margin-top: 6px; font-size: 0.82rem; font-weight: 700; line-height: 1.5; }
 .type-grid .phrase { display: inline-block; }
 
-/* ルナのこころ整理（heart/）の入口：トップ（診断カードの直後）と、タイプ診断の結果のお守りの後 */
+/* ルナのこころ整理（heart/）の入口：トップ（「今日の占い」ブロックの直後）と、タイプ診断の結果のお守りの後 */
 .heart-entry {
   margin: 0;
   padding: 20px 18px 16px;
