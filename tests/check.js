@@ -625,6 +625,13 @@ const pageInfo = PAGES.map((f) => {
   assert.ok(top.desc.includes(TOTAL_Q + "の質問") && top.desc.includes("8つ") && top.desc.includes("サブタイプコード") && top.desc.includes("今日の推し活占い"), "トップの description");
   // 「無料」は前面に出しすぎない：title・description・OGP・構造化データには入れない
   pageInfo.forEach((p) => assert.ok(!/無料/.test(p.html.slice(0, p.html.indexOf("</head>"))), p.f + "：head に「無料」"));
+  // 2026-11-17：本文（案内・ボタン・よくある質問）でも「無料」を強調しない。よくある質問は残す
+  pageInfo.forEach((p) => {
+    assert.ok(!/無料/.test(text(p.html)), p.f + "：本文に「無料」");
+    const faq = p.html.match(/<dl class="card card-cream about-faq">[\s\S]*?<\/dl>/);
+    if (faq) assert.ok((faq[0].match(/<dt>/g) || []).length >= 2 && !/無料で使えますか/.test(faq[0]), p.f + "：よくある質問（無料の質問は外し、ほかは残す）");
+  });
+  assert.ok(!/無料/.test(fs.readFileSync(path.join(__dirname, "..", "js", "share-card.js"), "utf8").replace(/\/\/.*$/gm, "")), "シェア画像に「無料」を入れない");
   // トップの8タイプ：名前・順番・リンク先がデータと同じ
   const grid = [...top.html.matchAll(/<li><a href="types\/#(\w+)"><img src="([^"]+)"[^>]*><span>(.*?)<\/span><\/a><\/li>/g)];
   assert.deepStrictEqual(grid.map((m) => [m[1], m[2], text(m[3])]), TYPE_KEYS.map((k) => [k, D.TYPES[k].image, D.TYPES[k].name]), "トップの8タイプ");

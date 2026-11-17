@@ -116,14 +116,14 @@ const serve = () => new Promise((resolve) => {
       const inside = d.filter(x => x.text).every(x => x.align === 'left' ? (x.x >= 70 && x.x + x.w <= 1010) : (x.x - x.w / 2 >= 70 && x.x + x.w / 2 <= 1010));
       const size = await p.evaluate(() => [document.getElementById('share-preview').naturalWidth, document.getElementById('share-preview').naturalHeight]);
       check('シェア画像 ' + k + '：サービス名・見出し・タグ・URL・診断への誘導', texts.includes('推しルナ占い') && texts.includes('あなたの推し活タイプは') && texts.includes('#推しルナ占い') &&
-        texts.includes('あなたは何タイプ？') && texts.includes('無料の推し活タイプ診断') && !texts.some(x => x.includes('はこちら')));
+        texts.includes('あなたは何タイプ？') && texts.includes('推し活タイプ診断') && !texts.some(x => x.includes('はこちら') || x.includes('無料')));
       // 画像のアドレスは、テストで開いているアドレス（プレビューやローカル）ではなく、いつも本番のアドレス
       // 文字の大きさを合わせるために、消して描き直すことがあるので、同じ文字は1つにまとめて数える
       const urlTexts = [...new Set(texts)].filter(x => /https?:|\.com|\.dev|\.io|localhost|127\.0\.0\.1/.test(x));
       check('シェア画像 ' + k + '：本番のアドレス https://oshi-luna.com/ だけを入れる（開いているアドレスは入れない）',
         urlTexts.length === 1 && urlTexts[0] === 'https://oshi-luna.com/' && !texts.some(x => x.includes(new URL(BASE).host)), JSON.stringify(urlTexts));
       const at = (t) => d.find(x => x.text === t);
-      const cta = at('無料の推し活タイプ診断'), url = at('https://oshi-luna.com/'), tag = at('#推しルナ占い');
+      const cta = at('推し活タイプ診断'), url = at('https://oshi-luna.com/'), tag = at('#推しルナ占い');
       const px = (x) => parseInt(/(\d+)px/.exec(x.font)[1], 10);
       check('シェア画像 ' + k + '：診断の誘導の直下にアドレス、その下にタグ（重ならない・枠の中・読める大きさ）',
         cta && url && tag && cta.y + px(cta) <= lay.urlPill.y && url.y >= lay.urlPill.y && url.y + px(url) <= lay.urlPill.y + lay.urlPill.h &&
