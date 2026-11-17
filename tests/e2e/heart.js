@@ -397,6 +397,41 @@ const serve = () => new Promise((resolve) => {
     await p.context().close();
   }
 
+  // 7g) トップのカード間隔 24px（未診断・診断済み）・今日の占いの中の2つのボタンの間隔は 10px のまま
+  //     結果：質問→回答・回答→点線・点線→次の質問の余白（文字の端から）がそろう。320・375・390px、回答が複数行でも
+  for (const w of [320, 375, 390]) {
+    const p = await open({ viewport: { width: w, height: 760 } });
+    const gaps = () => p.evaluate(() => { const ids = [...document.querySelectorAll('#screen-top > section')].map((e) => e.id).filter((id) => ['type-card', 'daily-entry', 'heart-entry'].includes(id));
+      const r = ids.map((id) => document.getElementById(id).getBoundingClientRect());
+      const t = [document.getElementById('daily-btn').getBoundingClientRect(), document.getElementById('tarot-open').getBoundingClientRect()];
+      return { order: ids.join('>'), gaps: r.slice(1).map((x, i) => Math.round(x.top - r[i].bottom)), inner: Math.round(t[1].top - t[0].bottom) }; });
+    await p.goto(BASE); await p.waitForTimeout(200);
+    const g1 = await gaps();
+    await p.evaluate(() => localStorage.setItem('oshi-luna-type', JSON.stringify({ version: 2, type: 'research', sub: null, answers: [], date: '2026-11-17' }))); await p.reload(); await p.waitForTimeout(200);
+    const g2 = await gaps();
+    check(w + 'px：トップのカード間隔は 24px（未診断・診断済み）・今日の占いの2つのボタンの間隔は 10px', [g1, g2].every((g) => g.gaps.length === 2 && g.gaps.every((x) => x === 24) && g.inner === 10), JSON.stringify([g1, g2]));
+    await p.goto(H); await p.click('#h-start');
+    await pick(p, ['同担やSNS']); await next(p); await pick(p, ['周りと比べて落ち込む', '疲れた']); await next(p);
+    await pick(p, ['SNSのフォロワー数', '同担とのやり取り']); await next(p); await pick(p, ['楽しい・元気', 'やり取りや']); await next(p);
+    await pick(p, ['睡眠や体力', '推しへの「好き」']); await next(p); await pick(p, ['少し落ち着く']); await next(p);
+    await p.click('#h-q7-skip'); await p.waitForSelector('#h-result:not([hidden])');
+    const m = await p.evaluate(() => {
+      const tb = (el) => { const r = document.createRange(); r.selectNodeContents(el); const rs = [...r.getClientRects()].filter((x) => x.height > 0); return { top: Math.min(...rs.map((x) => x.top)), bottom: Math.max(...rs.map((x) => x.bottom)), lines: new Set(rs.map((x) => Math.round(x.top))).size }; };
+      const out = { la: [], ad: [], dl: [], multi: 0 };
+      document.querySelectorAll('#h-concern, #h-values').forEach((box) => { const rows = [...box.querySelectorAll('.h-row')];
+        rows.forEach((row, i) => { const lab = tb(row.querySelector('.h-row-label')), ans = tb(row.querySelector('.h-row-values'));
+          if (row.querySelectorAll('.h-row-values li').length < ans.lines) out.multi++;
+          out.la.push(Math.round(ans.top - lab.bottom));
+          if (i < rows.length - 1) { const line = rows[i + 1].getBoundingClientRect().top; out.ad.push(Math.round(line - ans.bottom)); out.dl.push(Math.round(tb(rows[i + 1].querySelector('.h-row-label')).top - line)); } }); });
+      const lum = (c) => { const [r, g, b] = c.match(/\d+/g).map(Number); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      return { ...out, label: lum(getComputedStyle(document.querySelector('.h-row-label')).color), value: lum(getComputedStyle(document.querySelector('.h-row-values li')).color), soft: lum(getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim().replace(/^#(..)(..)(..)$/, (m, a, b, c) => 'rgb(' + parseInt(a, 16) + ',' + parseInt(b, 16) + ',' + parseInt(c, 16) + ')')) };
+    });
+    const same = (a) => a.length > 0 && a.every((x) => x === a[0]);
+    check(w + 'px：結果の余白がそろう（質問→回答・回答→点線・点線→次の質問、複数行の回答を含む）', same(m.la) && same(m.ad) && same(m.dl) && m.ad[0] === m.dl[0] && (w > 320 || m.multi > 0), JSON.stringify({ la: m.la, ad: m.ad, dl: m.dl, multi: m.multi }));
+    check(w + 'px：質問ラベルは前（--ink-soft）より濃く、回答より薄い', m.label < m.soft && m.label > m.value, JSON.stringify(m));
+    await p.context().close();
+  }
+
   // 7d) 整理中の画面：約3秒（動きを減らす設定では静止・約0.3秒）・計算と保存は1回・連打・再読み込み・保存済みの結果は演出なし
   {
     const countWrites = (key) => { window.__resultWrites = 0; const o = Storage.prototype.setItem;

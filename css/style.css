@@ -1047,7 +1047,7 @@ img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale
 
 /* ルナのこころ整理（heart/）の入口：トップ（診断カードの直後）と、タイプ診断の結果のお守りの後 */
 .heart-entry {
-  margin: 0 0 16px;
+  margin: 0;
   padding: 20px 18px 16px;
   text-align: center;
   background: linear-gradient(160deg, #fff 0%, #f3ecff 55%, #e9f4ff 100%);
@@ -1143,3 +1143,11 @@ img[src$="research-telescope-book.png"] { transform: translate(6%, -13.3%) scale
 }
 .guide-cta { margin: 34px 0 8px; text-align: center; }
 .guide-cta-btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* トップの3つのカード（診断カード・今日の占い・ルナのこころ整理）の間隔は 24px にそろえる。
+   並び順は app.js の refreshTop で変わる（未診断：診断→今日の占い→こころ整理、診断済み：今日の占い→こころ整理→診断）ので、
+   どの順でも「カードの次のカード」だけに間隔を付け、最初のカードの上と最後のカードの下は今までどおり */
+#type-card, #daily-entry, #heart-entry { margin-top: 0; margin-bottom: 0; }
+:is(#type-card, #daily-entry, #heart-entry) + :is(#type-card, #daily-entry, #heart-entry) { margin-top: 24px; }
+#type-card:not(:is(#daily-entry, #heart-entry) + *) { margin-top: 34px; }
+#daily-entry:not(:is(#type-card, #heart-entry) + *) { margin-top: 30px; }
