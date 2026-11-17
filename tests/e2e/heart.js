@@ -383,17 +383,33 @@ const serve = () => new Promise((resolve) => {
     check('±ボタン：ダブルタップの拡大をしない（touch-action: manipulation）・ページのズーム禁止はしない', ta.every((x) => x === 'manipulation') && !/user-scalable\s*=\s*(no|0)|maximum-scale/.test(vp), ta.join(',') + ' | ' + vp);
     await p.context().close();
   }
-  // 7f) 結果：見出しと本文の強弱（大きさ・太さ・色・帯）
+  // 7f) 結果：見出しと本文の強弱（大きさ・太さ・色）と、見出しの蛍光ペン風のマーカー
   {
     const p = await open();
     await p.goto(H); await p.click('#h-start'); await answerQ1toQ6(p); await p.click('#h-q7-skip'); await p.waitForSelector('#h-result:not([hidden])');
     const st = await p.evaluate(() => {
-      const cs = (sel) => { const e = document.querySelector(sel), c = getComputedStyle(e); return { size: parseFloat(c.fontSize), weight: Number(c.fontWeight), color: c.color, bg: c.backgroundColor, border: c.borderBottomWidth }; };
+      const cs = (sel) => { const e = document.querySelector(sel), c = getComputedStyle(e); return { size: parseFloat(c.fontSize), weight: Number(c.fontWeight), color: c.color, bg: c.backgroundColor, bgImage: c.backgroundImage, border: c.borderBottomWidth }; };
       return { h: cs('.h-section .card-title'), label: cs('.h-row-label'), value: cs('.h-row-values li'), text: cs('.h-text p') };
     });
-    const ok = st.h.size >= st.value.size * 1.12 && st.h.weight >= 700 && st.h.color === 'rgb(91, 63, 176)' && st.h.bg !== 'rgba(0, 0, 0, 0)' && parseFloat(st.h.border) >= 2 &&
+    const ok = st.h.size >= st.value.size * 1.12 && st.h.weight >= 700 && st.h.color === 'rgb(91, 63, 176)' &&
       st.label.size < st.value.size && st.label.weight < 700 && st.value.weight < 700 && st.text.weight < 700;
-    check('結果：大見出しは本文より大きく太く濃い紫・帯と区切り線／質問ラベルは回答より小さく／回答・本文は太字にしすぎない', ok, JSON.stringify(st));
+    check('結果：大見出しは本文より大きく太く濃い紫／質問ラベルは回答より小さく／回答・本文は太字にしすぎない', ok, JSON.stringify(st));
+    const mk = await p.evaluate(() => [...document.querySelectorAll('.h-section .card-title')].map((h) => {
+      const c = getComputedStyle(h), m = h.querySelector('.h-hl'), e = h.querySelector('.h-sec-emoji'), mc = getComputedStyle(m), ec = getComputedStyle(e);
+      const hr = h.getBoundingClientRect(), mr = m.getBoundingClientRect();
+      return { text: h.textContent, band: c.backgroundColor === 'rgba(0, 0, 0, 0)' && c.backgroundImage === 'none' && parseFloat(c.borderBottomWidth) === 0,
+        marker: /linear-gradient/.test(mc.backgroundImage) && /transparent|rgba\(0, 0, 0, 0\)/.test(mc.backgroundImage), lowerHalf: /56%/.test(mc.backgroundImage),
+        clone: (mc.boxDecorationBreak || mc.webkitBoxDecorationBreak) === 'clone', emojiPlain: ec.backgroundImage === 'none' && e.getAttribute('aria-hidden') === 'true',
+        fitsText: mr.width < hr.width - 20, color: mc.color };
+    }));
+    const sections = Object.values(R.SECTIONS);
+    check('結果：見出しの帯と下線を外し、文字の下半分にだけ文字の長さのマーカー（絵文字には付けない・文字は濃い紫・文は同じ）',
+      mk.length === 4 && mk.every((x, i) => x.text === sections[i] && x.band && x.marker && x.lowerHalf && x.clone && x.emojiPlain && x.fitsText && x.color === 'rgb(91, 63, 176)'), JSON.stringify(mk));
+    // 見出しが折り返すとき：行ごとに文字に沿ってマーカーが付く（狭い幅で折り返させて確かめる）
+    await p.evaluate(() => { document.getElementById('h-sec-concern').style.width = '170px'; });
+    const lines = await p.evaluate(() => document.querySelector('#h-sec-concern .h-hl').getClientRects().length);
+    await p.locator('#h-sec-concern').screenshot({ path: OUT + '/heading-wrapped.png' });
+    check('結果：見出しが折り返しても、各行の文字にマーカー（box-decoration-break: clone）', lines >= 2 && mk[0].clone, 'lines=' + lines);
     await p.context().close();
   }
 

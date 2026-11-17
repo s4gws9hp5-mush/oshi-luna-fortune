@@ -291,8 +291,14 @@
     var r = state.result;
     $("h-date").textContent = "整理した日：" + R.formatDate(state.dateKey);
     $("h-result-notice").textContent = D.ui.resultNotice;
-    $("h-sec-concern").textContent = R.SECTIONS.concern; $("h-sec-values").textContent = R.SECTIONS.values;
-    $("h-sec-message").textContent = R.SECTIONS.message; $("h-sec-action").textContent = R.SECTIONS.action;
+    // 見出し：絵文字と文字を分け、文字にだけ蛍光ペンのようなマーカーを付ける（表示する文は R.SECTIONS と同じ）
+    ["concern", "values", "message", "action"].forEach(function (k) {
+      var h = $("h-sec-" + k), m = /^(\S+)\s+(.+)$/.exec(R.SECTIONS[k]);
+      h.textContent = "";
+      h.appendChild(el("span", "h-sec-emoji", m[1])); h.lastChild.setAttribute("aria-hidden", "true");
+      h.appendChild(document.createTextNode(" "));
+      h.appendChild(el("span", "h-hl", m[2]));
+    });
     rows($("h-concern"), r.concern); rows($("h-values"), r.values);
     fill($("h-message"), r.message.paragraphs.concat(r.message.supplement));
     var act = r.action.paragraphs.slice();
