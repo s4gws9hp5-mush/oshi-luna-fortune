@@ -608,7 +608,8 @@ const pageInfo = PAGES.map((f) => {
   // ページ内のリンク・画像：同じサイトの中は、ファイルがあり、#のついたリンクは行き先の id がある
   const ids = (h) => new Set([...h.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
   [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !/^(https?:|data:|#$)/.test(u)).forEach((u) => {
-    const [p, hash] = u.split("#");
+    const [queryPath, hash] = u.split("#");
+    const p = queryPath.split("?")[0];
     const target = path.normalize(path.join(path.dirname(f), p || path.basename(f))).replace(/(^|\/)$|^\.$/, "$1index.html").replace(/^\.?$/, "index.html");
     const file = fs.existsSync(path.join(__dirname, "..", target)) && fs.statSync(path.join(__dirname, "..", target)).isDirectory() ? path.join(target, "index.html") : target;
     assert.ok(fs.existsSync(path.join(__dirname, "..", file)), f + "：リンク切れ " + u);
