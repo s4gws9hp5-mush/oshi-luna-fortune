@@ -8,8 +8,9 @@
 /* 開始前：スマホの最初の画面で、開始（または続きから）のボタンまで見えるように詰める */
 .h-intro { text-align: center; }
 .h-intro-art { width: min(96px, 26vw); margin: 0 auto 2px; }
-.h-intro-title { font-size: clamp(1.35rem, 6.4vw, 1.6rem); }
+.h-intro-title { margin: 6px 0 12px; font-size: clamp(1.6rem, 7.2vw, 1.95rem); font-weight: 800; line-height: 1.45; color: #5f409d; }
 .h-intro-lead { margin: 6px 0 0; font-size: 0.95rem; line-height: 1.75; }
+#h-intro-lead .h-phrase { text-decoration: underline; text-decoration-color: #baa5dd; text-decoration-thickness: 1px; text-underline-offset: 0.22em; text-decoration-skip-ink: auto; }
 .h-intro .h-resume { margin: 14px 0 0; }
 .h-intro .h-start { margin-top: 14px; }
 .h-start[hidden] { display: none; }

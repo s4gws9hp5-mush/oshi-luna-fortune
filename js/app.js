@@ -1067,4 +1067,9 @@
   deviceId(); // はじめて開いたときに、運勢用のIDを用意しておく
   drawSky();
   checkDate();
+
+  // タイプ一覧の入口からはトップを経由せず診断へ。途中の回答と保存済みの結果は残す。
+  if (new URLSearchParams(location.search).get("start") === "diagnosis") {
+    startQuiz(!!loadQuizProgress());
+  }
 })();
