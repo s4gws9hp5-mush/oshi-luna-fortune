@@ -179,14 +179,12 @@ const serve = () => new Promise((resolve) => {
     check('結果：整理した日（日本時間）', (await p.textContent('#h-date')) === '整理した日：2026年11月16日');
     const sections = await p.locator('.h-section .card-title').allTextContents();
     check('結果：4区分の順番', sections.join('|') === Object.values(R.SECTIONS).join('|'), sections.join('|'));
-    check('結果：注意文・Coming Soon（料金・受付日・申込みリンクなし）', (await p.textContent('#h-result-notice')) === D.ui.resultNotice &&
-      (await p.textContent('#h-soon')).includes('✨ 個別鑑定 Coming Soon') && (await p.locator('#h-soon a').count()) === 0 && !/円|￥|受付開始|申し込む/.test(await p.textContent('#h-soon')));
-    // コピーボタンは結果直後の1つだけ（Coming Soon の案内の中には置かない）。案内文は採用文のまま・「もう一度整理する」は残す
-    const soonInfo = await p.evaluate(() => ({ buttons: document.querySelectorAll('#h-soon button').length, copyButtons: [...document.querySelectorAll('#h-result button')].filter((b) => b.textContent.includes('整理結果をコピーする')).length,
-      paras: [...document.querySelectorAll('#h-soon p')].map((x) => x.textContent), soonArea: !!document.getElementById('h-copy-area-soon'), again: !!document.getElementById('h-again') && getComputedStyle(document.getElementById('h-again')).display !== 'none' }));
-    const soonText = D.ui.comingSoon.filter((t) => !/^［.+］$/.test(t)).map((t) => t.replace(/\n/g, ''));
-    check('結果：コピーボタンは結果直後の1つだけ・Coming Soon の中にはない・案内文はそのまま・もう一度整理するは残る',
-      soonInfo.buttons === 0 && soonInfo.copyButtons === 1 && !soonInfo.soonArea && soonInfo.again && JSON.stringify(soonInfo.paras) === JSON.stringify(soonText), JSON.stringify(soonInfo));
+    const shop = p.getByRole('link', { name: 'STORESで個別鑑定を見る' });
+    check('結果：注意文と有料鑑定へのリンク', (await p.textContent('#h-result-notice')) === D.ui.resultNotice &&
+      await shop.isVisible() && await shop.getAttribute('href') === 'https://oshirunauranai.stores.jp/' &&
+      await shop.getAttribute('rel') === 'noreferrer' && (await p.textContent('#h-reading-title')).includes('有料'));
+    check('結果：コピーは1つだけ・もう一度整理できる',
+      await p.getByRole('button', { name: '整理結果をコピーする', exact: true }).count() === 1 && await p.locator('#h-again').isVisible());
     // コピー成功：コピーした文章 = 表示と同じ内容
     await p.click('#h-copy'); await p.waitForTimeout(200);
     const clip = await p.evaluate(() => navigator.clipboard.readText());
