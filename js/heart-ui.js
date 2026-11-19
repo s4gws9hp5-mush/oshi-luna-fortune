@@ -304,12 +304,6 @@
     var act = r.action.paragraphs.slice();
     if (r.action.deadlineSupplement) act.push(r.action.deadlineSupplement);
     fill($("h-action"), act);
-    // Coming Soon（採用文）。コピーボタンは結果直後のメインのボタンだけにする（案内の中の［整理結果をコピーする］は表示しない）
-    var soon = $("h-soon"); soon.textContent = "";
-    D.ui.comingSoon.forEach(function (t, i) {
-      if (/^［.+］$/.test(t)) return;
-      var p = para(t); if (i === 2) p.className = "h-soon-title"; soon.appendChild(p);
-    });
     clearCopyAreas();
   }
 

@@ -200,9 +200,9 @@
   -webkit-user-select: text;
   user-select: text;
 }
-.h-soon { margin-top: 26px; padding-bottom: 20px; text-align: center; font-size: 0.92rem; line-height: 1.9; } /* コピーボタンを外したので、上下の余白を同じに */
-.h-soon p + p { margin-top: 10px; }
-.h-soon .h-soon-title { font-weight: 700; color: var(--lavender-deep); }
+.h-reading { margin-top: 26px; }
+.h-reading p { margin-top: 12px; line-height: 1.8; }
+.h-reading a { margin-top: 16px; }
 .h-home { text-align: center; }
 .h-confirm-text { font-weight: 700; }
 .h-confirm-error { margin: 0 0 6px; font-size: 0.88rem; font-weight: 700; color: var(--pink-deep); }
